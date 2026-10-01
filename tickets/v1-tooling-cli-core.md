@@ -2,7 +2,7 @@
 id: v1-tooling-cli-core
 type: feature
 title: KMP core module, CLI skeleton, ticket parser and targeted-edit writer
-status: backlog
+status: in-progress
 priority: high
 size: M
 created: 2026-10-01
@@ -38,6 +38,47 @@ The base every command builds on, as decided in `v1-tooling`'s Plan (Kotlin Mult
 
 ## Plan
 
+Layout: Gradle build at the repository root with modules `core/` and `cli/` (later `gui/` for
+`gui-viewer`); versions in `gradle/libs.versions.toml`. Packages `dev.mateuy.safanoria.core`
+and `dev.mateuy.safanoria.cli` (chosen by the user).
+`core` reads lazily: listing tickets reads only frontmatter; the body is parsed when asked.
+
+- [ ] Build skeleton: root Gradle project, `core` (jvm, linuxX64, mingwX64, macosArm64) and
+      `cli` (native executables + JVM for tests); `safanoria version` runs. Two build tasks that
+      keep sources single: generate `Schemas.kt` (string constants) from `schema/*.json`, so
+      the CLI embeds the same schemas the repo publishes; and, on Linux, create the
+      `libunistring.so` symlink the linker needs (spike learning) instead of a manual step.
+      CI workflow `cli.yml`: build and run tests on ubuntu-24.04, windows-2022, macos-14
+      (JVM tests + that OS's native tests), caching `~/.konan`.
+- [ ] Config: find the repository root (walk up to `safanoria.yaml`), load it with SPEC §2
+      defaults into `Config`, keeping the kaml node for lines. `Diagnostic(file, line, column,
+      code, message)` is the one error type every command reports.
+- [ ] Frontmatter: split it from the body (with its line offset), parse to a kaml node tree,
+      typed accessors (`id`, `status`, `parent`, `blockedBy`…) that keep each value's line.
+      `FrontmatterSchema` validates with the embedded ticket schema and maps JSON pointers to
+      lines; same for `safanoria.yaml`. Tests run every `schema/examples/` file with its
+      `# expect:` line, on JVM and native.
+- [ ] Body: sections (name, heading line, range), checklists with continuation lines and child
+      items (`` `id` `` first), Learnings with their `→` resolution (promoted / new ticket /
+      ticket only / pending), Work Log entries (`date`, `ref`, text), User Requests quotes with
+      attribution lines. Malformed parts become diagnostics, not exceptions.
+- [ ] Targeted editor: `setField` (replace the line, or insert at its §5 position), `setMapEntry`
+      (e.g. `resolvedIn.app`, turning `resolvedIn: null` into a block), `setChecked(item)`,
+      `appendWorkLog(entry)`. It edits the original text, so unedited files are the same bytes;
+      it keeps the file's line endings and final newline. Refuses values it can't edit safely
+      (multi-line block scalars) with a diagnostic instead of guessing.
+      Tests: no-op round trip, and each edit changes only its lines, over this repository's
+      tickets and, when `SAFANORIA_EXTRA_REPOS` points at local checkouts (VacAppKMP), theirs.
+      Private tickets are never copied into this repository.
+- [ ] Processes and git in `core` (from the spike: `popen`/`_popen`/`ProcessBuilder`), and a
+      `Repository` facade: config, ticket list (lazy), git helpers (`branchExists`,
+      `stagedFiles`). Hidden `safanoria dump <file>` prints what the parser sees (debugging and
+      a smoke test for the binary).
+- [ ] Startup check: `tools/bench.py` (from the spike) on the release binary; record times for
+      this repository and 504 tickets on each CI OS. Target: < 100 ms here.
+- [ ] README: build, test and run instructions for contributors. `schema/check.py` stays until
+      `validate` checks this repository's tickets in CI (note added to `v1-tooling-validate`).
+
 ## Design
 
 From `v1-tooling-native-spike` (proven on Linux, Windows and macOS):
@@ -60,3 +101,11 @@ From `v1-tooling-native-spike` (proven on Linux, Windows and macOS):
   `schema/check.py` can be removed if nothing else needs it.
 
 ## Work Log
+
+- **2026-10-01** · status · Started. Branch `v1-tooling-cli-core` from `v1-tooling`, worktree
+  `../safanoria--v1-tooling-cli-core`.
+- **2026-10-01** · plan · Root Gradle build with `core` and `cli`. Schemas embedded by code
+  generation from `schema/*.json` (one source). The schema validator lives in `core` here (its
+  examples test is this ticket's); cross-file rules stay in `validate`. VacAppKMP round-trip
+  tests read local checkouts through `SAFANORIA_EXTRA_REPOS`; private tickets never committed.
+- **2026-10-01** · plan · Approved, with packages under `dev.mateuy.safanoria` (user's choice).
