@@ -39,7 +39,9 @@ Only when the user says so.
    (the default), otherwise from `mainBranch`.
 2. If `safanoria.yaml` has `worktree`, create the worktree there (`{id}` replaced) and work in it:
    - `git worktree add` does not move the session. Switch into it (Claude Code: `EnterWorktree`
-     with `path`); otherwise you keep editing the original checkout.
+     with `path`); otherwise you keep editing the original checkout. If the session is already
+     in another worktree (e.g. the parent's), `ExitWorktree` with `keep` first: `EnterWorktree`
+     refuses to jump from one external worktree to another.
    - Uncommitted changes in the original checkout are not in the worktree. If the ticket needs
      them, copy them over and say so in the Work Log.
    - `.claude/settings.local.json` is ignored by git, so it is missing in the worktree. If the

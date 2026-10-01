@@ -36,6 +36,18 @@ Two parts:
 
 ## Plan
 
+## Design
+
+From `v1-tooling-native-spike` (workflow at commit 657ea65, `.github/workflows/native-spike.yml`):
+
+- Build each binary on its own runner: ubuntu-24.04 (linuxX64), windows-2022 (mingwX64),
+  macos-14 (macosArm64). Cold builds take 2–4.5 min; cache `~/.konan` and Gradle caches.
+- The Linux job must create the `libunistring.so` symlink before linking (see
+  `v1-tooling-validate`), and the Linux binary only runs where `libunistring.so.5` exists
+  (Ubuntu 24.04+). Say so in the install docs.
+- Binary sizes: 5.4–5.8 MB. Windows binary is `safanoria.exe`, others `safanoria.kexe` (rename to
+  `safanoria` when publishing).
+
 ## Work Log
 
 - **2026-10-01** · plan · Blocked also by `cli-core` (`init`/`update` are CLI commands). Added

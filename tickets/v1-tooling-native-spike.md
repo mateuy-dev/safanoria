@@ -2,7 +2,7 @@
 id: v1-tooling-native-spike
 type: research
 title: Can the Safanoria CLI be built with Kotlin/Native?
-status: in-progress
+status: review
 priority: high
 size: S
 created: 2026-10-01
@@ -18,15 +18,29 @@ mingwX64. Time box: size S. If it fails, fall back to a JVM CLI on the same `cor
 
 ## Acceptance Criteria
 
-- [ ] Which YAML library reads frontmatter on all native targets (candidates: kaml,
+Answer: **yes**, Kotlin/Native works for the CLI on all three targets.
+
+- [x] Which YAML library reads frontmatter on all native targets (candidates: kaml,
       snakeyaml-engine-kmp)?
-- [ ] Do Clikt (CLI) and Okio (file system) work on all three targets?
-- [ ] Is a KMP JSON Schema validator usable (candidate: OptimumCode `json-schema-validator`), or
+      kaml 0.104.0, with 1-based line and column on every node and on syntax errors.
+      snakeyaml-engine-kmp not needed.
+- [x] Do Clikt (CLI) and Okio (file system) work on all three targets?
+      Yes: Clikt 5.1.0 and Okio 3.18.2, run on Linux, Windows and macOS in CI.
+- [x] Is a KMP JSON Schema validator usable (candidate: OptimumCode `json-schema-validator`), or
       are per-file rules written in Kotlin?
-- [ ] How does the CLI run `git` and read its output on each target (branch existence, staged
+      Usable: 0.5.5 works on all three, errors map to file lines. On Linux it needs
+      `libunistring` at link time (workaround) and `libunistring.so.5` at runtime. Decided with
+      the user: use it in the CLI; switch to Kotlin rules if older Linux distros must be supported.
+- [x] How does the CLI run `git` and read its output on each target (branch existence, staged
       files)?
-- [ ] Measured startup time of a hello-world native binary that loads `safanoria.yaml`
-- [ ] Can CI cross-build all three binaries, and on which runners (macOS needs a macOS runner)?
+      Through the shell: `popen` (Linux, macOS) / `_popen` (Windows), `2>&1`, exit code from
+      `pclose` (POSIX wait status) / `_pclose`. JVM: `ProcessBuilder`.
+- [x] Measured startup time of a hello-world native binary that loads `safanoria.yaml`
+      5–16 ms for `--help`, 9–20 ms to load this repository (12 tickets) depending on the OS;
+      JVM ~245 ms. Tables in the Work Log (steps 6 and 7).
+- [x] Can CI cross-build all three binaries, and on which runners (macOS needs a macOS runner)?
+      Each on its own runner: ubuntu-24.04, windows-2022, macos-14 (cold build 2–4.5 min).
+      mingwX64 also links on Linux; macOS needs macOS.
 
 ## Plan
 
@@ -59,7 +73,7 @@ addition. If it doesn't fit, skip it and answer from metadata.
       windows for mingwX64, macos-14 for macosArm64) that builds the spike binary and runs it
       against this repository's tickets with the same timing. This answers the macOS and Windows
       questions with real runs. Also try linking `mingwX64` on Linux, if the disk allows.
-- [ ] Answer every question in Acceptance Criteria; write Learnings with where each one goes
+- [x] Answer every question in Acceptance Criteria; write Learnings with where each one goes
       (`cli-core`, `validate`, `install`, `v1-tooling` Plan). Delete `spike/` in the last commit,
       so only the ticket merges into `v1-tooling`; the Learnings name the commit that still has
       the code, for `cli-core` to reuse.
@@ -70,6 +84,36 @@ addition. If it doesn't fit, skip it and answer from metadata.
   worktree (only paths under `.claude/worktrees/` are allowed then). The session must first go
   back with `ExitWorktree` (`keep`) and then enter the new worktree. This affects starting a child
   ticket while working on its parent.
+  → promoted: skill/SKILL.md
+- The working spike (all commands, `bench.py`, CI workflow) is at commit 657ea65, deleted after
+  it. `cli-core` can start from it.
+  → promoted: `v1-tooling-cli-core`
+- Stack: Kotlin 2.4.20, Gradle 9.3, kaml 0.104.0, Clikt 5.1.0, Okio 3.18.2. Platform code is
+  small: file system (`FileSystem.SYSTEM`) and process (`popen`/`_popen`) only.
+  → promoted: `v1-tooling-cli-core`
+- kaml nodes and syntax errors carry 1-based lines; decoding to a `@Serializable` class with
+  `strictMode = false` works but `MissingFieldException` has no line. Check the node tree.
+  → promoted: `v1-tooling-cli-core`, `v1-tooling-validate`
+- `json-schema-validator` 0.5.5 → `com.doist.x:normalize` links `-lunistring` on linuxX64:
+  needs a `libunistring.so` symlink on the linker path, and the binary needs
+  `libunistring.so.5` at runtime (Ubuntu 24.04+; older distros ship `.so.2`). Windows and macOS
+  need nothing. Kept by decision.
+  → promoted: `v1-tooling-validate`, `v1-tooling-install`
+- Running git through `popen` passes arguments through `sh` / `cmd.exe`: only safe for ids and
+  paths without quotes. Use `posix_spawn` / `CreateProcess` if arbitrary arguments are needed.
+  → promoted: `v1-tooling-cli-core`
+- Parsing costs ~0.12 ms per ticket on Linux and ~0.2 ms on the Windows/macOS runners; 504
+  tickets take 63–136 ms. A large repository would miss the hook target if every command parses
+  every full ticket.
+  → promoted: `v1-tooling-cli-core`, `v1-tooling-validate`
+- Each binary is built on its own OS runner (macOS needs macOS); cold builds 2–4.5 min, so
+  cache `~/.konan`. Declaring `mingwX64` downloads the mingw toolchain on every first build,
+  even when only linuxX64 is linked.
+  → promoted: `v1-tooling-install`
+- In a Claude Code worktree session, the sandbox refuses Bash commands whose text contains "git"
+  in forms it can't verify (heredocs, loops, URLs with "github", a CLI subcommand named `git`).
+  Use the Write/Edit tools and plain, separate git commands.
+  → ticket only
 
 ## Work Log
 
@@ -143,3 +187,10 @@ addition. If it doesn't fit, skip it and answer from metadata.
   Windows and macOS runners are about 2x slower per ticket than Linux; 504 tickets exceed the
   100 ms target there. Fine for real projects today (tens of tickets), but `validate` on staged
   files should avoid parsing every full ticket when it only needs ids and relations, or cache.
+- **2026-10-01** · step 8 · Decided with the user: keep `json-schema-validator` in the CLI and
+  accept the Linux `libunistring.so.5` dependency ("If we need to run this in older ubuntus we'll
+  change it latter"), so `v1-tooling-validate` stays blocked by `v1-tooling-schema`. Questions
+  answered; Learnings promoted into `cli-core`, `validate` and `install` (Design sections) and
+  into the skill. `spike/` and the workflow deleted; the code stays at 657ea65. No project tests
+  exist yet to run (no CLI); the deliverable is this ticket.
+- **2026-10-01** · status · review.
