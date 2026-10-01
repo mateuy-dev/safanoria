@@ -14,16 +14,21 @@ for i in range(1, 43):
         text = re.sub(r"^id: .*$", f"id: {f.stem}-n{i}", f.read_text(), count=1, flags=re.M)
         (big / "tickets" / f"{f.stem}-n{i}.md").write_text(text)
 
-native = str(spike / "build/bin/linuxX64/releaseExecutable/safanoria.kexe")
-jar = ["java", "-jar", str(spike / "build/libs/safanoria-jvm.jar")]
+# Optional second argument: the native binary (CI passes the one for its OS).
+native = sys.argv[2] if len(sys.argv) > 2 else str(spike / "build/bin/linuxX64/releaseExecutable/safanoria.kexe")
+jar_path = spike / "build/libs/safanoria-jvm.jar"
+jar = ["java", "-jar", str(jar_path)]
 cases = [
     ("native --help", [native, "--help"], 20),
     ("native load 12", [native, "load", str(repo)], 20),
     ("native load 504", [native, "load", str(big)], 20),
     ("native schema 12", [native, "schema", str(repo)], 20),
-    ("jvm load 12", jar + ["load", str(repo)], 10),
-    ("jvm load 504", jar + ["load", str(big)], 10),
 ]
+if jar_path.exists():
+    cases += [
+        ("jvm load 12", jar + ["load", str(repo)], 10),
+        ("jvm load 504", jar + ["load", str(big)], 10),
+    ]
 for name, cmd, runs in cases:
     out = subprocess.run(cmd, capture_output=True, text=True)  # warm-up
     times = []

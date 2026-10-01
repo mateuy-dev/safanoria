@@ -1,0 +1,81 @@
+# Spike (v1-tooling-native-spike): build the native CLI on each OS and run it against this
+# repository. Deleted with spike/ at the end of the spike.
+name: native-spike
+
+on:
+  push:
+    branches: [v1-tooling-native-spike]
+    paths: [spike/**, .github/workflows/native-spike.yml]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: LinuxX64
+            binary: spike/build/bin/linuxX64/releaseExecutable/safanoria.kexe
+          - os: windows-2022
+            target: MingwX64
+            binary: spike/build/bin/mingwX64/releaseExecutable/safanoria.exe
+          - os: macos-14
+            target: MacosArm64
+            binary: spike/build/bin/macosArm64/releaseExecutable/safanoria.kexe
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.konan
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-konan-${{ hashFiles('spike/build.gradle.kts', 'spike/gradle/wrapper/gradle-wrapper.properties') }}
+
+      # json-schema-validator → com.doist.x:normalize links -lunistring on Linux (see ticket, step 4).
+      - name: libunistring for the linker
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p spike/build/native-libs
+          ln -sf /usr/lib/x86_64-linux-gnu/libunistring.so.5 spike/build/native-libs/libunistring.so
+
+      - name: Build
+        working-directory: spike
+        run: |
+          start=$(date +%s)
+          ./gradlew --no-daemon -q linkReleaseExecutable${{ matrix.target }}
+          echo "build took $(( $(date +%s) - start )) s"
+          ls -la "$(dirname ../${{ matrix.binary }})"
+
+      - name: Run
+        run: |
+          b=${{ matrix.binary }}
+          $b --help
+          $b hello -n 1 SPEC.md
+          $b load .
+          $b schema . | tail -6
+          $b vcs ${{ github.ref_name }} .
+          $b hello missing-file || echo "exit code $?"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Relative paths: Windows Python does not understand Git Bash's /d/a/... paths.
+      - name: Startup benchmark
+        run: python spike/bench.py spike ${{ matrix.binary }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: safanoria-${{ matrix.target }}
+          path: ${{ matrix.binary }}
