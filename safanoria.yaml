@@ -7,3 +7,4 @@ components:
 channels: [email, in-person, other]
 userRef: name of the project using Safanoria (e.g. VacAppKMP)
 learningTargets: [SPEC.md, skill/SKILL.md, README.md]
+worktree: ../safanoria--{id}

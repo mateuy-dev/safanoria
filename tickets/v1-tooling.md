@@ -2,11 +2,12 @@
 id: v1-tooling
 type: feature
 title: Tooling and open points to make Safanoria v1 usable across projects
-status: backlog
+status: in-progress
 priority: high
 size: L
 created: 2026-10-01
 updated: 2026-10-01
+related: [gui-viewer]
 ---
 
 ## Objective
@@ -22,41 +23,62 @@ when work starts. Project-specific work (VacApp release stamping in `AdminMain`,
 
 ## Acceptance Criteria
 
-- [ ] This repository is under git and uses Safanoria for its own tickets
+- [x] This repository is under git and uses Safanoria for its own tickets
 - [ ] A validator reports every rule in SPEC §12, with file and line
 - [ ] A ticket can be created, listed and released (stamped) from the command line
 - [ ] A board view shows tickets by status, with parents, children and blocked tickets
 - [ ] The skill and spec can be installed in, and updated for, a project with one command
 - [ ] A project can run validation automatically before commits and in CI
-- [ ] The open points below are decided and written into SPEC.md
+- [ ] The open points (Safanoria versioning, external stamping, attachments, per-type templates)
+      are decided and written into SPEC.md
+- [ ] This repository's own tickets pass `validate`, and its `safanoria.yaml` no longer needs
+      `external: true` for the `safanoria` component
 
 Out of scope:
-- Interactive viewer/editor apps (later tickets, after the CLI exists)
+- Interactive viewer/editor apps (later tickets, after the CLI exists; first: `gui-viewer`)
 - MCP server
 
 ## Plan
 
-- [ ] `git init` this repository; first commit with SPEC, skill, template, this ticket.
-- [ ] Decide the CLI language and distribution. Options: Kotlin (JVM, matches existing projects,
-      slow start), Kotlin/Native binary, or a script language. Startup time matters for hooks.
-- [ ] `schema/`: JSON Schema for the frontmatter and for `safanoria.yaml`, used by the CLI and apps.
-- [ ] CLI `validate`: all SPEC §12 checks; exit code ≠ 0 on errors; machine-readable output option.
-- [ ] CLI `new`: suggests an id from the title, checks file and branch uniqueness, writes the template.
-- [ ] CLI `board`: generates a markdown board (by status; parents with children and progress;
-      blocked tickets marked).
-- [ ] CLI `release <component> <version>`: stamping as in SPEC §9; reads the version from the
-      component's `version` source when not given.
-- [ ] Pre-commit hook and a CI example (GitHub Actions) running `validate`.
-- [ ] Install/update command for the skill and spec into a project's `.claude/skills/safanoria/`,
-      replacing the manual copy (copies drift from this repo).
-- [ ] Skill: on Start, switch the agent session into the new worktree (see Learnings).
-- [ ] Decide and specify the open points:
-      - Stamping components released from another repository (`external: true`, e.g. VacApp's Rails
-        server): who runs `release`, and how it reaches this ticket repository.
-      - Versioning of Safanoria itself (spec version vs tool version), to replace
-        `external: true` in this repository's `safanoria.yaml`.
-      - Attachments: naming, size limits, how apps show them.
-      - Whether templates per type are needed (e.g. `research` with questions as criteria).
+Children merge into this branch (`childrenMergeInto: parent`, the default), so the v1 tooling
+ships as one set. One child per command or deliverable that can be reviewed on its own; small
+skill and README edits stay as own steps. `cli-core` is split out of `validate` because every
+command needs the same parser and writer; once it is done, `validate`, `new`, `board` and
+`release` can be built in any order.
+
+- [x] `git init` this repository; first commit with SPEC, skill, template, this ticket.
+      Done in 8b23b85, before this ticket started.
+- [ ] Skill: on Start, switch the agent session into the new worktree (see Learnings), and say
+      that `.claude/settings.local.json` must be recreated there. First, because every child
+      below starts a worktree.
+- [x] Decide the CLI language and distribution, and record it here.
+      Decision: **Kotlin Multiplatform**. A `core` module (commonMain: model, parser, writer,
+      validator, operations) shared by a `cli` module built with **Kotlin/Native** (one binary per
+      OS: linuxX64, macosArm64, mingwX64; ~10 ms startup for hooks, no runtime to install) and,
+      later, a Compose Desktop viewer on the JVM (`gui-viewer`). A JVM target also runs the tests.
+      Writing tickets uses targeted text edits (status, `updated`, `resolvedIn`, Work Log, Plan
+      checkboxes), so the YAML library is only used for reading and no round-trip library is
+      needed. JS target deferred: only needed for npm distribution or a web viewer.
+      Rejected: TypeScript on Node (no code sharing with a Compose GUI; adds Node to Kotlin
+      projects), Kotlin/JVM only (~0.5 s startup in hooks; stays available as fallback, since
+      `core` runs on the JVM), Kotlin/JS (weaker for file system and processes), Go (no reuse).
+- [ ] `v1-tooling-native-spike`: prove the Kotlin/Native libraries and git calls before
+      `cli-core` builds on them.
+- [ ] `v1-tooling-schema`: JSON Schema for the frontmatter and `safanoria.yaml`.
+- [ ] `v1-tooling-cli-core`: KMP `core` + `cli` modules, config loading, ticket parser with line
+      numbers, targeted-edit writer.
+- [ ] `v1-tooling-validate`: all SPEC §12 checks.
+- [ ] `v1-tooling-new`: `new` command.
+- [ ] `v1-tooling-board`: `list` and `board` commands.
+- [ ] `v1-tooling-spec-decisions`: decide and specify Safanoria's versioning, attachments and
+      per-type templates.
+- [ ] `v1-tooling-release`: `release` stamping, including components released from another
+      repository (`external: true`).
+- [ ] `v1-tooling-install`: install/update of skill, spec and template into a project.
+- [ ] `v1-tooling-hooks`: pre-commit hook and GitHub Actions example running `validate`.
+- [ ] README: replace the manual setup steps and the "Planned" list with the CLI; give the
+      `safanoria` component a `version` source per the versioning decision; run `validate` on
+      this repository.
 
 ## Learnings
 
@@ -68,3 +90,18 @@ Out of scope:
 ## Work Log
 
 - **2026-10-01** · status · Created from the design discussion while setting up VacAppKMP.
+- **2026-10-01** · status · Started. Branch `v1-tooling` from `main`, worktree `../safanoria--v1-tooling`.
+  Includes the uncommitted `worktree:` line from `main`'s `safanoria.yaml`.
+- **2026-10-01** · plan · Split into eight children. The language decision stays an own step
+  before `cli-core`, since all children depend on it. `list` was in Acceptance Criteria but not in
+  the Plan; added to `board`. External-component stamping moved into `release` (it shapes that
+  command); the other open points into `spec-decisions`. Added a criterion for dogfooding.
+- **2026-10-01** · plan · Correction to the previous entry: the split had nine children, not eight.
+- **2026-10-01** · plan · Language decided with the user: Kotlin Multiplatform, CLI on
+  Kotlin/Native, so a future Compose Desktop viewer reuses `core` (TypeScript recommendation
+  dropped). The targeted-edit writer removes the need for a YAML round-trip library. Added the
+  research child `v1-tooling-native-spike`, since library support on Native is the main risk;
+  `cli-core` is blocked by it. `install` now also blocked by `cli-core`. Viewer recorded as
+  `gui-viewer` (out of scope, `related`).
+- **2026-10-01** · plan · Moved `hooks` after `install`, which now blocks it. Removed the reverse
+  `related` from `gui-viewer` (SPEC §8: one side only).
