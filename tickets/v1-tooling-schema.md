@@ -2,7 +2,7 @@
 id: v1-tooling-schema
 type: feature
 title: JSON Schema for ticket frontmatter and safanoria.yaml
-status: in-progress
+status: review
 priority: high
 size: S
 created: 2026-10-01
@@ -25,7 +25,7 @@ id/date/version patterns). Cross-file rules (references, cycles, parent Plans, `
 - [x] `schema/ticket.schema.json` and `schema/safanoria.schema.json` (JSON Schema 2020-12)
 - [x] Unknown fields are allowed (SPEC §2, §5)
 - [x] Example valid and invalid files under `schema/examples/`, checked by a test
-- [ ] SPEC.md links to the schemas
+- [x] SPEC.md links to the schemas
 
 ## Plan
 
@@ -56,7 +56,7 @@ in `validate`.
       must be testable on its own, and `cli-core` will run the same examples through the
       production validator (added to its Design), so the Python runner can be dropped then if it
       is redundant.
-- [ ] SPEC.md §2 and §5 link to the schemas; README lists `schema/` and shows the
+- [x] SPEC.md §2 and §5 link to the schemas; README lists `schema/` and shows the
       `# yaml-language-server: $schema=…` line for `safanoria.yaml` (editor completion).
       Ticket frontmatter can't be wired to a schema in editors (it's inside markdown); note that.
 
@@ -66,10 +66,12 @@ in `validate`.
   so a schema with `type: string` dates fails on them; kaml keeps it a string. Any tool reading
   tickets must load dates as strings. Also: an unquoted `4.3` is a number, while `4.3.0` is a
   string, so a two-part version fails with `type`, not `pattern`.
+  → promoted: SPEC.md §4, schema/check.py (docstring)
 - In JSON Schema 2020-12, `$ref` and its sibling keywords apply together: a `$ref` to a definition
   with `type: string` plus a sibling `type: [string, null]` still rejects null. Reusable format
   rules (`idFormat`, `versionFormat`) carry no `type`. `oneOf: [x, null]` works but reports one
   vague `oneOf` error instead of the failing rule, which is worse for mapping errors to lines.
+  → promoted: schema/ticket.schema.json (`idFormat`, `versionFormat` descriptions)
 
 ## Work Log
 
@@ -84,3 +86,8 @@ in `validate`.
   on done" rule makes exactly its two examples fail. Workflow `.github/workflows/schema.yml` runs
   it on push and PR. Deviation from step 1: `parent` and `resolvedIn` use
   `type: [..., null]` plus format rules instead of `oneOf` with null, for precise errors.
+- **2026-10-01** · step 4 · SPEC.md §2 and §5 link the schemas; §4 now says dates and versions
+  are strings that tools must not convert (clarification, no spec version change per §13).
+  README lists `schema/`, `check.py` and the `yaml-language-server` line; this repository's
+  `safanoria.yaml` uses it. Learnings promoted. `schema/check.py`: 69 files, 0 failures.
+- **2026-10-01** · status · review.
