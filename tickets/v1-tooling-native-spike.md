@@ -39,7 +39,7 @@ Constraint: the disk has ~2.6 GB free. Use what's cached (Gradle 9.x, Kotlin/Nat
 toolchains, kaml 0.77.1, Okio 3.11). The mingw toolchain download (~0.5 GB) is the only big
 addition. If it doesn't fit, skip it and answer from metadata.
 
-- [ ] Gradle skeleton in `spike/` (wrapper from cache, Kotlin 2.4.x, the four targets). A
+- [x] Gradle skeleton in `spike/` (wrapper from cache, Kotlin 2.4.x, the four targets). A
       linuxX64 `main` that prints "hello".
 - [ ] YAML: parse `safanoria.yaml` and the frontmatter of every ticket in `tickets/` with kaml
       on linuxX64 and jvm. Check that errors and nodes carry line numbers (needed by `validate`).
@@ -80,3 +80,6 @@ addition. If it doesn't fit, skip it and answer from metadata.
   macosArm64 from docs and metadata, with CI as the real proof in `install`.
 - **2026-10-01** · plan · The repository is now public on GitHub (`mateuy-dev/safanoria`), so the
   cross-build step runs real CI on Linux, Windows and macOS runners instead of only drafting it.
+- **2026-10-01** · step 1 · Kotlin 2.4.20, Gradle 9.3.0. Release linuxX64 "hello" binary: 479 KB.
+  Declaring `mingwX64` makes the first build download the mingw toolchain (and LLVM 21), even when
+  only linuxX64 is linked. Disk is no longer a constraint (21 GB free).
