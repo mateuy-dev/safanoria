@@ -33,8 +33,7 @@ mingwX64. Time box: size S. If it fails, fall back to a JVM CLI on the same `cor
 Throwaway code in `spike/`, a KMP Gradle project (targets: jvm, linuxX64, mingwX64,
 macosArm64). Everything is built and run here on linuxX64. mingwX64 is cross-compiled from Linux
 but can't be run here (no Windows, no Wine). macosArm64 can't be built here: Apple targets need
-a macOS host. Answers for those two targets come from compiling (mingw) or from library metadata
-and docs (macOS), and say so. Their real check is the CI build in `v1-tooling-install`.
+a macOS host. Those two targets are built and run on GitHub Actions runners (cross-build step).
 
 Constraint: the disk has ~2.6 GB free. Use what's cached (Gradle 9.x, Kotlin/Native 2.3/2.4
 toolchains, kaml 0.77.1, Okio 3.11). The mingw toolchain download (~0.5 GB) is the only big
@@ -56,9 +55,10 @@ addition. If it doesn't fit, skip it and answer from metadata.
       `expect`/`actual`. Compare with a process library if one exists for all three targets.
 - [ ] Startup: release binary loading `safanoria.yaml` and all tickets; time 20 runs (`hyperfine`
       if available, else a shell loop). Same for the JVM jar, for comparison.
-- [ ] Cross-build: compile and link `mingwX64` from Linux if disk allows; write a draft GitHub
-      Actions matrix (ubuntu for linux and mingw, macos-14 for macosArm64) in the Learnings for
-      `v1-tooling-install`. There's no remote, so it can't run here.
+- [ ] Cross-build: a GitHub Actions workflow on this branch with a matrix (ubuntu for linuxX64,
+      windows for mingwX64, macos-14 for macosArm64) that builds the spike binary and runs it
+      against this repository's tickets with the same timing. This answers the macOS and Windows
+      questions with real runs. Also try linking `mingwX64` on Linux, if the disk allows.
 - [ ] Answer every question in Acceptance Criteria; write Learnings with where each one goes
       (`cli-core`, `validate`, `install`, `v1-tooling` Plan). Delete `spike/` in the last commit,
       so only the ticket merges into `v1-tooling`; the Learnings name the commit that still has
@@ -78,3 +78,5 @@ addition. If it doesn't fit, skip it and answer from metadata.
 - **2026-10-01** · plan · Spike code in `spike/`, deleted before review (research: the
   deliverable is Learnings). Only linuxX64 and jvm can run here; mingwX64 compile only;
   macosArm64 from docs and metadata, with CI as the real proof in `install`.
+- **2026-10-01** · plan · The repository is now public on GitHub (`mateuy-dev/safanoria`), so the
+  cross-build step runs real CI on Linux, Windows and macOS runners instead of only drafting it.
