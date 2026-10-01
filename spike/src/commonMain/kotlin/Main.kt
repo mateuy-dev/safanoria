@@ -103,4 +103,9 @@ class Hello : CliktCommand(name = "hello") {
     }
 }
 
-fun main(args: Array<String>) = Safanoria().subcommands(YamlCmd(), Hello()).main(args)
+class SchemaCmd : CliktCommand(name = "schema") {
+    private val root by argument().default(".")
+    override fun run() = schemaCheck(root.toPath())
+}
+
+fun main(args: Array<String>) = Safanoria().subcommands(YamlCmd(), Hello(), SchemaCmd()).main(args)

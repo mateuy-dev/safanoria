@@ -46,7 +46,7 @@ addition. If it doesn't fit, skip it and answer from metadata.
       Try `snakeyaml-engine-kmp` only if kaml falls short.
 - [x] Clikt and Okio: a `safanoria hello <path>` command, with Clikt subcommands and Okio file
       reads, on linuxX64. For mingwX64 and macosArm64, check the published artifacts.
-- [ ] JSON Schema: validate one frontmatter against a small schema with OptimumCode
+- [x] JSON Schema: validate one frontmatter against a small schema with OptimumCode
       `json-schema-validator` on linuxX64 (frontmatter YAML → JsonElement). Record the binary
       size and startup cost it adds. If it's unusable, record that per-file rules go in Kotlin
       (and `v1-tooling-validate` drops `blockedBy: v1-tooling-schema`).
@@ -95,3 +95,13 @@ addition. If it doesn't fit, skip it and answer from metadata.
   native targets; with Clikt and kaml added, the code compiles (klib) for mingwX64 and
   macosArm64 on Linux too, so dependencies resolve on every target. Linking and running there is
   step 7. Release linuxX64 binary with kaml + Clikt + Okio: 4.2 MB.
+- **2026-10-01** · step 4 · OptimumCode `json-schema-validator` 0.5.5 validates correctly (all
+  tickets valid; a broken sample gives pattern, enum, type and required errors with JSON pointers,
+  mapped back to file lines through kaml node locations). But on linuxX64 it does not link out of
+  the box: its dependency `com.doist.x:normalize` links `-lunistring`, which Kotlin/Native's
+  sysroot lacks. Linking against the system library (symlink in `build/native-libs`) works, but
+  the binary then needs `libunistring.so.5` at runtime (missing on older distros, which ship
+  `.so.2`), and grows from 4.2 to 5.8 MB. Proposal: no JSON Schema validator in the CLI; write
+  per-file rules in Kotlin and keep `schema/` as a published artifact for editors (YAML language
+  server), with a JVM test checking that rules and schema agree. Then `v1-tooling-validate` no
+  longer needs `blockedBy: v1-tooling-schema`. To confirm with the user at the end.
