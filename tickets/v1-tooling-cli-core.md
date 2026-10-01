@@ -55,5 +55,8 @@ From `v1-tooling-native-spike` (proven on Linux, Windows and macOS):
 - Startup: 5–16 ms for an empty command, ~0.12 ms (Linux) to ~0.2 ms (Windows/macOS) per parsed
   ticket. Parse lazily (frontmatter first, body only when a command needs it) so large
   repositories stay under the 100 ms target.
+- From `v1-tooling-schema`: `core` tests run every `schema/examples/` file through the production
+  validator, honouring each invalid file's `# expect: <keyword> <pointer>` line. Once they pass,
+  `schema/check.py` can be removed if nothing else needs it.
 
 ## Work Log

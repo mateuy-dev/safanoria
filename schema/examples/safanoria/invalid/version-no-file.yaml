@@ -1,0 +1,5 @@
+# expect: required /components/app/version
+safanoria: 1
+components:
+  app:
+    version: { property: v }

@@ -1,0 +1,13 @@
+# A user reference can be a string id.
+id: map-input
+type: feature
+title: Pick a location on a map
+status: backlog
+priority: medium
+size: S
+created: 2026-10-01
+updated: 2026-10-01
+requests:
+  - user: u-2f9c
+    channel: email
+    date: 2026-09-30

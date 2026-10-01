@@ -51,6 +51,7 @@ learningTargets: [CLAUDE.md, docs/, .claude/skills/, code comment]   # optional 
   `external: true` means the version is supplied when stamping (§9).
 - `channels` defaults to `[email, phone, in-person, other]`.
 - Unknown keys MUST be preserved by tools and MAY be ignored.
+- [`schema/safanoria.schema.json`](schema/safanoria.schema.json) is the JSON Schema for this file.
 
 ## 3. Ticket id
 
@@ -77,10 +78,17 @@ worktree name.
 The file is UTF-8, uses `\n` line endings, and starts with a YAML frontmatter block between
 `---` lines, followed by the body (§7).
 
+Dates (`YYYY-MM-DD`) and versions are strings. YAML 1.1 loaders (PyYAML, js-yaml's default
+schema) turn an unquoted `2026-10-01` into a date object; tools MUST read it as a string.
+
 ## 5. Frontmatter
 
 Fields SHOULD appear in the order below. Optional fields MAY be omitted; an omitted field has
 its default value. Tools that write a ticket MUST preserve unknown fields.
+
+[`schema/ticket.schema.json`](schema/ticket.schema.json) is the JSON Schema for the frontmatter.
+It covers the rules that can be checked from one file; the rest of §12 needs the other tickets
+and `safanoria.yaml`.
 
 | Field | Required | Type | Default | Meaning |
 |---|---|---|---|---|

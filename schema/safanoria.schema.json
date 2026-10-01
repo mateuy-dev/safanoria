@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/mateuy-dev/safanoria/main/schema/safanoria.schema.json",
+  "title": "Safanoria project configuration (safanoria.yaml)",
+  "description": "Project configuration (SPEC.md §2), spec version 1. Unknown keys are allowed and must be preserved by tools.",
+  "type": "object",
+  "required": ["safanoria", "components"],
+  "properties": {
+    "safanoria": { "const": 1, "description": "Spec version." },
+    "dir": { "type": "string", "minLength": 1, "default": "tickets", "description": "Ticket directory." },
+    "mainBranch": { "type": "string", "minLength": 1, "default": "main", "description": "Branch that releases are made from." },
+    "worktree": {
+      "type": "string",
+      "pattern": "\\{id\\}",
+      "description": "Where `start` creates a ticket's worktree; {id} is replaced by the ticket id."
+    },
+    "components": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/slug" },
+      "additionalProperties": { "$ref": "#/$defs/component" },
+      "description": "Allowed values of a ticket's area and keys of resolvedIn."
+    },
+    "channels": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/slug" },
+      "uniqueItems": true,
+      "default": ["email", "phone", "in-person", "other"],
+      "description": "Allowed requests[].channel values."
+    },
+    "userRef": { "type": "string", "description": "What requests[].user refers to (documentation)." },
+    "refs": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/slug" },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["url"],
+        "properties": { "url": { "type": "string", "pattern": "\\{id\\}" } }
+      },
+      "description": "External systems tickets may reference in refs; {id} in url is replaced by the reference."
+    },
+    "learningTargets": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Where learnings are promoted to (hint, §7.6)."
+    }
+  },
+  "$defs": {
+    "slug": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "component": {
+      "type": "object",
+      "properties": {
+        "version": { "$ref": "#/$defs/versionSource" },
+        "external": { "type": "boolean", "description": "Released from another repository; the version is supplied when stamping (§9)." }
+      },
+      "anyOf": [
+        { "required": ["version"] },
+        { "required": ["external"], "properties": { "external": { "const": true } } }
+      ]
+    },
+    "versionSource": {
+      "type": "object",
+      "required": ["file"],
+      "properties": {
+        "file": { "type": "string", "minLength": 1, "description": "Path from the repository root." },
+        "property": { "type": "string", "minLength": 1, "description": "Key in a key=value file." },
+        "regex": { "type": "string", "minLength": 1, "description": "Regular expression with one capture group." }
+      },
+      "oneOf": [{ "required": ["property"] }, { "required": ["regex"] }]
+    }
+  }
+}

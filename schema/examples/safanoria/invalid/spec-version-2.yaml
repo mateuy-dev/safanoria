@@ -1,0 +1,5 @@
+# expect: const /safanoria
+safanoria: 2
+components:
+  app:
+    version: { file: gradle.properties, property: appVersionName }

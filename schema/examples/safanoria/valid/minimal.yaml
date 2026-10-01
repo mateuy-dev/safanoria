@@ -1,0 +1,5 @@
+# Only the required keys.
+safanoria: 1
+components:
+  app:
+    version: { file: gradle.properties, property: appVersionName }
