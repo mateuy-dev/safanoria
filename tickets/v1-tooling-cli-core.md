@@ -2,7 +2,7 @@
 id: v1-tooling-cli-core
 type: feature
 title: KMP core module, CLI skeleton, ticket parser and targeted-edit writer
-status: in-progress
+status: review
 priority: high
 size: M
 created: 2026-10-01
@@ -29,12 +29,12 @@ The base every command builds on, as decided in `v1-tooling`'s Plan (Kotlin Mult
 
 ## Acceptance Criteria
 
-- [ ] Parsing and then applying no edits to any ticket in this repository (and VacAppKMP's) gives
+- [x] Parsing and then applying no edits to any ticket in this repository (and VacAppKMP's) gives
       the same bytes; each edit changes only the lines it targets
-- [ ] Parse errors carry file and line
-- [ ] The native CLI starts fast enough for a pre-commit hook (target: under 100 ms on this
+- [x] Parse errors carry file and line
+- [x] The native CLI starts fast enough for a pre-commit hook (target: under 100 ms on this
       repository)
-- [ ] `core` tests run on the JVM and on the native target
+- [x] `core` tests run on the JVM and on the native target
 
 ## Plan
 
@@ -74,9 +74,9 @@ and `dev.mateuy.safanoria.cli` (chosen by the user).
       `Repository` facade: config, ticket list (lazy), git helpers (`branchExists`,
       `stagedFiles`). Hidden `safanoria dump <file>` prints what the parser sees (debugging and
       a smoke test for the binary).
-- [ ] Startup check: `tools/bench.py` (from the spike) on the release binary; record times for
+- [x] Startup check: `tools/bench.py` (from the spike) on the release binary; record times for
       this repository and 504 tickets on each CI OS. Target: < 100 ms here.
-- [ ] README: build, test and run instructions for contributors. `schema/check.py` stays until
+- [x] README: build, test and run instructions for contributors. `schema/check.py` stays until
       `validate` checks this repository's tickets in CI (note added to `v1-tooling-validate`).
 
 ## Design
@@ -99,6 +99,23 @@ From `v1-tooling-native-spike` (proven on Linux, Windows and macOS):
 - From `v1-tooling-schema`: `core` tests run every `schema/examples/` file through the production
   validator, honouring each invalid file's `# expect: <keyword> <pointer>` line. Once they pass,
   `schema/check.py` can be removed if nothing else needs it.
+
+## Learnings
+
+- Gradle doesn't treat a test task's environment variables as inputs: changing one can reuse
+  a cached (or up-to-date) result. Declare them with `inputs.property`.
+  → promoted: core/build.gradle.kts (comment)
+- OptimumCode `json-schema-validator` reports an `anyOf`/`oneOf` failure as its failing
+  branches, and `propertyNames` at the offending key; Python's `jsonschema` reports the
+  combinator or the map. Same problem, different detail.
+  → promoted: core/src/commonTest/…/SchemaExamplesTest.kt (comment on `matches`)
+- kaml doesn't keep a scalar's style, so `"2026"` and `2026` look the same; whether a value is
+  a string must be read from the source at the node's position.
+  → promoted: core/src/commonMain/…/YamlNodes.kt (`isExplicitString`)
+- Kotlin/Native cross-links Linux binaries on macOS and Windows hosts, and `allTests` links
+  them; anything Linux-specific in linking (here, the system `libunistring`) breaks other hosts
+  unless those link tasks are disabled there.
+  → promoted: build.gradle.kts (comment)
 
 ## Work Log
 
@@ -163,3 +180,23 @@ From `v1-tooling-native-spike` (proven on Linux, Windows and macOS):
   sections, checklists and children, learnings, work log; diagnostics on stderr, exit 1).
   CI runs `dump` on every ticket on each OS. 5 more tests (JVM and linuxX64), real git included.
   CI for the step 1 fix: green on Linux, Windows and macOS.
+- **2026-10-02** · step 7 · `tools/bench.py` (release binary; `version`, `dump` over this
+  repository and over 504 synthetic tickets). `dump` without a file parses and schema-checks
+  every ticket, the workload `validate` will have. CI run 36933952902, all green:
+
+  | runner | `version` | this repository (12) | synthetic (504) |
+  |---|---|---|---|
+  | local Linux | 13 ms | 19 ms | 144 ms |
+  | ubuntu-24.04 | 5 ms | 16 ms | 179 ms |
+  | windows-2022 | 7 ms | 21 ms | 262 ms |
+  | macos-14 | 10 ms | 26 ms | 202 ms |
+
+  VacAppKMP's 47 tickets, locally: 32 ms. The < 100 ms target holds for real repositories; full
+  body parsing and schema checks of ~500 tickets don't, hence the note in `v1-tooling-validate`
+  to check fully only what a hook needs.
+- **2026-10-02** · step 8 · README: Development section (modules, build, test, bench,
+  `libunistring`, `SAFANORIA_EXTRA_REPOS`, generated schemas); Planned list updated.
+  `v1-tooling-validate` Design: what `core` provides, timings, and removing `schema/check.py`
+  once `validate` checks tickets in CI. Learnings promoted as code comments. `allTests` green
+  locally and on the three CI OSes.
+- **2026-10-02** · status · review.
