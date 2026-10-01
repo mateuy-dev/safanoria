@@ -55,7 +55,7 @@ addition. If it doesn't fit, skip it and answer from metadata.
       `expect`/`actual`. Compare with a process library if one exists for all three targets.
 - [x] Startup: release binary loading `safanoria.yaml` and all tickets; time 20 runs (`hyperfine`
       if available, else a shell loop). Same for the JVM jar, for comparison.
-- [ ] Cross-build: a GitHub Actions workflow on this branch with a matrix (ubuntu for linuxX64,
+- [x] Cross-build: a GitHub Actions workflow on this branch with a matrix (ubuntu for linuxX64,
       windows for mingwX64, macos-14 for macosArm64) that builds the spike binary and runs it
       against this repository's tickets with the same timing. This answers the macOS and Windows
       questions with real runs. Also try linking `mingwX64` on Linux, if the disk allows.
@@ -126,3 +126,20 @@ addition. If it doesn't fit, skip it and answer from metadata.
   Native meets the < 100 ms hook target with room; it scales at ~0.12 ms per ticket, so ~800
   tickets would reach 100 ms for a full load (`validate` on staged files still needs every
   frontmatter for references). The JVM's ~240 ms fixed cost rules it out for hooks, as expected.
+- **2026-10-01** · step 7 · `mingwX64` links on Linux (5.6 MB `.exe`; not run, no Wine).
+  `.github/workflows/native-spike.yml` builds each binary on its own OS (ubuntu-24.04,
+  windows-2022, macos-14), runs every spike command against this repository, benchmarks it, and
+  uploads it. Run 36897932693: all three green, identical command output on each OS (schema errors
+  with lines, branch/staged/failing git, exit codes); Windows `_popen` through `cmd.exe` works,
+  and Windows/macOS link the schema validator without extra libraries (only Linux needs
+  `libunistring`). Build times with a cold cache: Linux 135 s, macOS 203 s, Windows 259 s.
+
+  | runner | binary | `--help` | `load` 12 | `load` 504 |
+  |---|---|---|---|---|
+  | ubuntu-24.04 | 5.8 MB | 5 ms | 9 ms | 63 ms |
+  | windows-2022 | 5.6 MB | 9 ms | 15 ms | 120 ms |
+  | macos-14 | 5.4 MB | 16 ms | 20 ms | 136 ms |
+
+  Windows and macOS runners are about 2x slower per ticket than Linux; 504 tickets exceed the
+  100 ms target there. Fine for real projects today (tens of tickets), but `validate` on staged
+  files should avoid parsing every full ticket when it only needs ids and relations, or cache.
