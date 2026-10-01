@@ -48,7 +48,7 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
 
 - [x] `git init` this repository; first commit with SPEC, skill, template, this ticket.
       Done in 8b23b85, before this ticket started.
-- [ ] Skill: on Start, switch the agent session into the new worktree (see Learnings), and say
+- [x] Skill: on Start, switch the agent session into the new worktree (see Learnings), and say
       that `.claude/settings.local.json` must be recreated there. First, because every child
       below starts a worktree.
 - [x] Decide the CLI language and distribution, and record it here.
@@ -84,8 +84,10 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
 
 - Creating a worktree with `git worktree add` does not move a Claude Code session into it; the
   session keeps working in the original checkout until it switches (EnterWorktree with `path`).
+  → promoted: skill/SKILL.md
 - `.claude/settings.local.json` is ignored by git, so it is not present in new worktrees: local
   settings such as extra directories must be added again in each worktree.
+  → promoted: skill/SKILL.md
 
 ## Work Log
 
@@ -105,3 +107,6 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
   `gui-viewer` (out of scope, `related`).
 - **2026-10-01** · plan · Moved `hooks` after `install`, which now blocks it. Removed the reverse
   `related` from `gui-viewer` (SPEC §8: one side only).
+- **2026-10-01** · step 2 · Skill Start step now says to switch the session into the worktree,
+  to carry over needed uncommitted changes (happened at this ticket's start), and to recreate
+  `settings.local.json`. Both Learnings promoted there.

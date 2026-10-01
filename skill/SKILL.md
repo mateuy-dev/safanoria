@@ -37,7 +37,13 @@ Only when the user says so.
 
 1. Branch `<id>`: from the parent's branch if the parent has `childrenMergeInto: parent`
    (the default), otherwise from `mainBranch`.
-2. If `safanoria.yaml` has `worktree`, create the worktree there (`{id}` replaced) and work in it.
+2. If `safanoria.yaml` has `worktree`, create the worktree there (`{id}` replaced) and work in it:
+   - `git worktree add` does not move the session. Switch into it (Claude Code: `EnterWorktree`
+     with `path`); otherwise you keep editing the original checkout.
+   - Uncommitted changes in the original checkout are not in the worktree. If the ticket needs
+     them, copy them over and say so in the Work Log.
+   - `.claude/settings.local.json` is ignored by git, so it is missing in the worktree. If the
+     user relies on local settings (permissions, extra directories), tell them to recreate it.
 3. Set `status: in-progress` and log `status · started`.
 4. Then do what the user asked:
    - **Plan**: read the relevant code; write Acceptance Criteria and Plan (a checklist, one item
