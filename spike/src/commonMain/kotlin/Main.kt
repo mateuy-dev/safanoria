@@ -108,4 +108,10 @@ class SchemaCmd : CliktCommand(name = "schema") {
     override fun run() = schemaCheck(root.toPath())
 }
 
-fun main(args: Array<String>) = Safanoria().subcommands(YamlCmd(), Hello(), SchemaCmd()).main(args)
+class GitCmd : CliktCommand(name = "vcs") {
+    private val id by argument()
+    private val root by argument().default(".")
+    override fun run() = gitCheck(root.toPath(), id)
+}
+
+fun main(args: Array<String>) = Safanoria().subcommands(YamlCmd(), Hello(), SchemaCmd(), GitCmd()).main(args)

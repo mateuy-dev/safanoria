@@ -50,7 +50,7 @@ addition. If it doesn't fit, skip it and answer from metadata.
       `json-schema-validator` on linuxX64 (frontmatter YAML → JsonElement). Record the binary
       size and startup cost it adds. If it's unusable, record that per-file rules go in Kotlin
       (and `v1-tooling-validate` drops `blockedBy: v1-tooling-schema`).
-- [ ] git: run `git branch --list <id>` and `git diff --cached --name-only` from native code.
+- [x] git: run `git branch --list <id>` and `git diff --cached --name-only` from native code.
       Try `popen` (posix, linux/macOS) and see what mingw needs (`_popen`), behind
       `expect`/`actual`. Compare with a process library if one exists for all three targets.
 - [ ] Startup: release binary loading `safanoria.yaml` and all tickets; time 20 runs (`hyperfine`
@@ -105,3 +105,11 @@ addition. If it doesn't fit, skip it and answer from metadata.
   per-file rules in Kotlin and keep `schema/` as a published artifact for editors (YAML language
   server), with a JVM test checking that rules and schema agree. Then `v1-tooling-validate` no
   longer needs `blockedBy: v1-tooling-schema`. To confirm with the user at the end.
+- **2026-10-01** · step 5 · git through the shell with `popen` (linux, macOS) / `_popen` (mingw:
+  `popen` does not exist there, so open/close are `expect`/`actual` per platform), `fgets` loop,
+  `2>&1` to merge stderr. `pclose` returns a wait status on POSIX (exit code = bits 8-15),
+  `_pclose` the exit code. JVM uses `ProcessBuilder` (`sh -c` / `cmd /c`). Branch existence,
+  staged files and a failing command give the same output native and on the JVM. No process
+  library tried: none needed. Limitation: arguments go through a shell, so quoting must suit
+  both `sh` and `cmd.exe`; fine for ids and paths (`validate` only passes those). If arbitrary
+  arguments are ever needed, use `posix_spawn` + pipes / `CreateProcess`. Windows run is step 7.
