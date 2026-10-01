@@ -19,6 +19,7 @@ kotlin {
         commonMain.dependencies {
             implementation("com.charleskorn.kaml:kaml:0.104.0")
             implementation("com.squareup.okio:okio:3.18.2")
+            implementation("com.github.ajalt.clikt:clikt:5.1.0")
         }
     }
 }

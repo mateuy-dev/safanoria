@@ -44,7 +44,7 @@ addition. If it doesn't fit, skip it and answer from metadata.
 - [x] YAML: parse `safanoria.yaml` and the frontmatter of every ticket in `tickets/` with kaml
       on linuxX64 and jvm. Check that errors and nodes carry line numbers (needed by `validate`).
       Try `snakeyaml-engine-kmp` only if kaml falls short.
-- [ ] Clikt and Okio: a `safanoria hello <path>` command, with Clikt subcommands and Okio file
+- [x] Clikt and Okio: a `safanoria hello <path>` command, with Clikt subcommands and Okio file
       reads, on linuxX64. For mingwX64 and macosArm64, check the published artifacts.
 - [ ] JSON Schema: validate one frontmatter against a small schema with OptimumCode
       `json-schema-validator` on linuxX64 (frontmatter YAML → JsonElement). Record the binary
@@ -90,3 +90,8 @@ addition. If it doesn't fit, skip it and answer from metadata.
   `MissingFieldException` has no line: `validate` must check the node tree, not rely on decoding.
   Dates stay strings (no YAML 1.1 timestamp conversion). snakeyaml-engine-kmp not needed.
   Okio used here already (file reads), a step early.
+- **2026-10-01** · step 3 · Clikt 5.1.0 and Okio 3.18.2: subcommands, typed options, `--help`,
+  and exit codes (`PrintMessage` with `statusCode`) work on linuxX64. Okio publishes all three
+  native targets; with Clikt and kaml added, the code compiles (klib) for mingwX64 and
+  macosArm64 on Linux too, so dependencies resolve on every target. Linking and running there is
+  step 7. Release linuxX64 binary with kaml + Clikt + Okio: 4.2 MB.

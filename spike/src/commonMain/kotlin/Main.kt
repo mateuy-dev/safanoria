@@ -1,4 +1,13 @@
 import com.charleskorn.kaml.Yaml
+import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.PrintMessage
+import com.github.ajalt.clikt.core.main
+import com.github.ajalt.clikt.core.subcommands
+import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.default
+import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.int
 import com.charleskorn.kaml.YamlConfiguration
 import com.charleskorn.kaml.YamlException
 import com.charleskorn.kaml.YamlList
@@ -75,6 +84,23 @@ fun yamlCheck(root: Path) {
     }
 }
 
-fun main(args: Array<String>) {
-    yamlCheck((args.firstOrNull() ?: ".").toPath())
+class Safanoria : CliktCommand(name = "safanoria") {
+    override fun run() = Unit
 }
+
+class YamlCmd : CliktCommand(name = "yaml") {
+    private val root by argument().default(".")
+    override fun run() = yamlCheck(root.toPath())
+}
+
+class Hello : CliktCommand(name = "hello") {
+    private val path by argument()
+    private val lines by option("--lines", "-n").int().default(3)
+    override fun run() {
+        val p = path.toPath()
+        if (!fileSystem.exists(p)) throw PrintMessage("No such file: $p", statusCode = 2, printError = true)
+        fileSystem.read(p) { generateSequence { readUtf8Line() }.take(lines).forEach { echo(it) } }
+    }
+}
+
+fun main(args: Array<String>) = Safanoria().subcommands(YamlCmd(), Hello()).main(args)
