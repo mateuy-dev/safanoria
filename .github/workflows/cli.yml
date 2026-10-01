@@ -57,6 +57,13 @@ jobs:
           for f in tickets/*.md; do $b dump "$f" > /dev/null; done
           $b dump tickets/v1-tooling.md
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Relative path: Windows Python does not understand Git Bash's /d/a/... paths.
+      - name: Startup benchmark
+        run: python tools/bench.py cli/build/bin/${{ matrix.dir }}/releaseExecutable/${{ matrix.binary }}
+
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
