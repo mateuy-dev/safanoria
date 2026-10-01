@@ -22,7 +22,7 @@ id/date/version patterns). Cross-file rules (references, cycles, parent Plans, `
 
 ## Acceptance Criteria
 
-- [ ] `schema/ticket.schema.json` and `schema/safanoria.schema.json` (JSON Schema 2020-12)
+- [x] `schema/ticket.schema.json` and `schema/safanoria.schema.json` (JSON Schema 2020-12)
 - [ ] Unknown fields are allowed (SPEC §2, §5)
 - [ ] Example valid and invalid files under `schema/examples/`, checked by a test
 - [ ] SPEC.md links to the schemas
@@ -41,7 +41,7 @@ in `validate`.
       versions, `requests` items, `refs`, `resolvedIn` rules above, `childrenMergeInto` enum.
       `additionalProperties` allowed everywhere (unknown fields are preserved, §5).
       `$id` = raw GitHub URL on `main`, so editors and tools can reference it.
-- [ ] `schema/safanoria.schema.json`: `safanoria: 1`, `dir`, `mainBranch`, `worktree` (must
+- [x] `schema/safanoria.schema.json`: `safanoria: 1`, `dir`, `mainBranch`, `worktree` (must
       contain `{id}`), `components` (slug keys, at least one, each with a `version` source
       `{file, property}` or `{file, regex}`, or `external: true`), `channels`, `userRef`,
       `refs` (`{url}` with `{id}`), `learningTargets`.
