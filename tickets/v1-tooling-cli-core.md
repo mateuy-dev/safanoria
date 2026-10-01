@@ -38,4 +38,22 @@ The base every command builds on, as decided in `v1-tooling`'s Plan (Kotlin Mult
 
 ## Plan
 
+## Design
+
+From `v1-tooling-native-spike` (proven on Linux, Windows and macOS):
+
+- Stack: Kotlin 2.4.20, Gradle 9.3, kaml 0.104.0 (YAML), Clikt 5.1.0 (CLI), Okio 3.18.2 (files),
+  OptimumCode `json-schema-validator` 0.5.5 (see `v1-tooling-validate`). Start from the spike
+  code at commit 657ea65 (`spike/`: build file, `expect`/`actual` layout, commands, `bench.py`).
+- Read frontmatter as a kaml node tree: every node has a 1-based line and column (add the
+  frontmatter's offset in the file). Decoding to a `@Serializable` class (`strictMode = false`)
+  is fine for convenience, but its `MissingFieldException` has no line.
+- Processes: `popen` (linuxMain, appleMain) / `_popen` (mingwMain; `popen` does not exist
+  there), `2>&1`, exit code = `(pclose(p) shr 8) and 0xff` on POSIX, `_pclose(p)` on Windows,
+  `ProcessBuilder` on the JVM. Arguments go through `sh`/`cmd.exe`: only pass ids and paths;
+  switch to `posix_spawn`/`CreateProcess` if arbitrary arguments are ever needed.
+- Startup: 5–16 ms for an empty command, ~0.12 ms (Linux) to ~0.2 ms (Windows/macOS) per parsed
+  ticket. Parse lazily (frontmatter first, body only when a command needs it) so large
+  repositories stay under the 100 ms target.
+
 ## Work Log

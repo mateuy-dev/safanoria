@@ -26,4 +26,20 @@ written by hand or by agents stay inside the format.
 
 ## Plan
 
+## Design
+
+From `v1-tooling-native-spike`:
+
+- Per-file rules come from the JSON Schema (`v1-tooling-schema`), checked at runtime with
+  OptimumCode `json-schema-validator` 0.5.5: convert the kaml node tree to `JsonElement`
+  (scalars typed as in YAML 1.2: integers, booleans, else strings), validate, and map each
+  error's JSON pointer back to a kaml node's line (the map's line when the property is missing).
+  Cross-file rules are Kotlin.
+- Linux cost, accepted by the user: the validator's `com.doist.x:normalize` links
+  `-lunistring`. The build needs a `libunistring.so` symlink on the linker path
+  (`linkerOpts("-L…")`), and the binary needs `libunistring.so.5` at runtime (Ubuntu 24.04+).
+  If older distros must be supported, replace the validator with Kotlin rules (the schema stays
+  for editors).
+- Staged-files mode still needs every ticket's frontmatter (references), not every body.
+
 ## Work Log
