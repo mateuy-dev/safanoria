@@ -35,7 +35,7 @@ That includes some conditional rules (§9: `resolvedIn` only on `done`, never on
 (ids that exist, `area` ⊆ `components`, `channel` ∈ `channels`, Plan/children, cycles) stays
 in `validate`.
 
-- [ ] `schema/ticket.schema.json` (draft 2020-12): required fields, enums, id pattern
+- [x] `schema/ticket.schema.json` (draft 2020-12): required fields, enums, id pattern
       `^[a-z](-?[a-z0-9])+$` with length 3–40 (expresses "no `--`, no trailing `-`" without
       lookahead, which not every regex engine supports), `YYYY-MM-DD` dates, `MAJOR.MINOR.PATCH`
       versions, `requests` items, `refs`, `resolvedIn` rules above, `childrenMergeInto` enum.

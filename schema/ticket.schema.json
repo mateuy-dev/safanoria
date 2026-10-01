@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/mateuy-dev/safanoria/main/schema/ticket.schema.json",
+  "title": "Safanoria ticket frontmatter",
+  "description": "Frontmatter of a Safanoria ticket (SPEC.md §5), spec version 1. Covers rules checkable from one file; cross-file rules (references, area against components, channels, Plan children) are checked by `safanoria validate`.",
+  "type": "object",
+  "required": ["id", "type", "title", "status", "priority", "size", "created", "updated"],
+  "properties": {
+    "id": { "$ref": "#/$defs/id", "description": "Equals the filename without .md. Never changes." },
+    "type": { "enum": ["feature", "bug", "maintenance", "research"] },
+    "title": { "type": "string", "minLength": 1, "pattern": "^[^\\n]*$", "description": "One line." },
+    "status": { "enum": ["backlog", "ready", "in-progress", "review", "done", "wontfix"] },
+    "priority": { "enum": ["low", "medium", "high", "urgent"] },
+    "size": { "enum": ["XS", "S", "M", "L", "XL"], "description": "For research, the time box." },
+    "area": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/slug" },
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Components this ticket changes. Required when the project has more than one component."
+    },
+    "assignee": { "type": ["string", "null"] },
+    "created": { "$ref": "#/$defs/date" },
+    "updated": { "$ref": "#/$defs/date" },
+    "parent": { "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+    "childrenMergeInto": { "enum": ["parent", "main"] },
+    "blockedBy": { "$ref": "#/$defs/idList" },
+    "related": { "$ref": "#/$defs/idList" },
+    "refs": {
+      "type": "object",
+      "additionalProperties": { "type": "array", "items": { "type": ["string", "integer"] } },
+      "description": "Ids in external systems declared in safanoria.yaml refs, e.g. sentry: [7Y, 7T]."
+    },
+    "requests": { "type": "array", "items": { "$ref": "#/$defs/request" } },
+    "resolvedIn": {
+      "oneOf": [
+        {
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/slug" },
+          "additionalProperties": { "oneOf": [{ "$ref": "#/$defs/version" }, { "type": "null" }] }
+        },
+        { "type": "null" }
+      ],
+      "description": "Set only by release stamping (§9)."
+    }
+  },
+  "allOf": [
+    {
+      "description": "§9: resolvedIn is null until the ticket is done; wontfix tickets never have it.",
+      "if": { "properties": { "status": { "not": { "const": "done" } } } },
+      "then": { "properties": { "resolvedIn": { "type": "null" } } }
+    },
+    {
+      "description": "§6.2, §9: research tickets never get resolvedIn.",
+      "if": { "properties": { "type": { "const": "research" } } },
+      "then": { "properties": { "resolvedIn": { "type": "null" } } }
+    }
+  ],
+  "$defs": {
+    "slug": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 40,
+      "pattern": "^[a-z](-?[a-z0-9])+$",
+      "description": "§3: lowercase slug, 3-40 chars, no '--', not ending in '-'."
+    },
+    "idList": { "type": "array", "items": { "$ref": "#/$defs/id" }, "uniqueItems": true },
+    "date": { "type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$", "format": "date" },
+    "version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
+    "request": {
+      "type": "object",
+      "required": ["channel", "date"],
+      "properties": {
+        "user": {
+          "type": ["integer", "string", "null"],
+          "description": "Pseudonymous reference in the project's own system (see userRef). Never a name, email or phone."
+        },
+        "who": { "type": "string", "minLength": 1, "description": "Required when user is null. No personal data." },
+        "channel": { "type": "string", "minLength": 1, "description": "One of safanoria.yaml channels." },
+        "date": { "$ref": "#/$defs/date" }
+      },
+      "if": { "properties": { "user": { "type": "null" } } },
+      "then": { "required": ["who"] }
+    }
+  }
+}
