@@ -53,7 +53,7 @@ addition. If it doesn't fit, skip it and answer from metadata.
 - [x] git: run `git branch --list <id>` and `git diff --cached --name-only` from native code.
       Try `popen` (posix, linux/macOS) and see what mingw needs (`_popen`), behind
       `expect`/`actual`. Compare with a process library if one exists for all three targets.
-- [ ] Startup: release binary loading `safanoria.yaml` and all tickets; time 20 runs (`hyperfine`
+- [x] Startup: release binary loading `safanoria.yaml` and all tickets; time 20 runs (`hyperfine`
       if available, else a shell loop). Same for the JVM jar, for comparison.
 - [ ] Cross-build: a GitHub Actions workflow on this branch with a matrix (ubuntu for linuxX64,
       windows for mingwX64, macos-14 for macosArm64) that builds the spike binary and runs it
@@ -113,3 +113,16 @@ addition. If it doesn't fit, skip it and answer from metadata.
   library tried: none needed. Limitation: arguments go through a shell, so quoting must suit
   both `sh` and `cmd.exe`; fine for ids and paths (`validate` only passes those). If arbitrary
   arguments are ever needed, use `posix_spawn` + pipes / `CreateProcess`. Windows run is step 7.
+- **2026-10-01** · step 6 · `spike/bench.py` (no hyperfine here), linuxX64 release vs JVM 21 fat
+  jar, wall time per process, file cache warm. `load` = read config + parse every frontmatter.
+
+  | case | native mean (min) | JVM mean (min) |
+  |---|---|---|
+  | `--help` | 9 ms (6) | |
+  | `load`, 12 tickets | 12 ms (7) | 246 ms (236) |
+  | `load`, 504 tickets | 72 ms (61) | 353 ms (339) |
+  | `schema` (validator init + 12 validations) | 12 ms (6) | |
+
+  Native meets the < 100 ms hook target with room; it scales at ~0.12 ms per ticket, so ~800
+  tickets would reach 100 ms for a full load (`validate` on staged files still needs every
+  frontmatter for references). The JVM's ~240 ms fixed cost rules it out for hooks, as expected.

@@ -19,6 +19,17 @@ kotlin {
         }
     }
 
+    // Spike: a runnable JVM jar to time against the native binary.
+    tasks.register<Jar>("jvmFatJar") {
+        archiveBaseName.set("safanoria-jvm")
+        manifest { attributes["Main-Class"] = "MainKt" }
+        val jvmMain = jvm().compilations.getByName("main")
+        from(jvmMain.output.allOutputs)
+        from({ jvmMain.runtimeDependencyFiles!!.filter { it.name.endsWith(".jar") }.map { zipTree(it) } })
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
+    }
+
     sourceSets {
         commonMain.dependencies {
             implementation("com.charleskorn.kaml:kaml:0.104.0")

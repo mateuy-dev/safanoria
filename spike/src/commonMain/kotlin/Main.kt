@@ -114,4 +114,17 @@ class GitCmd : CliktCommand(name = "vcs") {
     override fun run() = gitCheck(root.toPath(), id)
 }
 
-fun main(args: Array<String>) = Safanoria().subcommands(YamlCmd(), Hello(), SchemaCmd(), GitCmd()).main(args)
+/** What `validate` does before checking: config, ticket list, every frontmatter parsed. */
+class Load : CliktCommand(name = "load") {
+    private val root by argument().default(".")
+    override fun run() {
+        val r = root.toPath()
+        yaml.parseToYamlNode(fileSystem.read(r / "safanoria.yaml") { readUtf8() })
+        val nodes = fileSystem.list(r / "tickets").filter { it.name.endsWith(".md") }.mapNotNull { file ->
+            frontmatter(fileSystem.read(file) { readUtf8() })?.let { yaml.parseToYamlNode(it.first) }
+        }
+        echo("${nodes.size} tickets")
+    }
+}
+
+fun main(args: Array<String>) =Safanoria().subcommands(YamlCmd(), Hello(), SchemaCmd(), GitCmd(), Load()).main(args)
