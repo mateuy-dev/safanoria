@@ -70,7 +70,7 @@ and `dev.mateuy.safanoria.cli` (chosen by the user).
       Tests: no-op round trip, and each edit changes only its lines, over this repository's
       tickets and, when `SAFANORIA_EXTRA_REPOS` points at local checkouts (VacAppKMP), theirs.
       Private tickets are never copied into this repository.
-- [ ] Processes and git in `core` (from the spike: `popen`/`_popen`/`ProcessBuilder`), and a
+- [x] Processes and git in `core` (from the spike: `popen`/`_popen`/`ProcessBuilder`), and a
       `Repository` facade: config, ticket list (lazy), git helpers (`branchExists`,
       `stagedFiles`). Hidden `safanoria dump <file>` prints what the parser sees (debugging and
       a smoke test for the binary).
@@ -154,3 +154,12 @@ From `v1-tooling-native-spike` (proven on Linux, Windows and macOS):
   Refuses block scalars, flow-style maps and non-checklist lines. Added `setList`, not in the
   plan, for `new` (`blockedBy`). 12 tests on JVM and linuxX64, including a no-op round trip and
   three targeted edits on every real ticket, here and VacAppKMP's 47.
+- **2026-10-02** · step 6 · `runCommand` (`popen`/`_popen`/`ProcessBuilder`, from the spike)
+  and `Git` (`branchExists` local or remote, `currentBranch`, `stagedFiles`; arguments with a
+  quote are rejected). `Repository.find` (from `--root` or the working directory) with config,
+  ticket paths by the §1 rule (`<id>.md` with a valid id; README, templates and bad names are
+  not tickets), lazily read tickets and `git`. CLI: global `--root`, a shared `CliContext`,
+  `RepositoryCommand` base for the next commands, and hidden `dump <file>` (fields with lines,
+  sections, checklists and children, learnings, work log; diagnostics on stderr, exit 1).
+  CI runs `dump` on every ticket on each OS. 5 more tests (JVM and linuxX64), real git included.
+  CI for the step 1 fix: green on Linux, Windows and macOS.

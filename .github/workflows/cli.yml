@@ -51,7 +51,11 @@ jobs:
         run: ./gradlew --no-daemon :cli:linkReleaseExecutable${{ matrix.target }}
 
       - name: Run CLI
-        run: cli/build/bin/${{ matrix.dir }}/releaseExecutable/${{ matrix.binary }} version
+        run: |
+          b=cli/build/bin/${{ matrix.dir }}/releaseExecutable/${{ matrix.binary }}
+          $b version
+          for f in tickets/*.md; do $b dump "$f" > /dev/null; done
+          $b dump tickets/v1-tooling.md
 
       - uses: actions/upload-artifact@v4
         if: failure()
