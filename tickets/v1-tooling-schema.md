@@ -2,7 +2,7 @@
 id: v1-tooling-schema
 type: feature
 title: JSON Schema for ticket frontmatter and safanoria.yaml
-status: review
+status: done
 priority: high
 size: S
 created: 2026-10-01
@@ -91,3 +91,4 @@ in `validate`.
   README lists `schema/`, `check.py` and the `yaml-language-server` line; this repository's
   `safanoria.yaml` uses it. Learnings promoted. `schema/check.py`: 69 files, 0 failures.
 - **2026-10-01** · status · review.
+- **2026-10-01** · status · done. Merged into `v1-tooling`.

@@ -64,7 +64,7 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
       `core` runs on the JVM), Kotlin/JS (weaker for file system and processes), Go (no reuse).
 - [x] `v1-tooling-native-spike`: prove the Kotlin/Native libraries and git calls before
       `cli-core` builds on them.
-- [ ] `v1-tooling-schema`: JSON Schema for the frontmatter and `safanoria.yaml`.
+- [x] `v1-tooling-schema`: JSON Schema for the frontmatter and `safanoria.yaml`.
 - [ ] `v1-tooling-cli-core`: KMP `core` + `cli` modules, config loading, ticket parser with line
       numbers, targeted-edit writer.
 - [ ] `v1-tooling-validate`: all SPEC §12 checks.
@@ -116,3 +116,5 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
 - **2026-10-01** · v1-tooling-native-spike · Done and merged: Kotlin/Native works on all three
   targets. JSON Schema validator kept in the CLI (Linux binary needs `libunistring.so.5`).
   Findings in the Design sections of `cli-core`, `validate` and `install`.
+- **2026-10-01** · v1-tooling-schema · Done and merged: both schemas, 56 examples,
+  `schema/check.py` in CI; SPEC §4 now says dates and versions are strings.
