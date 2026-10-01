@@ -50,7 +50,7 @@ and `dev.mateuy.safanoria.cli` (chosen by the user).
       `libunistring.so` symlink the linker needs (spike learning) instead of a manual step.
       CI workflow `cli.yml`: build and run tests on ubuntu-24.04, windows-2022, macos-14
       (JVM tests + that OS's native tests), caching `~/.konan`.
-- [ ] Config: find the repository root (walk up to `safanoria.yaml`), load it with SPEC §2
+- [x] Config: find the repository root (walk up to `safanoria.yaml`), load it with SPEC §2
       defaults into `Config`, keeping the kaml node for lines. `Diagnostic(file, line, column,
       code, message)` is the one error type every command reports.
 - [ ] Frontmatter: split it from the body (with its line offset), parse to a kaml node tree,
@@ -117,3 +117,9 @@ From `v1-tooling-native-spike` (proven on Linux, Windows and macOS):
   message when the library is missing. `safanoria version` runs; native Windows `.exe` 2.7 MB.
   `allTests` passes locally (JVM + linuxX64). `cli.yml` runs `allTests`, links and runs the
   binary on ubuntu-24.04, windows-2022 and macos-14.
+- **2026-10-02** · step 2 · `ConfigLoader.findRoot/load/parse` → `Config` with §2 defaults,
+  typed `Component`/`VersionSource`/`RefSystem`, and the line of every top-level key. Loading is
+  lenient (wrong types fall back to defaults); only YAML syntax errors are reported here, since
+  type and value rules come from the schema in step 3 (one source of rules). `Diagnostic`
+  prints as `file:line:col: error[code]: message`. Internal `YamlBlock` maps kaml's block lines
+  to file lines. 7 tests, JVM and linuxX64.
