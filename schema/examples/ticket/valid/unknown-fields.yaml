@@ -1,0 +1,12 @@
+# Unknown fields are allowed and must be preserved (§5).
+id: map-input
+type: feature
+title: Pick a location on a map
+status: backlog
+priority: medium
+size: S
+created: 2026-10-01
+updated: 2026-10-01
+estimate: 3d
+custom:
+  anything: [1, 2]

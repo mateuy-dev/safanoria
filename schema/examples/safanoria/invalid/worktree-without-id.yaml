@@ -1,0 +1,6 @@
+# expect: pattern /worktree
+safanoria: 1
+components:
+  app:
+    version: { file: gradle.properties, property: appVersionName }
+worktree: ../project-worktree

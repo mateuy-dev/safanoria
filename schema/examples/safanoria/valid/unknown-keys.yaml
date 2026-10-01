@@ -1,0 +1,6 @@
+# Unknown keys are allowed and must be preserved (§2).
+safanoria: 1
+components:
+  app:
+    version: { file: gradle.properties, property: appVersionName }
+boardTitle: Our tickets

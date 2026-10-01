@@ -22,7 +22,7 @@
     "assignee": { "type": ["string", "null"] },
     "created": { "$ref": "#/$defs/date" },
     "updated": { "$ref": "#/$defs/date" },
-    "parent": { "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+    "parent": { "$ref": "#/$defs/idFormat", "type": ["string", "null"] },
     "childrenMergeInto": { "enum": ["parent", "main"] },
     "blockedBy": { "$ref": "#/$defs/idList" },
     "related": { "$ref": "#/$defs/idList" },
@@ -33,15 +33,10 @@
     },
     "requests": { "type": "array", "items": { "$ref": "#/$defs/request" } },
     "resolvedIn": {
-      "oneOf": [
-        {
-          "type": "object",
-          "propertyNames": { "$ref": "#/$defs/slug" },
-          "additionalProperties": { "oneOf": [{ "$ref": "#/$defs/version" }, { "type": "null" }] }
-        },
-        { "type": "null" }
-      ],
-      "description": "Set only by release stamping (§9)."
+      "type": ["object", "null"],
+      "propertyNames": { "$ref": "#/$defs/slug" },
+      "additionalProperties": { "$ref": "#/$defs/versionFormat", "type": ["string", "null"] },
+      "description": "Set only by release stamping (§9). A null value: not released yet."
     }
   },
   "allOf": [
@@ -58,16 +53,19 @@
   ],
   "$defs": {
     "slug": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "id": {
-      "type": "string",
+    "id": { "$ref": "#/$defs/idFormat", "type": "string" },
+    "idFormat": {
       "minLength": 3,
       "maxLength": 40,
       "pattern": "^[a-z](-?[a-z0-9])+$",
-      "description": "§3: lowercase slug, 3-40 chars, no '--', not ending in '-'."
+      "description": "§3: lowercase slug, 3-40 chars, no '--', not ending in '-'. No type, so it can be combined with null."
     },
     "idList": { "type": "array", "items": { "$ref": "#/$defs/id" }, "uniqueItems": true },
     "date": { "type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$", "format": "date" },
-    "version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
+    "versionFormat": {
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "description": "MAJOR.MINOR.PATCH. No type, so it can be combined with null."
+    },
     "request": {
       "type": "object",
       "required": ["channel", "date"],

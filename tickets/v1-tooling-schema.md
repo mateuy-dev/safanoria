@@ -23,8 +23,8 @@ id/date/version patterns). Cross-file rules (references, cycles, parent Plans, `
 ## Acceptance Criteria
 
 - [x] `schema/ticket.schema.json` and `schema/safanoria.schema.json` (JSON Schema 2020-12)
-- [ ] Unknown fields are allowed (SPEC §2, §5)
-- [ ] Example valid and invalid files under `schema/examples/`, checked by a test
+- [x] Unknown fields are allowed (SPEC §2, §5)
+- [x] Example valid and invalid files under `schema/examples/`, checked by a test
 - [ ] SPEC.md links to the schemas
 
 ## Plan
@@ -45,7 +45,7 @@ in `validate`.
       contain `{id}`), `components` (slug keys, at least one, each with a `version` source
       `{file, property}` or `{file, regex}`, or `external: true`), `channels`, `userRef`,
       `refs` (`{url}` with `{id}`), `learningTargets`.
-- [ ] Examples and test: `schema/examples/{ticket,safanoria}/{valid,invalid}/*.yaml`, one
+- [x] Examples and test: `schema/examples/{ticket,safanoria}/{valid,invalid}/*.yaml`, one
       invalid file per rule, each starting with a `# expect: <keyword>` comment. Test runner
       `schema/check.py` (PyYAML + `jsonschema`; installed here, `pip install` in CI): validates the schemas
       against the 2020-12 metaschema, every example, and this repository's own `safanoria.yaml`
@@ -60,9 +60,27 @@ in `validate`.
       `# yaml-language-server: $schema=…` line for `safanoria.yaml` (editor completion).
       Ticket frontmatter can't be wired to a schema in editors (it's inside markdown); note that.
 
+## Learnings
+
+- YAML 1.1 loaders (PyYAML, and js-yaml's default schema) turn `2026-10-01` into a date object,
+  so a schema with `type: string` dates fails on them; kaml keeps it a string. Any tool reading
+  tickets must load dates as strings. Also: an unquoted `4.3` is a number, while `4.3.0` is a
+  string, so a two-part version fails with `type`, not `pattern`.
+- In JSON Schema 2020-12, `$ref` and its sibling keywords apply together: a `$ref` to a definition
+  with `type: string` plus a sibling `type: [string, null]` still rejects null. Reusable format
+  rules (`idFormat`, `versionFormat`) carry no `type`. `oneOf: [x, null]` works but reports one
+  vague `oneOf` error instead of the failing rule, which is worse for mapping errors to lines.
+
 ## Work Log
 
 - **2026-10-01** · status · Started. Branch `v1-tooling-schema` from `v1-tooling`, worktree
   `../safanoria--v1-tooling-schema`.
 - **2026-10-01** · plan · Python test runner for now (see Plan item 3); schema includes the
   single-file conditional rules from §5 and §9.
+- **2026-10-01** · step 3 · 56 examples (11 valid, 45 invalid: one per rule) and
+  `schema/check.py`, which also checks this repository's `safanoria.yaml` and tickets: 69 files,
+  0 failures. Each invalid example declares the keyword and JSON pointer it must fail with, so a
+  file can't pass by failing for another reason. Mutation check: removing the "resolvedIn only
+  on done" rule makes exactly its two examples fail. Workflow `.github/workflows/schema.yml` runs
+  it on push and PR. Deviation from step 1: `parent` and `resolvedIn` use
+  `type: [..., null]` plus format rules instead of `oneOf` with null, for precise errors.

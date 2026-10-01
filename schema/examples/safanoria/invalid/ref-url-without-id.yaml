@@ -1,0 +1,7 @@
+# expect: pattern /refs/sentry/url
+safanoria: 1
+components:
+  app:
+    version: { file: gradle.properties, property: appVersionName }
+refs:
+  sentry: { url: https://example.sentry.io/issues/ }

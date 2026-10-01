@@ -1,0 +1,4 @@
+# expect: anyOf /components/app
+safanoria: 1
+components:
+  app: {}
