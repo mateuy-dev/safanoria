@@ -58,7 +58,7 @@ and `dev.mateuy.safanoria.cli` (chosen by the user).
       `FrontmatterSchema` validates with the embedded ticket schema and maps JSON pointers to
       lines; same for `safanoria.yaml`. Tests run every `schema/examples/` file with its
       `# expect:` line, on JVM and native.
-- [ ] Body: sections (name, heading line, range), checklists with continuation lines and child
+- [x] Body: sections (name, heading line, range), checklists with continuation lines and child
       items (`` `id` `` first), Learnings with their `→` resolution (promoted / new ticket /
       ticket only / pending), Work Log entries (`date`, `ref`, text), User Requests quotes with
       attribution lines. Malformed parts become diagnostics, not exceptions.
@@ -138,3 +138,11 @@ From `v1-tooling-native-spike` (proven on Linux, Windows and macOS):
 - **2026-10-02** · step 1 · Fix: CI failed on Windows and macOS because `allTests` also linked a
   linuxX64 binary there (Kotlin/Native cross-links) and `linkUnistring` found no library. Linux
   link tasks are now disabled on non-Linux hosts; Linux binaries are built on Linux.
+- **2026-10-02** · step 4 · `Ticket` (lazy: frontmatter and body parse separately) and `Body`:
+  sections (headings inside fenced code blocks ignored), checklists with continuation lines and
+  child items, Learnings with `Resolution`, Work Log entries (refs may contain spaces:
+  `step 2`), User Requests quotes. Malformed entries, resolutions and attributions are
+  diagnostics with their line. Section order and required content (§7.1) are left to
+  `validate`. 27 tests on JVM and linuxX64; this repository's tickets parse cleanly, and the
+  parent's Plan children equal the tickets naming it as parent. VacAppKMP: 47 tickets (49 files
+  minus README and template; step 3's "49" was the file count), 0 parse diagnostics.
