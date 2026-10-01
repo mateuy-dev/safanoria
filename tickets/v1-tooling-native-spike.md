@@ -2,7 +2,7 @@
 id: v1-tooling-native-spike
 type: research
 title: Can the Safanoria CLI be built with Kotlin/Native?
-status: review
+status: done
 priority: high
 size: S
 created: 2026-10-01
@@ -194,3 +194,4 @@ addition. If it doesn't fit, skip it and answer from metadata.
   into the skill. `spike/` and the workflow deleted; the code stays at 657ea65. No project tests
   exist yet to run (no CLI); the deliverable is this ticket.
 - **2026-10-01** · status · review.
+- **2026-10-01** · status · done. Merged into `v1-tooling`.

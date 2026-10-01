@@ -62,7 +62,7 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
       Rejected: TypeScript on Node (no code sharing with a Compose GUI; adds Node to Kotlin
       projects), Kotlin/JVM only (~0.5 s startup in hooks; stays available as fallback, since
       `core` runs on the JVM), Kotlin/JS (weaker for file system and processes), Go (no reuse).
-- [ ] `v1-tooling-native-spike`: prove the Kotlin/Native libraries and git calls before
+- [x] `v1-tooling-native-spike`: prove the Kotlin/Native libraries and git calls before
       `cli-core` builds on them.
 - [ ] `v1-tooling-schema`: JSON Schema for the frontmatter and `safanoria.yaml`.
 - [ ] `v1-tooling-cli-core`: KMP `core` + `cli` modules, config loading, ticket parser with line
@@ -113,3 +113,6 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
 - **2026-10-01** · publish · Published at github.com/mateuy-dev/safanoria (public, MIT). History
   rewritten before the first push to remove private project names from the SPEC.md examples and
   to add LICENSE; the first commit is now 4c2f71b (was 8b23b85).
+- **2026-10-01** · v1-tooling-native-spike · Done and merged: Kotlin/Native works on all three
+  targets. JSON Schema validator kept in the CLI (Linux binary needs `libunistring.so.5`).
+  Findings in the Design sections of `cli-core`, `validate` and `install`.
