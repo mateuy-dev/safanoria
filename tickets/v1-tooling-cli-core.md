@@ -62,7 +62,7 @@ and `dev.mateuy.safanoria.cli` (chosen by the user).
       items (`` `id` `` first), Learnings with their `→` resolution (promoted / new ticket /
       ticket only / pending), Work Log entries (`date`, `ref`, text), User Requests quotes with
       attribution lines. Malformed parts become diagnostics, not exceptions.
-- [ ] Targeted editor: `setField` (replace the line, or insert at its §5 position), `setMapEntry`
+- [x] Targeted editor: `setField` (replace the line, or insert at its §5 position), `setMapEntry`
       (e.g. `resolvedIn.app`, turning `resolvedIn: null` into a block), `setChecked(item)`,
       `appendWorkLog(entry)`. It edits the original text, so unedited files are the same bytes;
       it keeps the file's line endings and final newline. Refuses values it can't edit safely
@@ -146,3 +146,11 @@ From `v1-tooling-native-spike` (proven on Linux, Windows and macOS):
   `validate`. 27 tests on JVM and linuxX64; this repository's tickets parse cleanly, and the
   parent's Plan children equal the tickets naming it as parent. VacAppKMP: 47 tickets (49 files
   minus README and template; step 3's "49" was the file count), 0 parse diagnostics.
+- **2026-10-02** · step 5 · `TicketEditor`: `setField`, `setList` (flow style), `setMapEntry`
+  (absent / `null` / `{}` → block; replace or append an entry), `setChecked(line)`,
+  `appendWorkLog` (multi-line text as indented continuation). Edits the original lines only:
+  keeps CRLF, a missing final newline, and a plain value's trailing comment with its spacing.
+  Values are written plain when unambiguous, else double-quoted (`"Map: pick"`, `"true"`).
+  Refuses block scalars, flow-style maps and non-checklist lines. Added `setList`, not in the
+  plan, for `new` (`blockedBy`). 12 tests on JVM and linuxX64, including a no-op round trip and
+  three targeted edits on every real ticket, here and VacAppKMP's 47.
