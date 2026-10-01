@@ -31,13 +31,19 @@ subprojects {
                 Files.createSymbolicLink(link, lib.toPath())
             }
         }
+        val linuxHost = System.getProperty("os.name").startsWith("Linux")
         extensions.configure<KotlinMultiplatformExtension> {
             targets.withType<KotlinNativeTarget>()
                 .matching { it.konanTarget == KonanTarget.LINUX_X64 }
                 .configureEach {
                     binaries.all {
-                        linkerOpts("-L${libDir.get().asFile}")
-                        linkTaskProvider.configure { dependsOn(linkUnistring) }
+                        if (linuxHost) {
+                            linkerOpts("-L${libDir.get().asFile}")
+                            linkTaskProvider.configure { dependsOn(linkUnistring) }
+                        } else {
+                            // Kotlin/Native could cross-link, but not without the system library.
+                            linkTaskProvider.configure { enabled = false }
+                        }
                     }
                 }
         }

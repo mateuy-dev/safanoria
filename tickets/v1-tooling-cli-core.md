@@ -135,3 +135,6 @@ From `v1-tooling-native-spike` (proven on Linux, Windows and macOS):
   map; the test accepts the expected keyword, or any branch error, at or under the pointer.
   VacAppKMP's config and 49 tickets pass (`SAFANORIA_EXTRA_REPOS`). Fixed on the way: test
   environment variables are now Gradle task inputs; before, changing them reused a cached result.
+- **2026-10-02** · step 1 · Fix: CI failed on Windows and macOS because `allTests` also linked a
+  linuxX64 binary there (Kotlin/Native cross-links) and `linkUnistring` found no library. Linux
+  link tasks are now disabled on non-Linux hosts; Linux binaries are built on Linux.
