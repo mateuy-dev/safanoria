@@ -16,17 +16,30 @@ private val yaml = Yaml.default
  * A parsed YAML block and where it starts in its file. kaml lines are 1-based within the block;
  * [lineOf] turns them into file lines.
  */
-internal class YamlBlock(val file: Path?, val root: YamlNode, private val firstLine: Int) {
+internal class YamlBlock(val file: Path?, val root: YamlNode, private val firstLine: Int, text: String) {
+    private val lines = text.split('\n')
+
     fun lineOf(node: YamlNode): Int = node.location.line + firstLine - 1
     fun columnOf(node: YamlNode): Int = node.location.column
 
     fun diagnostic(node: YamlNode, code: String, message: String): Diagnostic =
         Diagnostic(file, lineOf(node), columnOf(node), code, message)
+
+    /**
+     * Whether a scalar is written quoted or as a block scalar, i.e. is a string whatever it
+     * looks like. kaml doesn't keep the style, so look at the source where the node starts.
+     */
+    fun isExplicitString(node: YamlScalar): Boolean =
+        lines.getOrNull(node.location.line - 1)?.getOrNull(node.location.column - 1) in EXPLICIT_STRING_STARTS
+
+    private companion object {
+        val EXPLICIT_STRING_STARTS = setOf('"', '\'', '|', '>')
+    }
 }
 
 /** Parses [text], whose first line is line [firstLine] of [file]. */
 internal fun parseYamlBlock(file: Path?, text: String, firstLine: Int): Pair<YamlBlock?, Diagnostic?> = try {
-    YamlBlock(file, yaml.parseToYamlNode(text), firstLine) to null
+    YamlBlock(file, yaml.parseToYamlNode(text), firstLine, text) to null
 } catch (e: YamlException) {
     null to Diagnostic(file, e.line + firstLine - 1, e.column, "yaml-syntax", e.message ?: "invalid YAML")
 }

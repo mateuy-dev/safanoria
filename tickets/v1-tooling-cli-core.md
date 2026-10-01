@@ -53,7 +53,7 @@ and `dev.mateuy.safanoria.cli` (chosen by the user).
 - [x] Config: find the repository root (walk up to `safanoria.yaml`), load it with SPEC §2
       defaults into `Config`, keeping the kaml node for lines. `Diagnostic(file, line, column,
       code, message)` is the one error type every command reports.
-- [ ] Frontmatter: split it from the body (with its line offset), parse to a kaml node tree,
+- [x] Frontmatter: split it from the body (with its line offset), parse to a kaml node tree,
       typed accessors (`id`, `status`, `parent`, `blockedBy`…) that keep each value's line.
       `FrontmatterSchema` validates with the embedded ticket schema and maps JSON pointers to
       lines; same for `safanoria.yaml`. Tests run every `schema/examples/` file with its
@@ -123,3 +123,15 @@ From `v1-tooling-native-spike` (proven on Linux, Windows and macOS):
   type and value rules come from the schema in step 3 (one source of rules). `Diagnostic`
   prints as `file:line:col: error[code]: message`. Internal `YamlBlock` maps kaml's block lines
   to file lines. 7 tests, JVM and linuxX64.
+- **2026-10-02** · step 3 · `Frontmatter.parse` (bounds, CRLF-tolerant) → typed fields as
+  `Located<T>` with file lines, enums with their spec spelling, `requests`, `resolvedIn`, all
+  keys. `SchemaValidator` (internal) checks frontmatter and `safanoria.yaml` (now part of
+  `ConfigLoader.parse`) against the embedded schemas and maps JSON pointers to file lines (a
+  nested map or list points at its key's line). YAML→JSON typing follows YAML 1.2 but treats
+  quoted and block scalars as strings, found from the source since kaml drops the style
+  (`title: "2026"` is valid, `title: 2026` is a type error). Examples test: all 56 pass on JVM
+  and linuxX64. Deviation: OptimumCode reports `anyOf`/`oneOf` as their failing branches and
+  `propertyNames` at the offending key, where Python's jsonschema reports the combinator or the
+  map; the test accepts the expected keyword, or any branch error, at or under the pointer.
+  VacAppKMP's config and 49 tickets pass (`SAFANORIA_EXTRA_REPOS`). Fixed on the way: test
+  environment variables are now Gradle task inputs; before, changing them reused a cached result.

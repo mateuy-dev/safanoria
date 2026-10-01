@@ -28,7 +28,7 @@ public data class RefSystem(val name: String, val url: String)
 
 /**
  * `safanoria.yaml` with SPEC §2 defaults applied. Values of the wrong type fall back to their
- * default here; the schema check (step 3 of cli-core) reports them.
+ * default here; [ConfigResult.diagnostics] reports them (schema/safanoria.schema.json).
  */
 public data class Config(
     val path: Path,
@@ -103,6 +103,7 @@ public object ConfigLoader {
             learningTargets = root.get("learningTargets").textList() ?: emptyList(),
             keyLines = root.mapEntries().associate { (key, _) -> key.content to block.lineOf(key) },
         )
-        return ConfigResult(config, emptyList())
+        val schemaDiagnostics = SchemaValidator.configErrors(block).map { SchemaValidator.toDiagnostic(block, it) }
+        return ConfigResult(config, schemaDiagnostics)
     }
 }
