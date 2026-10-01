@@ -6,7 +6,7 @@ status: in-progress
 priority: high
 size: M
 created: 2026-10-01
-updated: 2026-10-01
+updated: 2026-10-02
 parent: v1-tooling
 blockedBy: [v1-tooling-native-spike]
 ---
@@ -43,7 +43,7 @@ Layout: Gradle build at the repository root with modules `core/` and `cli/` (lat
 and `dev.mateuy.safanoria.cli` (chosen by the user).
 `core` reads lazily: listing tickets reads only frontmatter; the body is parsed when asked.
 
-- [ ] Build skeleton: root Gradle project, `core` (jvm, linuxX64, mingwX64, macosArm64) and
+- [x] Build skeleton: root Gradle project, `core` (jvm, linuxX64, mingwX64, macosArm64) and
       `cli` (native executables + JVM for tests); `safanoria version` runs. Two build tasks that
       keep sources single: generate `Schemas.kt` (string constants) from `schema/*.json`, so
       the CLI embeds the same schemas the repo publishes; and, on Linux, create the
@@ -109,3 +109,11 @@ From `v1-tooling-native-spike` (proven on Linux, Windows and macOS):
   examples test is this ticket's); cross-file rules stay in `validate`. VacAppKMP round-trip
   tests read local checkouts through `SAFANORIA_EXTRA_REPOS`; private tickets never committed.
 - **2026-10-01** · plan · Approved, with packages under `dev.mateuy.safanoria` (user's choice).
+- **2026-10-02** · step 1 · Root Gradle build (wrapper 9.3.0, Kotlin 2.4.20, versions catalog),
+  `core` (explicit API) and `cli`. `generateEmbedded` writes `Embedded.kt` (version + both
+  schemas as multi-dollar raw strings, so `$schema` stays literal) into `core`'s generated
+  sources. `linkUnistring` (root build, all KMP subprojects) symlinks the system
+  `libunistring.so.5` for every linuxX64 link, including test binaries; it fails with a clear
+  message when the library is missing. `safanoria version` runs; native Windows `.exe` 2.7 MB.
+  `allTests` passes locally (JVM + linuxX64). `cli.yml` runs `allTests`, links and runs the
+  binary on ubuntu-24.04, windows-2022 and macos-14.

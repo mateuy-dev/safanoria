@@ -1,0 +1,60 @@
+name: cli
+
+on:
+  push:
+    paths-ignore: [tickets/**, "*.md"]
+  pull_request:
+    paths-ignore: [tickets/**, "*.md"]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: LinuxX64
+            binary: safanoria.kexe
+            dir: linuxX64
+          - os: windows-2022
+            target: MingwX64
+            binary: safanoria.exe
+            dir: mingwX64
+          - os: macos-14
+            target: MacosArm64
+            binary: safanoria.kexe
+            dir: macosArm64
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.konan
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties', '**/*.gradle.kts') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      # allTests: JVM tests plus the native tests this OS can run.
+      - name: Test
+        run: ./gradlew --no-daemon allTests
+
+      - name: Build CLI
+        run: ./gradlew --no-daemon :cli:linkReleaseExecutable${{ matrix.target }}
+
+      - name: Run CLI
+        run: cli/build/bin/${{ matrix.dir }}/releaseExecutable/${{ matrix.binary }} version
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-reports-${{ matrix.dir }}
+          path: "*/build/reports/tests/"
