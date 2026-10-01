@@ -1,3 +1,80 @@
+import com.charleskorn.kaml.Yaml
+import com.charleskorn.kaml.YamlConfiguration
+import com.charleskorn.kaml.YamlException
+import com.charleskorn.kaml.YamlList
+import com.charleskorn.kaml.YamlMap
+import com.charleskorn.kaml.YamlNode
+import com.charleskorn.kaml.YamlScalar
+import kotlinx.serialization.Serializable
+import okio.FileSystem
+import okio.Path
+import okio.Path.Companion.toPath
+
+expect val fileSystem: FileSystem
+
+@Serializable
+data class Frontmatter(
+    val id: String,
+    val type: String,
+    val title: String,
+    val status: String,
+    val priority: String,
+    val size: String,
+    val created: String,
+    val updated: String,
+    val parent: String? = null,
+    val blockedBy: List<String> = emptyList(),
+    val related: List<String> = emptyList(),
+)
+
+private val yaml = Yaml(configuration = YamlConfiguration(strictMode = false))
+
+/** Frontmatter text and the file line its first YAML line is on. */
+fun frontmatter(text: String): Pair<String, Int>? {
+    val lines = text.lines()
+    if (lines.firstOrNull() != "---") return null
+    val end = lines.drop(1).indexOf("---")
+    if (end < 0) return null
+    return lines.subList(1, end + 1).joinToString("\n") to 2
+}
+
+fun describe(node: YamlNode, lineOffset: Int): String = when (node) {
+    is YamlMap -> node.entries.entries.joinToString(", ") { (k, v) ->
+        "${k.content}@${k.location.line + lineOffset - 1}=${describe(v, lineOffset)}"
+    }
+    is YamlList -> node.items.joinToString(",", "[", "]") { describe(it, lineOffset) }
+    is YamlScalar -> node.content
+    else -> node.toString()
+}
+
+fun yamlCheck(root: Path) {
+    val config = fileSystem.read(root / "safanoria.yaml") { readUtf8() }
+    val configNode = yaml.parseToYamlNode(config)
+    println("safanoria.yaml: ${describe(configNode, 1)}")
+
+    val tickets = fileSystem.list(root / "tickets").filter { it.name.endsWith(".md") && !it.name.startsWith("_") }
+    for (file in tickets) {
+        val (fm, offset) = frontmatter(fileSystem.read(file) { readUtf8() }) ?: continue
+        val node = yaml.parseToYamlNode(fm)
+        val decoded = yaml.decodeFromString(Frontmatter.serializer(), fm)
+        println("${file.name}: ${decoded.id} ${decoded.status} parent=${decoded.parent} blockedBy=${decoded.blockedBy}")
+        println("  lines: ${describe(node, offset)}")
+    }
+
+    val broken = "id: x\ntype: [unclosed\nstatus: done\n"
+    try {
+        yaml.parseToYamlNode(broken)
+    } catch (e: YamlException) {
+        // kaml lines are 1-based; add the frontmatter offset - 1 for file lines.
+        println("syntax error at line ${e.line} col ${e.column}: ${e.message}")
+    }
+    try {
+        yaml.decodeFromString(Frontmatter.serializer(), "id: x\ntype: bug\n")
+    } catch (e: Exception) {
+        println("decode error: ${e::class.simpleName}: ${e.message}")
+    }
+}
+
 fun main(args: Array<String>) {
-    println("hello")
+    yamlCheck((args.firstOrNull() ?: ".").toPath())
 }

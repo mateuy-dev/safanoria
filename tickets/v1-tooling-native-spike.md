@@ -41,7 +41,7 @@ addition. If it doesn't fit, skip it and answer from metadata.
 
 - [x] Gradle skeleton in `spike/` (wrapper from cache, Kotlin 2.4.x, the four targets). A
       linuxX64 `main` that prints "hello".
-- [ ] YAML: parse `safanoria.yaml` and the frontmatter of every ticket in `tickets/` with kaml
+- [x] YAML: parse `safanoria.yaml` and the frontmatter of every ticket in `tickets/` with kaml
       on linuxX64 and jvm. Check that errors and nodes carry line numbers (needed by `validate`).
       Try `snakeyaml-engine-kmp` only if kaml falls short.
 - [ ] Clikt and Okio: a `safanoria hello <path>` command, with Clikt subcommands and Okio file
@@ -83,3 +83,10 @@ addition. If it doesn't fit, skip it and answer from metadata.
 - **2026-10-01** · step 1 · Kotlin 2.4.20, Gradle 9.3.0. Release linuxX64 "hello" binary: 479 KB.
   Declaring `mingwX64` makes the first build download the mingw toolchain (and LLVM 21), even when
   only linuxX64 is linked. Disk is no longer a constraint (21 GB free).
+- **2026-10-01** · step 2 · kaml 0.104.0 (published for linuxX64, mingwX64, macosArm64) reads
+  `safanoria.yaml` and all 12 tickets' frontmatter on linuxX64 and jvm with identical output.
+  Every node has a 1-based line and column; syntax errors carry line and column too. Decoding to
+  a `@Serializable` class works with `strictMode = false` (unknown fields ignored), but
+  `MissingFieldException` has no line: `validate` must check the node tree, not rely on decoding.
+  Dates stay strings (no YAML 1.1 timestamp conversion). snakeyaml-engine-kmp not needed.
+  Okio used here already (file reads), a step early.
