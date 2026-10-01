@@ -47,7 +47,7 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
 `release` can be built in any order.
 
 - [x] `git init` this repository; first commit with SPEC, skill, template, this ticket.
-      Done in 8b23b85, before this ticket started.
+      Done in 4c2f71b, before this ticket started.
 - [x] Skill: on Start, switch the agent session into the new worktree (see Learnings), and say
       that `.claude/settings.local.json` must be recreated there. First, because every child
       below starts a worktree.
@@ -110,3 +110,6 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
 - **2026-10-01** · step 2 · Skill Start step now says to switch the session into the worktree,
   to carry over needed uncommitted changes (happened at this ticket's start), and to recreate
   `settings.local.json`. Both Learnings promoted there.
+- **2026-10-01** · publish · Published at github.com/mateuy-dev/safanoria (public, MIT). History
+  rewritten before the first push to remove private project names from the SPEC.md examples and
+  to add LICENSE; the first commit is now 4c2f71b (was 8b23b85).
