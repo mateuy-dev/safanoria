@@ -44,7 +44,7 @@ Mostly desk research, plus two small spikes. Throwaway code goes in `spike/` and
 the last commit, so only the ticket merges. Nothing is pushed or posted to GitHub without the
 user's OK (an API spike would write to a repository).
 
-- [ ] Routes: list the candidate routes and compare them in a table (criteria from the first
+- [x] Routes: list the candidate routes and compare them in a table (criteria from the first
       question). Drop the ones that clearly lose and say why.
 - [ ] Commit path: check what the GitHub REST API needs to commit a ticket plus an image in one
       commit (Git Data API: blobs, tree, commit, ref update) and the auth (fine-grained token vs
@@ -68,3 +68,25 @@ user's OK (an API spike would write to a repository).
 
 - **2026-10-02** · status · started
 - **2026-10-02** · plan · Questions and plan written. Routes compared on paper first; spikes only for `core` on Android and, with the user's OK, the GitHub commit path.
+- **2026-10-02** · step 1 · Routes compared (desk research, sources: GitHub changelog/blog on
+  GitHub Mobile, code.claude.com/docs/en/mobile). Taps counted from the screenshot or the idea
+  to "sent".
+
+  | Route | Taps | Offline | Screenshot | Auth | Commit path | Validation | Build / maintain |
+  |---|---|---|---|---|---|---|---|
+  | A. Native app (KMP, reuses `core`) | 3 (share → form → send) | queue, send later | resize and crop on device | token or OAuth on the phone | GitHub API from the phone | full, minus the branch check | high: app, store, updates |
+  | B. Share-target-only app | 2–3 | queue | resize on device, no crop | token on the phone | GitHub API, or opens an issue (D) | none on device | medium |
+  | C. Web form / PWA (Web Share Target) | 3 | no | browser resize | token in the browser or a backend | GitHub API or backend | in a backend only | medium, plus hosting |
+  | D. GitHub issue (GitHub Mobile, issue form) → Action runs `safanoria new` | ~6 | no (drafts only) | issue attachment, the Action downloads it | the user's existing GitHub login | Action commits on `mainBranch` | Action runs validate, comments back | low: one workflow |
+  | E. GitHub Mobile file editor | many | no | none: text files only | existing login | direct commit | none, frontmatter by hand | none |
+  | F. Claude app → Claude Code cloud session (or Remote Control) running the skill | ~4 + a confirmation | no | photo attached to the message | claude.ai and GitHub connected | agent commits; cloud sessions push a session branch, not `mainBranch` | full, the CLI runs in the session | none: setup only |
+  | G. Note or email inbox, processed later by an agent | 2 | yes | attachment in the note/email | per inbox | agent commits in a batch | full, at processing time | low, but one more moving part |
+
+  Dropped: E (no images, ids and frontmatter by hand, nothing checked). C (needs hosting and
+  holds a write token, and does what B does with more taps). G loses to D: the same deferred
+  processing without structure or a place to report errors. B is A without the UI that would make
+  it worth installing; keep it as A's first version if A is chosen. Leading: **D** (cheapest
+  real route, works for anyone with GitHub access) and **F** (no build at all, but needs a
+  Claude plan and lands on a session branch). **A** only if a phone app is wanted anyway
+  (e.g. alongside `gui-viewer`). To check: images attached on Android are reported dropped in
+  Remote Control sessions (public issue reports); unverified for cloud sessions.
