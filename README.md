@@ -30,7 +30,7 @@ Ticket frontmatter is inside markdown, which editors don't check against a schem
 4. Add to the project's `CLAUDE.md`:
    > Work is tracked as Safanoria tickets in `tickets/<id>.md`. The ticket id is also the branch
    > name. When creating, planning or working on a ticket, use the `safanoria` skill.
-5. Make the release process stamp `resolvedIn` (SPEC §9).
+5. Make the release process run `safanoria release <component>` (see "Releasing"; SPEC §9).
 
 ## Creating tickets
 
@@ -77,6 +77,26 @@ committed one only changes when tickets do. This repository's board, shortened:
 - [gui-viewer](tickets/gui-viewer.md) Compose Desktop app to view tickets
 ```
 
+## Releasing
+
+```sh
+safanoria release app --dry-run       # which tickets would get resolvedIn.app, and the version
+safanoria release app                 # version from the component's source (e.g. gradle.properties)
+safanoria release app 4.3.0           # or given
+safanoria release rails 2.8.0 --ticket fix-login --ticket export-csv   # external: name what shipped
+```
+
+`release` stamps `resolvedIn.<component>` on every `done` ticket with that component in its
+`area` and no version for it yet, adds a `release · <component> <version>` Work Log entry, and
+sets `updated`. Each component is stamped on its own, so an app and a server in the same
+repository release at their own pace; a ticket for both gets both versions. Run it on
+`mainBranch` (else `--any-branch`) as part of the release commit: it doesn't commit. It
+refuses a version lower than one already stamped for the component.
+
+External components (released from another repository) are stamped here with the version
+given, by hand or from that repository's release job. Use `--ticket` when `done` here doesn't
+guarantee the ticket was in that release.
+
 ## Validating tickets
 
 ```sh
@@ -116,7 +136,7 @@ exec safanoria validate --staged
 
 ## Planned
 
-- CLI commands: `release <component> <version>`, `init`.
+- CLI commands: `init`, `update`.
 - `apps/`: viewers and editors.
 
 ## Development

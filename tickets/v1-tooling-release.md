@@ -2,7 +2,7 @@
 id: v1-tooling-release
 type: feature
 title: "`safanoria release`: stamp resolvedIn, also for external components"
-status: in-progress
+status: review
 priority: high
 size: M
 created: 2026-10-01
@@ -30,7 +30,7 @@ command with the version given).
 - [x] Refuses to run off `mainBranch` (overridable), and on a malformed version
 - [x] Reads the version from `{ file, property }` and `{ file, regex }` sources
 - [x] `--dry-run` lists what would be stamped
-- [ ] The external-component flow is decided and written into SPEC §9
+- [x] The external-component flow is decided and written into SPEC §9
 
 ## Plan
 
@@ -52,7 +52,7 @@ SHOULD be part of the release commit, which the project's release process makes.
       [--any-branch]`: refuses off `mainBranch` unless `--any-branch`; prints each stamped
       ticket; nothing to stamp is not an error (exit 0); refusals exit 1. Validates the written
       files. Tests on a copy of the `valid` fixture, JVM and native.
-- [ ] External components, SPEC §9: stamping always runs in the ticket repository, on its
+- [x] External components, SPEC §9: stamping always runs in the ticket repository, on its
       `mainBranch`, with the version given (there is no source to read). Either a person runs it
       after the other repository releases, or that repository's release job checks out the
       ticket repository, runs `safanoria release <c> <v>`, and commits (or opens a PR).
@@ -60,6 +60,26 @@ SHOULD be part of the release commit, which the project's release process makes.
       repository can't see, so tickets done after that release was cut would be stamped too:
       `--ticket <id>` restricts stamping to the given tickets for that case. README usage; skill:
       release stamping is `safanoria release`.
+
+## Design
+
+External components (SPEC §9): stamped in the ticket repository with the version given;
+`--ticket` when `done` can't be trusted to mean "in this release". Rejected:
+
+- **Stamping in the other repository**: the tickets aren't there; it would need its own copy or
+  a remote write, and two places could stamp the same ticket.
+- **A `released` status or a release-branch marker for external tickets**: a new status changes
+  §6.1 for one case, and the ticket repository still couldn't see the other repository's
+  branches.
+- **Cut-off by date** (`--done-before`): `updated` changes for other reasons, and dates don't
+  match release cuts across time zones and CI queues; naming the tickets is exact.
+
+## Learnings
+
+- Kotlin's `MatchResult.groups[i]` throws on the JVM for a group the regex doesn't have, but
+  returns null on Native: check `groups.size` before indexing, or a common test passes on one
+  target and fails on the other.
+  → promoted: core/src/commonMain/…/Versions.kt (comment at the check)
 
 ## Work Log
 
@@ -92,3 +112,8 @@ SHOULD be part of the release commit, which the project's release process makes.
   version's origin (`from gradle.properties`) so a wrong source is visible. 3 tests on a copy
   of the `valid` fixture, JVM and linuxX64; the off-main test skips itself on `main`, where CI
   also runs.
+- **2026-10-02** · step 4 · SPEC §9: external-component flow and "versions only go up" (MUST
+  refuse a lower version); §2 says what `external` means. README "Releasing" (setup step 5
+  points to it; `release` out of Planned, `update` in). Skill: `resolvedIn` is set by
+  `safanoria release` from the release process. Rejected alternatives in Design.
+- **2026-10-02** · status · review. `allTests` green; this repository validates clean.
