@@ -55,7 +55,7 @@ user's OK (an API spike would write to a repository).
       `~/Android/Sdk`) to a copy of `core`'s build, see which dependencies resolve (kaml,
       json-schema-validator, okio) and which sources fail to compile (`Pipe`, `Git`). Record
       what an app could reuse.
-- [ ] Ids and screenshots: decide where id suggestion, uniqueness check, image resize and
+- [x] Ids and screenshots: decide where id suggestion, uniqueness check, image resize and
       redaction happen for the leading routes.
 - [ ] Answer every question; write Learnings with a target for each (SPEC.md, skill, README,
       or a new ticket in `related`). Delete `spike/`.
@@ -135,3 +135,23 @@ user's OK (an API spike would write to a repository).
   `FakeFileSystem`-like tree) and commit the result through the Git Data API. Needs git, so not
   usable on a phone: `Git`, `Branches`, `BranchView`, `GitTreeFileSystem`, `Resume`, `Hooks`
   (Android has `sh` and `ProcessBuilder`, but no `git`).
+- **2026-10-02** · step 4 · Ids and screenshots, per leading route.
+  - Ids. D: the Action has a full clone, so `safanoria new` suggests the id from the issue title
+    and checks it as on a laptop; an optional "id" form field overrides it, and a refusal is
+    commented on the issue (the user fixes the field and relabels). No provisional id needed.
+    F: the skill as it is (dry run, confirm the id in the chat). A: the phone can list ticket
+    files and branch names through the API, but not every file that ever existed on any branch
+    (§3: never reused) without walking history; it would need a provisional id finalised by
+    something with a clone, which is D's Action again. So the clone-based check stays off the
+    phone in every route.
+  - Size. D: the Action shrinks any image over 1 MB (ImageMagick `-resize` / quality, installed
+    in the job if the runner lacks it) and names it lowercase without spaces. F: the agent does
+    the same in the session. A: the app would resize before upload.
+  - Redaction (§10). Can't be automated reliably, so it happens on the phone before the image
+    leaves it: Android's screenshot editor crops and draws over. In D this is also the only
+    safe place: the issue attachment is visible to everyone who can read the repository from
+    the moment the issue is posted, and the `user-attachments` asset may stay reachable after
+    the issue is closed or edited. The issue form says so next to the upload field.
+  - `requests`: the person filing from the phone is the maintainer, not a user request. When
+    the capture is a user's report, optional form fields (user id, channel, verbatim quote) map
+    to `requests` and User Requests; the user id is the project's id (§10), never a name.
