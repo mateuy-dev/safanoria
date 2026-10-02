@@ -40,7 +40,7 @@ while the parent's Plan item is unchecked is reported on the parent).
       `channel` ∈ `channels`; `area` and `resolvedIn` keys ∈ components, `resolvedIn` keys ∈
       `area`, `area` required with more than one component. Schema errors whose meaning a rule
       states better (e.g. `resolvedIn` on a non-`done` ticket) get the rule's message.
-- [ ] Cross-ticket rules: duplicate id; unknown ids in `parent`, `blockedBy`, `related`, Plan
+- [x] Cross-ticket rules: duplicate id; unknown ids in `parent`, `blockedBy`, `related`, Plan
       child items and Learnings `new ticket`; `blockedBy` cycles; parents with a parent;
       `research` with children; each child exactly once in its parent's Plan, and no Plan item
       naming a ticket that isn't a child; child item checked iff child `done`/`wontfix`; a child's
@@ -101,3 +101,11 @@ From `v1-tooling-cli-core` (what `core` already provides):
   Objective and Work Log (§6.1: "the Work Log says why"), not Acceptance Criteria or Plan.
   `Body.hasContent` ignores lines that are only an HTML comment. This repository: 0 problems;
   VacAppKMP: 0 problems.
+- **2026-10-02** · step 2 · `CrossTicketRules`: `id-duplicate`, `ref-unknown` (parent,
+  blockedBy, related, Plan child items, Learning new ticket), `blocked-by-cycle` (each cycle once,
+  on every member, at its blockedBy entry), `parent-nested`, `research-parent`,
+  `parent-plan-missing-child`, `parent-plan-duplicate-child`, `plan-item-not-child`,
+  `child-check-mismatch`, `child-resolved-later` (per component, numeric semver). Each finding
+  names the other tickets causing it, for only-given-files mode. Identity is the filename id;
+  references to a ticket whose frontmatter id differs are reported once, as `id-mismatch`.
+  This repository and VacAppKMP: 0 problems.
