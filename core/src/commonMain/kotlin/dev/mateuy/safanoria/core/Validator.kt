@@ -8,8 +8,12 @@ import okio.Path
  */
 internal data class Finding(val diagnostic: Diagnostic, val causes: Set<Path> = emptySet())
 
-/** Checks a repository against SPEC §12. Codes are stable: tools and docs refer to them. */
-public class Validator(private val repository: Repository) {
+/**
+ * Checks a repository's checkout against SPEC §12. Codes are stable: tools and docs refer to
+ * them. With [branches], ids on other branches count as known, and tickets created separately
+ * on another branch are reported (SPEC §14.3).
+ */
+public class Validator(private val repository: Repository, private val branches: Branches? = null) {
     private val config get() = repository.config
 
     /**
@@ -19,14 +23,31 @@ public class Validator(private val repository: Repository) {
     public fun validate(only: Collection<Path>? = null): List<Diagnostic> {
         val findings = repository.configResult.diagnostics.map { Finding(it) } +
             repository.tickets.flatMap { ticketFindings(it) } +
-            CrossTicketRules(repository.tickets).findings() +
-            AttachmentRules(repository).findings()
+            CrossTicketRules(repository.tickets, branches?.ids.orEmpty()).findings() +
+            AttachmentRules(repository).findings() +
+            createdTwice()
         val selected = only?.map { canonical(it) }?.toSet()
         return findings
             .filter { f -> selected == null || f.diagnostic.file?.let(::canonical) in selected || f.causes.any { canonical(it) in selected } }
             .map { it.diagnostic }
             .distinct()
             .sortedWith(compareBy({ it.file?.toString() }, { it.line ?: 0 }, { it.column ?: 0 }, { it.code }))
+    }
+
+    /** Tickets in this checkout whose id was also created separately on another branch (§14.3). */
+    private fun createdTwice(): List<Finding> {
+        val b = branches ?: return emptyList()
+        val here = b.branches.first()
+        return b.createdTwice().mapNotNull { twice ->
+            val other = when (here) {
+                twice.branch -> twice.otherBranch
+                twice.otherBranch -> twice.branch
+                else -> return@mapNotNull null
+            }
+            val ticket = repository.ticket(twice.id) ?: return@mapNotNull null
+            Finding(Diagnostic(ticket.path, ticket.frontmatter?.id?.line ?: 1, null, "id-created-twice",
+                "branch '$other' also created a ticket '${twice.id}' separately; they will conflict at merge, so rename one (§14.3)", Severity.WARNING))
+        }
     }
 
     private fun canonical(path: Path): Path =

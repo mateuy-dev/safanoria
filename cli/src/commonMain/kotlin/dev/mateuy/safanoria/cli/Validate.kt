@@ -9,6 +9,7 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.choice
+import dev.mateuy.safanoria.core.Branches
 import dev.mateuy.safanoria.core.CONFIG_FILE
 import dev.mateuy.safanoria.core.Diagnostic
 import dev.mateuy.safanoria.core.Severity
@@ -33,6 +34,7 @@ class Validate : RepositoryCommand(name = "validate") {
     private val files by argument(help = "Ticket files or safanoria.yaml (default: everything)").multiple()
     private val staged by option("--staged", help = "Check the git-staged tickets and safanoria.yaml (for pre-commit hooks)").flag()
     private val format by option("--format", help = "Output format").choice("text", "json").default("text")
+    private val checkout by option("--checkout", help = "Don't read other branches: references must name tickets in this checkout").flag()
 
     override fun run() {
         if (staged && files.isNotEmpty()) throw PrintMessage("Give files or --staged, not both.", 2, true)
@@ -51,7 +53,10 @@ class Validate : RepositoryCommand(name = "validate") {
             }
             else -> null
         }
-        val diagnostics = Validator(repo).validate(only)
+        // Other branches, remote-tracking ones too (CI often has only origin/*), only add known ids
+        // and the id-created-twice warning (SPEC §12, §14); the files checked are this checkout's.
+        val branches = if (checkout) null else Branches.read(repo, remote = true)
+        val diagnostics = Validator(repo, branches).validate(only)
         val checked = only?.let { plural(it.size, "file") } ?: plural(repo.tickets.size, "ticket")
         report(diagnostics, checked)
     }

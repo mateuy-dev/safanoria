@@ -30,7 +30,8 @@ public sealed interface NewTicketResult {
 public object NewTicket {
     public const val TEMPLATE_FILE: String = "_TEMPLATE.md"
 
-    public fun prepare(repository: Repository, request: NewTicketRequest, today: String): NewTicketResult {
+    /** [takenIds]: ids of tickets on other branches, which can't be used either (§14.3). */
+    public fun prepare(repository: Repository, request: NewTicketRequest, today: String, takenIds: Set<String> = emptySet()): NewTicketResult {
         val title = request.title.trim()
         if (title.isEmpty() || '\n' in title) return refused("the title must be one non-empty line")
 
@@ -48,6 +49,7 @@ public object NewTicket {
         if (repository.fileSystem.exists(path) || repository.tickets.any { it.frontmatter?.id?.value == id }) {
             return refused("ticket '$id' already exists; ids are never reused (§3)")
         }
+        if (id in takenIds) return refused("ticket '$id' already exists on another branch; ids are unique across branches (§3, §14.3)")
 
         val components = config.components.keys
         request.area.firstOrNull { it !in components }?.let { return refused("'$it' is not a component: ${components.joinToString()}") }

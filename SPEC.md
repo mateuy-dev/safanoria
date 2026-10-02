@@ -61,7 +61,8 @@ The id is a short, human-readable slug. It is the filename, the git branch name 
 worktree name.
 
 - MUST match `^[a-z][a-z0-9-]{2,39}$`, MUST NOT contain `--`, MUST NOT end with `-`.
-- MUST be unique among all tickets, whatever their status. An id is never reused.
+- MUST be unique among all tickets, whatever their status, on every branch (§14). An id is
+  never reused.
 - SHOULD NOT clash with an existing branch when the ticket is created.
 - MUST NOT change after creation. The title may change.
 - Children SHOULD be named after their parent (`herd-locations` → `herd-locations-map-input`).
@@ -342,8 +343,10 @@ Tickets live in git, whose history is permanent and copied to every clone.
 
 These rules apply to agents and to tools that automate work.
 
-1. **Create.** Propose an id, check it is unused (file and branch), confirm it with the human,
-   copy the template for its type (§6.2), set `status: backlog`, fill Objective. Add requests and quotes if it comes from users.
+1. **Create.** Propose an id, check it is unused (a ticket file on any branch, and a branch
+   name), confirm it with the human, copy the template for its type (§6.2), set
+   `status: backlog`, fill Objective. Add requests and quotes if it comes from users. Create it
+   on the branch §14.2 says, which is often not the current one.
 2. **Start** — only when the human says so. Create the branch `<id>` (from the parent's branch if
    `childrenMergeInto: parent`, else from `mainBranch`) and, if configured, the worktree. Set
    `status: in-progress`.
@@ -354,7 +357,7 @@ These rules apply to agents and to tools that automate work.
 4. **Work.** For each Plan item: implement, check it, add a Work Log entry if anything is worth
    recording, and commit code and ticket together with the message `<id>: <short description>`.
    Changes to the plan are written into the Plan and logged with the reason. Out-of-scope work
-   becomes a new `backlog` ticket in `related`. Learnings are added when discovered.
+   becomes a new `backlog` ticket in `related`, created on `mainBranch` (§14.2). Learnings are added when discovered.
 5. **Finish.** Resolve every learning, run the project's tests, set `status: review`.
    Set `done` only when it is merged into its target. Never set `resolvedIn`.
 
@@ -377,6 +380,11 @@ A validator MUST report:
 
 A validator SHOULD warn about attachment files over 1 MB.
 
+A validator checks the files of one checkout (what is about to be committed or merged). An id is
+unknown only if no branch the validator can see has a ticket file with it (§14), so a reference
+to a ticket that so far exists only on another branch is not an error. A validator SHOULD warn
+when the same ticket was created separately on two branches (§14.3).
+
 ## 13. Versioning of this spec
 
 `safanoria.yaml` declares the spec version. Additions that old tools can ignore (new optional
@@ -389,3 +397,51 @@ version, which says which spec versions it supports. A project records only the 
 Copies installed into a project (the skill, this file) SHOULD end with a
 `<!-- safanoria X.Y.Z -->` line naming the Safanoria version they came from, so tools can tell
 what is installed and update it.
+
+## 14. Tickets across branches
+
+Tickets live next to the code, so one ticket can have different copies on different branches.
+After Start, the real state (status, Plan, Work Log) is on branch `<id>`, while `mainBranch`
+still has the `backlog` copy until the merge. Tools that show tickets (boards, lists, viewers)
+SHOULD read every branch and show each ticket's real copy. Which copy is real follows from git
+state, never from `status`.
+
+### 14.1 The real copy
+
+A ticket's **target** is its parent's branch if it has a parent with `childrenMergeInto: parent`,
+else `mainBranch`. The parent's branch is resolved the same way: branch `<parent>` while it is
+not merged, else the parent's target.
+
+1. If branch `<id>` exists and is not merged into the target, the real copy is the one on branch
+   `<id>`. The same applies when it is checked out with uncommitted edits to the ticket: a branch
+   just started has no commits of its own, so git sees it as merged, but its edits are not.
+2. Otherwise it is the target's copy. A child merged into an unmerged parent branch is
+   therefore read from the parent's branch. Once a branch is merged, the target wins even if the
+   branch is kept, so stamping on `mainBranch` is never hidden by an old branch copy.
+3. A ticket on neither is real wherever it is found (for example, a ticket created on a feature
+   branch, §14.2). Tools SHOULD mark it with that branch's name.
+
+When a branch is checked out in a worktree, its copy is the working-tree file, uncommitted edits
+included. To find the target, `parent` is read from the copy on branch `<id>`, else from the one
+on `mainBranch`, else from any copy. Tools MAY include remote-tracking branches; a local branch
+wins over a remote one with the same name.
+
+### 14.2 Where a ticket is created
+
+- Top-level tickets, including out-of-scope ones found while working on another ticket (§11.4),
+  are created on `mainBranch`, without checking it out. That reserves the id at once, the ticket
+  survives if the branch that found it is abandoned, and it can be prioritized on its own.
+- Children of a parent with `childrenMergeInto: parent` are created on the parent's branch,
+  where their own branches start.
+- If `mainBranch` can't be written to (protected, pull requests only), a ticket MAY be created
+  on the current branch. Tools reading every branch still find it (§14.1, rule 3).
+
+A ticket created on `mainBranch` while working elsewhere MUST NOT be edited from the branch that
+found it. The branch doesn't have the file, so adding it there conflicts at merge.
+
+### 14.3 Ids across branches
+
+An id is taken if any branch has a ticket file with it (§3). The same id **created twice** means
+two branches have `<dir>/<id>.md` but the commit where they diverged (their merge-base) does not:
+two tickets that will conflict at merge. A started ticket on `mainBranch` and `<id>` isn't
+created twice, because the file existed when `<id>` branched.

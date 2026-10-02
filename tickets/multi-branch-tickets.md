@@ -2,7 +2,7 @@
 id: multi-branch-tickets
 type: feature
 title: Read and create tickets across git branches
-status: backlog
+status: review
 priority: high
 size: M
 created: 2026-10-02
@@ -31,42 +31,54 @@ discoverable.
 
 ## Acceptance Criteria
 
-- [ ] SPEC.md defines which copy of a ticket is the real one when it exists on several branches
+- [x] SPEC.md defines which copy of a ticket is the real one when it exists on several branches
       (or worktrees), and every tool that lists or validates tickets follows it
-- [ ] SPEC.md says on which branch a new ticket is created: top-level and out-of-scope tickets
+- [x] SPEC.md says on which branch a new ticket is created: top-level and out-of-scope tickets
       on `mainBranch`; children on their parent's branch; a fallback for when `mainBranch`
       can't be written to
-- [ ] Id uniqueness covers ticket files on every branch, not just branch names
-- [ ] The CLI board shows each ticket's real state, read from all local branches (and
-      `origin/*` with a flag) without checking any branch out
-- [ ] Uncommitted edits in a checked-out worktree show up in the board
-- [ ] Tickets that exist only on a non-main branch are listed and marked with that branch
-- [ ] `validate` resolves ids across branches (no false "unknown id" for a `related` ticket that
-      is only on `main`) and reports the same id created separately on two branches
-- [ ] The CLI can create a ticket on `mainBranch` while the user works on another branch,
-      without touching their working tree
-- [ ] The skill follows the new creation rules
+- [x] Id uniqueness covers ticket files on every branch, not just branch names: `new` refuses an
+      id whose file exists on any local or remote-tracking branch
+- [x] `board` and `list` show each ticket's real state, read from all local branches (and
+      `origin/*` with `--remote`) without checking any branch out; `--checkout` keeps today's
+      behaviour (working tree only)
+- [x] Uncommitted edits in a checked-out worktree show up in `board` and `list`
+- [x] Tickets that exist only on a non-target branch are listed and marked with that branch
+- [x] `validate` still checks the files of the current checkout, but resolves referenced ids
+      across local and remote-tracking branches (no false `ref-unknown` for a ticket that is
+      only on `main`), and warns when the same id was created separately on two branches
+- [x] `new --on <branch>` creates (and commits) a ticket on another branch without touching the
+      current working tree
+- [x] Outside a git repository, or with a single branch, every command behaves as today
+- [x] The skill follows the new creation rules
+- [x] Git cost stays bounded: one process per branch plus one per distinct ticket version, not
+      one per ticket per branch
 
 Out of scope:
 - Syncing or fetching remotes automatically (the user runs `git fetch`)
 - Moving tickets out of the code repository (separate ticket branch or repo)
+- `release`: it keeps stamping the `mainBranch` checkout it runs on (§9)
 
 ## Plan
 
-- [ ] SPEC: new section "Tickets across branches" with the resolution rule (see Design).
-- [ ] SPEC §3 / §11 Create: uniqueness across all branches; creation branch rules and fallback.
-- [ ] SPEC §12: cross-branch checks (duplicate id on different branches; branch `<id>` gone
-      while `main` says `in-progress`).
-- [ ] Skill: creation rules (out-of-scope → `mainBranch`; children → parent's branch); don't
-      edit an out-of-scope ticket from the branch that found it.
-- [ ] CLI (needs the CLI from `v1-tooling`): ticket source that reads `<ref>:<dir>/` with
-      `git ls-tree` / `git show` (or `cat-file --batch`), plus worktree files for
-      checked-out branches.
-- [ ] CLI: resolution rule; `board` and `validate` use it; `--remote` includes `origin/*`.
-- [ ] CLI `new --on <branch>`: commit on another branch through plumbing (temporary index,
-      `commit-tree`, `update-ref`), or in the worktree where that branch is checked out.
-- [ ] Tests with a fixture repository: unstarted, started, merged-and-kept branch, child
-      merged into the parent's branch, out-of-scope ticket on main, duplicate id.
+- [x] SPEC: new section "Tickets across branches" (resolution rule, see Design); §3 uniqueness
+      across branches; §11 Create: on which branch, with the fallback; §12 cross-branch checks.
+- [x] Skill: creation rules (`new --on <mainBranch>` for out-of-scope tickets, children on the
+      parent's branch); don't edit an out-of-scope ticket from the branch that found it.
+- [x] core `Git`: branches (local, remote-tracking), worktrees (`worktree list --porcelain`),
+      merged-into checks, `ls-tree` of the ticket dir, blob reads, merge-base.
+- [x] core `GitTreeFileSystem`: a read-only Okio `FileSystem` over one commit's tree, blobs read
+      once and cached across branches, so `Repository` (config, tickets, templates, validator,
+      `NewTicket`) works on any branch unchanged.
+- [x] core `Branches`: every branch's tickets (working-tree files for checked-out branches), the
+      resolution rule, and where each real copy came from (for the "only on" marker).
+- [x] CLI `board` and `list` use it, with `--remote` and `--checkout`; both show the marker.
+- [x] CLI `validate`: ids from every branch for references; `id-created-twice` warning.
+- [x] CLI `new --on <branch>`: prepare against that branch's tree and commit there (see
+      Implementation); `new` checks ids against every branch.
+- [x] Tests with a fixture repository (real `git init` in a temp dir): unstarted, started,
+      started and checked out with uncommitted edits, merged-and-kept branch, child merged into
+      the parent's branch, ticket only on a feature branch, created twice, `--on` both ways.
+- [x] README: board/list/new options, and what "real copy" means for the user.
 
 ## Design
 
@@ -111,6 +123,88 @@ together" (§11.4).
 - A ticket on the branch can name an id in `related` that only exists on `main`. Validation
   must resolve ids across branches.
 
+### Implementation
+
+- **Reading a branch.** For each branch: one `git ls-tree` of `<branch>:<dir>/` (blob ids).
+  Read each distinct blob once with `git cat-file -p`; most tickets are identical across
+  branches, so this is about one read per ticket plus one per change. `runCommand` has no stdin,
+  so `cat-file --batch` is out. For a branch checked out in a worktree, read that worktree's
+  files instead, which picks up uncommitted edits. The current checkout counts as such a worktree.
+- **One code path.** A read-only `GitTreeFileSystem` lets `Repository(root, fs)` open any branch.
+  Config, the ticket list, templates, the validator and `NewTicket.prepare` then need no changes.
+- **Resolution** is as in "Which copy is the real one". The parent (for the target) is read from
+  the `<id>` branch copy, else the `mainBranch` copy, else any copy. Merged checks use one
+  `git branch --merged <target>` per target, not one call per ticket. With `--remote`, the local
+  branch is used when it exists, else `origin/<name>`.
+- **Validate stays on the checkout.** It is a pre-commit and CI check of the files being
+  committed, so it keeps validating the working tree. Other branches only add known ids for
+  `ref-unknown`. Remote-tracking branches are included here, because CI checkouts with
+  `fetch-depth: 0` only have `origin/*`.
+- **Created twice** = the same `<dir>/<id>.md` on two branches, absent at their merge-base.
+  A started ticket is on both `main` and `<id>` but is present at the merge-base, so it isn't
+  reported. It is a warning, not an error: the commit being validated can't fix it, and a stale
+  remote branch must not block everyone. `new` refuses such ids, which is where it matters.
+- **Rejected:** a §12 check for "branch `<id>` gone while `main` says `in-progress`". The result
+  depends on which branches a clone has (CI, fresh clones), and when a branch is deleted
+  unmerged, `main` still says `backlog` anyway.
+- **`new --on <branch>`.**
+  - If that branch is checked out in a worktree (usually `main` in the main checkout), write the
+    files there and run `git -C <wt> commit -- <files>`. This commits only those paths and leaves
+    the user's other staged work alone.
+  - Otherwise, commit through plumbing. `update-ref` on a branch checked out elsewhere would
+    desync that worktree, which is why the worktree case is separate.
+    - `hash-object -w` the files.
+    - Rebuild the trees bottom-up: `ls-tree` and `mktree < tmpfile`. A `<` redirect works in
+      both `sh` and `cmd`; `GIT_INDEX_FILE=` doesn't.
+    - `commit-tree -p <branch>`, then `update-ref <branch> <new> <old>`, so a concurrent change
+      fails instead of being lost.
+  - The commit message is `<id>: create`.
+  - Without `--on`, `new` writes to the working tree as today. On a non-`mainBranch` branch
+    without `--parent`, it prints a hint to use `--on <mainBranch>`.
+
+## Learnings
+
+- Okio `Path.relativeTo` returns `.` for the same path, not an empty path: filter it out before
+  joining segments into git paths.
+  → promoted: core/src/commonMain/kotlin/dev/mateuy/safanoria/core/Branches.kt (comment in `layout`)
+- `git ls-tree` paths depend on the working directory unless `--full-tree` is given, even with a
+  `<rev>:<dir>` argument.
+  → promoted: core/src/commonMain/kotlin/dev/mateuy/safanoria/core/Git.kt (comment in `tree`)
+
 ## Work Log
 
 - **2026-10-02** · status · Created from the design discussion on how the CLI sees tickets on several branches.
+- **2026-10-02** · status · started
+- **2026-10-02** · plan · Plan rewritten against the shipped CLI (`v1-tooling` is done); decisions in Design → Implementation.
+- **2026-10-02** · decision · The new section is §14, not inserted before §11: §11–§13 are cited
+  in code, docs and copies installed in other projects. The spec version stays 1: §14 only adds
+  rules, and validation gets more lenient (fewer `ref-unknown`) plus one warning.
+- **2026-10-02** · deviation · Rule 1 was incomplete. Right after Start, branch `<id>` has no
+  commits of its own, so `--merged` counts it as merged and the `backlog` copy on `main` won
+  over the worktree's uncommitted `in-progress`. Rule 1 now also applies when the checked-out
+  copy differs from the branch's last commit (SPEC §14.1 updated). Found by the "checked-out"
+  test case.
+- **2026-10-02** · decision · `validate` took 2.2 s on this repository, too slow for a
+  pre-commit hook. The 11 kept `v1-tooling*` branches hold old copies of most tickets: a blob
+  read per copy, plus a `cat-file -e` per copy for `id-created-twice`. Two changes bring it to
+  45 ms:
+  - Branches merged into `mainBranch` aren't read unless checked out. They can't hold a real
+    copy (rule 2), and their tickets are in `main`'s history, so they add no id and no
+    created-twice case `main` doesn't already show.
+  - Merge-bases are listed once per directory.
+
+  `validate` also gets `--checkout`, the old behaviour.
+- **2026-10-02** · decision · `new --on` validates the new files against the target branch
+  before anything is written or committed: an overlay over that branch's files. A commit on
+  another branch is harder to take back than a file. The plumbing commit runs no hooks; this
+  check replaces the pre-commit hook.
+- **2026-10-02** · bug · Two path bugs surfaced through the subdirectory test:
+  - `ls-tree` run from a subdirectory lists only that part of the tree, even for `<rev>:<dir>`.
+    Fixed with `--full-tree`.
+  - Okio's `relativeTo` gives `.` for the same path, which turned tree paths into `./tickets/…`.
+    `Branches` only worked by luck: git reads `rev:./path` relative to the working directory.
+
+  Both are covered now: `aProjectBelowTheGitTopLevel` and `aProjectInASubdirectory`.
+- **2026-10-02** · status · review. core and cli tests pass on the JVM and linuxX64. On this
+  repository, `list` from the main checkout shows this ticket as `in-progress`, read from its
+  worktree; `validate` takes 45 ms.

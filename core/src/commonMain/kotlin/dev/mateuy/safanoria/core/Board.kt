@@ -24,7 +24,8 @@ public object Board {
             return "[${t.fileId}](${path.segments.joinToString("/")})"
         }
         fun ref(id: String) = graph.ticket(id)?.let(::link) ?: "`$id`"
-        fun title(t: Ticket) = t.frontmatter?.title?.value ?: "(no title)"
+        /** The title, and the branch when the ticket exists only there (SPEC §14.1 rule 3). */
+        fun title(t: Ticket) = (t.frontmatter?.title?.value ?: "(no title)") + (t.branch?.takeIf { t.onlyOnBranch }?.let { " · only on `$it`" } ?: "")
 
         /** Type and priority when not the usual ones, then progress and open blockers. */
         fun details(t: Ticket, withStatus: Boolean): String {

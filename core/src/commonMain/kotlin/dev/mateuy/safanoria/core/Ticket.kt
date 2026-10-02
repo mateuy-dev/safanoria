@@ -6,7 +6,14 @@ import okio.Path
  * A ticket file. Parsing is lazy: [frontmatter] parses only the YAML block, [body] the rest, so
  * commands that only need ids and relations stay fast on large repositories.
  */
-public class Ticket(public val path: Path, public val text: String) {
+public class Ticket(
+    public val path: Path,
+    public val text: String,
+    /** The branch this copy was read from when tickets come from every branch (SPEC §14), else null. */
+    public val branch: String? = null,
+    /** True when the copy is real only because no other branch has it (SPEC §14.1 rule 3). */
+    public val onlyOnBranch: Boolean = false,
+) {
     /** The id from the filename (SPEC §3: the filename is `<id>.md`). */
     public val fileId: String get() = path.name.removeSuffix(".md")
 

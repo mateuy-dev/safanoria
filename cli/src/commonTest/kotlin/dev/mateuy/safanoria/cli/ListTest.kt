@@ -16,7 +16,7 @@ class ListTest {
     private val repoRoot = (environmentVariable("SAFANORIA_REPO_ROOT") ?: error("run through Gradle")).toPath()
     private val fixture = repoRoot / "core" / "src" / "commonTest" / "fixtures" / "validate" / "valid"
 
-    private fun run(vararg args: String) = cli().test(listOf("--root", fixture.toString(), "list") + args.toList())
+    private fun run(vararg args: String) = cli().test(listOf("--root", fixture.toString(), "list", "--checkout") + args.toList())
     private fun ids(stdout: String) = stdout.lines().filter { it.isNotBlank() }.map { it.substringBefore(' ') }
 
     @Test
