@@ -122,6 +122,50 @@ public class TicketEditor(original: String) {
         lines[index] = current.replaceFirst(CHECKBOX, if (checked) "- [x]" else "- [ ]")
     }
 
+    /** Index of `## <name>` and the index after its section (the next heading or the end). */
+    private fun sectionBounds(name: String): Pair<Int, Int> {
+        val heading = lines.indexOfFirst { it == "## $name" }
+        if (heading < 0) throw TicketEditException("the ticket has no '## $name' section")
+        val end = ((heading + 1) until lines.size).firstOrNull { lines[it].startsWith("## ") } ?: lines.size
+        return heading to end
+    }
+
+    /**
+     * Replaces the content of `## <name>` with [text], keeping one blank line after the heading
+     * and one before the next heading. For filling a template's placeholder (e.g. Objective).
+     */
+    public fun replaceSectionContent(name: String, text: String): TicketEditor = apply {
+        val (heading, end) = sectionBounds(name)
+        repeat(end - heading - 1) { lines.removeAt(heading + 1) }
+        val content = listOf("") + text.trim('\n').split('\n') + if (heading + 1 < lines.size) listOf("") else emptyList()
+        lines.addAll(heading + 1, content)
+    }
+
+    /**
+     * Appends `- [ ] <text>` to `## Plan`: after its last checklist item (and that item's
+     * continuation lines), else after its last content line, else after the heading.
+     */
+    public fun appendPlanItem(text: String, checked: Boolean = false): TicketEditor = apply {
+        val (heading, end) = sectionBounds("Plan")
+        val item = "- [${if (checked) "x" else " "}] $text"
+        val lastItem = ((heading + 1) until end).lastOrNull { CHECKBOX.containsMatchIn(lines[it]) }
+        val after = if (lastItem != null) {
+            var i = lastItem
+            while (i + 1 < end && lines[i + 1].isNotBlank() && (lines[i + 1].startsWith(" ") || lines[i + 1].startsWith("\t"))) i++
+            i
+        } else {
+            ((heading + 1) until end).lastOrNull { lines[it].isNotBlank() }
+        }
+        if (after != null) {
+            lines.add(after + 1, item)
+        } else {
+            // Empty section: blank line, item, and keep a blank line before the next heading.
+            lines.add(heading + 1, "")
+            lines.add(heading + 2, item)
+            if (heading + 3 < lines.size && lines[heading + 3].isNotBlank()) lines.add(heading + 3, "")
+        }
+    }
+
     /** Appends `- **date** · ref · text` at the end of `## Work Log`; extra lines are indented. */
     public fun appendWorkLog(date: String, ref: String, text: String): TicketEditor = apply {
         val heading = lines.indexOfFirst { it == "## Work Log" }

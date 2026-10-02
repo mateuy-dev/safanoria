@@ -1,7 +1,10 @@
 package dev.mateuy.safanoria.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.CliktError
 import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.core.UsageError
+import com.github.ajalt.clikt.core.parse
 import com.github.ajalt.clikt.core.PrintMessage
 import com.github.ajalt.clikt.core.findOrSetObject
 import com.github.ajalt.clikt.core.main
@@ -11,6 +14,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import dev.mateuy.safanoria.core.Embedded
 import dev.mateuy.safanoria.core.Repository
 import dev.mateuy.safanoria.core.SPEC_VERSION
+import okio.Path
 import okio.Path.Companion.toPath
 
 /** Shared by all commands: finds the repository once, from `--root` or the working directory. */
@@ -40,6 +44,12 @@ class Version : CliktCommand(name = "version") {
     override fun run() = echo("safanoria ${Embedded.VERSION} (spec $SPEC_VERSION)")
 }
 
+/** A path as shown to the user: relative to the working directory when it's under it. */
+fun displayPath(path: Path): String {
+    val cwd = dev.mateuy.safanoria.core.SystemFileSystem.canonicalize(".".toPath())
+    return runCatching { path.relativeTo(cwd) }.getOrNull()?.toString()?.takeIf { !it.startsWith("..") } ?: path.toString()
+}
+
 /** Base for commands that work on a repository. */
 abstract class RepositoryCommand(name: String) : CliktCommand(name = name) {
     private val cli by requireObject<CliContext>()
@@ -47,6 +57,18 @@ abstract class RepositoryCommand(name: String) : CliktCommand(name = name) {
 }
 
 /** The command tree; tests run it with Clikt's `test()`. */
-fun cli(): CliktCommand = Safanoria().subcommands(Validate(), Version(), Dump())
+fun cli(): CliktCommand = Safanoria().subcommands(New(), Validate(), Version(), Dump())
 
-fun main(args: Array<String>) = cli().main(args)
+/**
+ * Like Clikt's `main`, but usage errors (bad option, missing argument) exit 2 as documented
+ * (Clikt uses 1, which here means "problems found" or "refused").
+ */
+fun main(args: Array<String>) {
+    val command = cli()
+    try {
+        command.parse(args)
+    } catch (e: CliktError) {
+        command.echoFormattedHelp(e)
+        command.currentContext.exitProcess(if (e is UsageError) 2 else e.statusCode)
+    }
+}

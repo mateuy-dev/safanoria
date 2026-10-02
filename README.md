@@ -30,6 +30,20 @@ Ticket frontmatter is inside markdown, which editors don't check against a schem
    > name. When creating, planning or working on a ticket, use the `safanoria` skill.
 5. Make the release process stamp `resolvedIn` (SPEC §9).
 
+## Creating tickets
+
+```sh
+safanoria new "Herd photos from the field" --dry-run   # suggested id, files it would write
+safanoria new "Herd photos from the field" --id herd-photos --size M --objective "Why…"
+safanoria new "Map pin" --parent herd-locations          # child: herd-locations-map-pin, added to the parent's Plan
+```
+
+`new` fills `<dir>/_TEMPLATE.md` (or the built-in template) with the id, title, type,
+priority, size, `area` (required when there are several components), `status: backlog` and
+today's date. It refuses an id that exists (ids are never reused), an unknown parent, and a
+parent that can't have children; a branch with the same name is a warning. The suggested id is
+short (filler words dropped, at most four words): confirm or change it, it's the branch name.
+
 ## Validating tickets
 
 ```sh
@@ -67,7 +81,7 @@ exec safanoria validate --staged
 
 ## Planned
 
-- CLI commands: `new`, `list`, `board`, `release <component> <version>`, `init`.
+- CLI commands: `list`, `board`, `release <component> <version>`, `init`.
 - `apps/`: viewers and editors.
 
 ## Development

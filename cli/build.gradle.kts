@@ -31,6 +31,7 @@ kotlin {
             implementation(project(":core"))
             implementation(libs.clikt)
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.datetime)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

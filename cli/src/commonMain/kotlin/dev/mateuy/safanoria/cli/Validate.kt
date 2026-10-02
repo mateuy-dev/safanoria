@@ -69,10 +69,7 @@ class Validate : RepositoryCommand(name = "validate") {
     }
 
     private fun report(diagnostics: List<Diagnostic>, checked: String) {
-        val cwd = SystemFileSystem.canonicalize(".".toPath())
-        fun shown(path: Path?): String? = path?.let { p ->
-            runCatching { p.relativeTo(cwd) }.getOrNull()?.takeIf { !it.toString().startsWith("..") }?.toString() ?: p.toString()
-        }
+        fun shown(path: Path?): String? = path?.let(::displayPath)
         val errors = diagnostics.count { it.severity == Severity.ERROR }
         when (format) {
             "json" -> echo(buildJsonObject {

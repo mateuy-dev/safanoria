@@ -5,6 +5,7 @@ okio = "3.18.2"
 clikt = "5.1.0"
 jsonSchemaValidator = "0.5.5"
 kotlinxSerialization = "1.11.0"
+kotlinxDatetime = "0.8.0"
 
 [libraries]
 kaml = { module = "com.charleskorn.kaml:kaml", version.ref = "kaml" }
@@ -13,6 +14,7 @@ okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", versio
 clikt = { module = "com.github.ajalt.clikt:clikt", version.ref = "clikt" }
 json-schema-validator = { module = "io.github.optimumcode:json-schema-validator", version.ref = "jsonSchemaValidator" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
