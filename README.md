@@ -69,14 +69,29 @@ Then make the release process run `safanoria release <component>` (see "Releasin
 safanoria new "Herd photos from the field" --dry-run   # suggested id, files it would write
 safanoria new "Herd photos from the field" --id herd-photos --size M --objective "Why…"
 safanoria new "Map pin" --parent herd-locations          # child: herd-locations-map-pin, added to the parent's Plan
+safanoria new "Export is slow" --on main                 # from another branch: committed on main, this checkout untouched
 ```
 
 `new` fills the template for the type (`<dir>/_TEMPLATE.<type>.md`, else `<dir>/_TEMPLATE.md`,
 else the built-in one, which for bugs has Steps to reproduce, Expected and Actual; `--objective`
 keeps those subsections) with the id, title, type, priority, size, `area` (required when there
-are several components), `status: backlog` and today's date. It refuses an id that exists (ids are never reused), an unknown parent, and a
-parent that can't have children; a branch with the same name is a warning. The suggested id is
-short (filler words dropped, at most four words): confirm or change it, it's the branch name.
+are several components), `status: backlog` and today's date. It refuses an id that exists on
+any branch (ids are never reused), an unknown parent, and a parent that can't have children; a
+branch with the same name is a warning. The suggested id is short (filler words dropped, at
+most four words): confirm or change it, it's the branch name.
+
+**Which branch** (SPEC §14.2): a new top-level ticket belongs on `mainBranch`, even when you
+find the work while on another ticket's branch. On `main` the id is taken at once, the ticket
+survives if that branch is abandoned, and it can be prioritized on its own. `--on main` does
+that from anywhere:
+- If `main` is checked out in another worktree, it writes the file there and commits only that
+  file; whatever else is staged there stays staged.
+- Otherwise it commits straight to the branch, without checking it out.
+
+It validates the ticket first, and the commit is `<id>: create`. Children are created on their
+parent's branch, which is where you are while planning the parent. Without `--on`, `new` writes
+into this checkout and doesn't commit; on a branch other than `mainBranch` it reminds you about
+`--on`.
 
 ## Viewing tickets
 
@@ -87,7 +102,24 @@ safanoria list --parent v1-tooling --blocked    # children blocked by a ticket t
 safanoria list --format json                    # {tickets: [...]}: every field, plus children, blocks, openBlockers, progress
 safanoria board                                 # markdown board on stdout
 safanoria board -o docs/BOARD.md                # links relative to the file
+safanoria list --remote                         # also origin/* branches (git fetch first)
+safanoria list --checkout                       # only this checkout's files
 ```
+
+**Every branch.** A ticket you start moves to its own branch: there it becomes `in-progress`,
+gets a Plan and a Work Log, while `main` keeps the `backlog` copy until the merge. So `list` and
+`board` read every local branch, without checking any out, and show each ticket's real copy
+(SPEC §14.1):
+- The copy on branch `<id>` while that branch isn't merged.
+- A child's copy on its parent's branch, once merged there.
+- Otherwise `main`'s copy.
+
+A branch checked out in a worktree is read from its files, so uncommitted edits show. A ticket
+that exists only on some other branch (created there instead of on `main`) is listed with
+`only on <branch>`. Branches already merged into `main` aren't read: their tickets are on `main`.
+`list --format json` has `branch` (where the copy came from) and `onlyOnBranch` for each ticket.
+Outside git, or without a local `mainBranch` branch (as in a CI checkout of one commit), both
+read the checkout as it is.
 
 `list` and `board` show tickets in the same order: status (in-progress, review, ready, backlog,
 done, wontfix), then priority, then id. In `board`, children appear under their parent with
@@ -139,6 +171,11 @@ safanoria validate --format json    # {valid, checked, diagnostics: [{file, line
 Exit code 0: valid; 1: problems; 2: usage error or not in a Safanoria repository. Problems
 print as `file:line:col: error[code]: message`.
 
+`validate` checks the files of this checkout: what you are about to commit or merge. Other
+branches, local and remote-tracking, only count as known ids. A `related` to a ticket that so
+far exists only on `main` (or on its own branch) isn't `ref-unknown`. `--checkout` turns that
+off. In CI, `actions/checkout` with `fetch-depth: 0` gives it every branch.
+
 ### Before each commit
 
 ```sh
@@ -189,6 +226,7 @@ Elsewhere, install with `install.sh` and run `safanoria validate`.
 | `child-resolved-later` | A child released after its parent (§9) |
 | `attachment-missing` | A link to a file under `attachments/` that isn't there (§7.8) |
 | `attachment-large` (warning) | An attachment over 1 MB (§7.8); warnings don't change the exit code |
+| `id-created-twice` (warning) | Another branch created a ticket with this id separately; they will conflict at merge, so rename one (§14.3) |
 
 ## Planned
 

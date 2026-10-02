@@ -2,7 +2,7 @@
 id: multi-branch-tickets
 type: feature
 title: Read and create tickets across git branches
-status: in-progress
+status: review
 priority: high
 size: M
 created: 2026-10-02
@@ -31,26 +31,26 @@ discoverable.
 
 ## Acceptance Criteria
 
-- [ ] SPEC.md defines which copy of a ticket is the real one when it exists on several branches
+- [x] SPEC.md defines which copy of a ticket is the real one when it exists on several branches
       (or worktrees), and every tool that lists or validates tickets follows it
-- [ ] SPEC.md says on which branch a new ticket is created: top-level and out-of-scope tickets
+- [x] SPEC.md says on which branch a new ticket is created: top-level and out-of-scope tickets
       on `mainBranch`; children on their parent's branch; a fallback for when `mainBranch`
       can't be written to
-- [ ] Id uniqueness covers ticket files on every branch, not just branch names: `new` refuses an
+- [x] Id uniqueness covers ticket files on every branch, not just branch names: `new` refuses an
       id whose file exists on any local or remote-tracking branch
-- [ ] `board` and `list` show each ticket's real state, read from all local branches (and
+- [x] `board` and `list` show each ticket's real state, read from all local branches (and
       `origin/*` with `--remote`) without checking any branch out; `--checkout` keeps today's
       behaviour (working tree only)
-- [ ] Uncommitted edits in a checked-out worktree show up in `board` and `list`
-- [ ] Tickets that exist only on a non-target branch are listed and marked with that branch
-- [ ] `validate` still checks the files of the current checkout, but resolves referenced ids
+- [x] Uncommitted edits in a checked-out worktree show up in `board` and `list`
+- [x] Tickets that exist only on a non-target branch are listed and marked with that branch
+- [x] `validate` still checks the files of the current checkout, but resolves referenced ids
       across local and remote-tracking branches (no false `ref-unknown` for a ticket that is
       only on `main`), and warns when the same id was created separately on two branches
-- [ ] `new --on <branch>` creates (and commits) a ticket on another branch without touching the
+- [x] `new --on <branch>` creates (and commits) a ticket on another branch without touching the
       current working tree
-- [ ] Outside a git repository, or with a single branch, every command behaves as today
-- [ ] The skill follows the new creation rules
-- [ ] Git cost stays bounded: one process per branch plus one per distinct ticket version, not
+- [x] Outside a git repository, or with a single branch, every command behaves as today
+- [x] The skill follows the new creation rules
+- [x] Git cost stays bounded: one process per branch plus one per distinct ticket version, not
       one per ticket per branch
 
 Out of scope:
@@ -75,10 +75,10 @@ Out of scope:
 - [x] CLI `validate`: ids from every branch for references; `id-created-twice` warning.
 - [x] CLI `new --on <branch>`: prepare against that branch's tree and commit there (see
       Implementation); `new` checks ids against every branch.
-- [ ] Tests with a fixture repository (real `git init` in a temp dir): unstarted, started,
+- [x] Tests with a fixture repository (real `git init` in a temp dir): unstarted, started,
       started and checked out with uncommitted edits, merged-and-kept branch, child merged into
       the parent's branch, ticket only on a feature branch, created twice, `--on` both ways.
-- [ ] README: board/list/new options, and what "real copy" means for the user.
+- [x] README: board/list/new options, and what "real copy" means for the user.
 
 ## Design
 
@@ -205,3 +205,6 @@ together" (§11.4).
     `Branches` only worked by luck: git reads `rev:./path` relative to the working directory.
 
   Both are covered now: `aProjectBelowTheGitTopLevel` and `aProjectInASubdirectory`.
+- **2026-10-02** · status · review. core and cli tests pass on the JVM and linuxX64. On this
+  repository, `list` from the main checkout shows this ticket as `in-progress`, read from its
+  worktree; `validate` takes 45 ms.
