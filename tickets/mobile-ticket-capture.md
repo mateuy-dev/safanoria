@@ -46,7 +46,7 @@ user's OK (an API spike would write to a repository).
 
 - [x] Routes: list the candidate routes and compare them in a table (criteria from the first
       question). Drop the ones that clearly lose and say why.
-- [ ] Commit path: check what the GitHub REST API needs to commit a ticket plus an image in one
+- [x] Commit path: check what the GitHub REST API needs to commit a ticket plus an image in one
       commit (Git Data API: blobs, tree, commit, ref update) and the auth (fine-grained token vs
       GitHub App). Sketch the hand-off alternative: an issue with a label, turned into a ticket
       by a GitHub Action that runs `safanoria new` and moves the issue's image into
@@ -90,3 +90,33 @@ user's OK (an API spike would write to a repository).
   Claude plan and lands on a session branch). **A** only if a phone app is wanted anyway
   (e.g. alongside `gui-viewer`). To check: images attached on Android are reported dropped in
   Remote Control sessions (public issue reports); unverified for cloud sessions.
+- **2026-10-02** · step 2 · Commit path, on paper. Not tried against a real repository: the
+  answer doesn't depend on it, and the remaining unknowns are about the phone apps (checked by
+  hand in the Learnings).
+  - From the phone (A, B): the Contents API (`PUT /repos/{o}/{r}/contents/{path}`) makes one
+    commit per file, so ticket and screenshot would be two commits. The Git Data API does it in
+    one: `POST git/blobs` per file (image base64), `POST git/trees` with `base_tree`,
+    `POST git/commits`, `PATCH git/refs/heads/<mainBranch>`; a race with another push fails the
+    ref update, and the app retries. Auth: a fine-grained token with Contents read/write on the
+    repository, stored on the phone; a GitHub App with device flow avoids pasting a token but is
+    more to build. Without a clone, the phone can't check that an id was never used on any
+    branch (§14.3) without many API calls.
+  - Hand-off (D): an issue labeled e.g. `ticket` starts a workflow (`on: issues: [labeled]`,
+    `permissions: contents: write, issues: write`) that checks out with `fetch-depth: 0` (all
+    branches, so `safanoria new` checks ids for real), reads the issue form fields, downloads
+    images from the signed `<img src>` URLs in `body_html` (`Accept:
+    application/vnd.github.html+json`; the plain `user-attachments` URLs need a browser session
+    in private repositories), runs `safanoria new`, copies the image into
+    `<dir>/attachments/<id>/`, runs `safanoria validate`, commits ticket and image in one
+    commit on `mainBranch`, comments the link and closes the issue. Constraints found:
+    issue text is untrusted input, so it goes to scripts through `env`, never `${{ }}` inside
+    `run`; only a label (needs triage rights) or `author_association` OWNER/MEMBER should
+    trigger it, or anyone could add tickets to a public repository; a push with `GITHUB_TOKEN`
+    doesn't start other workflows, and a protected `mainBranch` needs a PR (auto-merge) instead
+    of a push.
+  - `safanoria new` lacks two things this needs: a way to attach a file (copy into
+    `attachments/<id>/` and link it) and machine-readable output of the chosen id
+    (`--format json`, as `resume` has). Today a script would run `--dry-run` and parse the id.
+  - F: a cloud session commits on its own session branch, which then needs a PR into
+    `mainBranch`; through Remote Control the session is on the user's machine and can commit on
+    `mainBranch` like any local session (`--on main`).
