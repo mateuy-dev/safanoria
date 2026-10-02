@@ -94,6 +94,14 @@ parent's branch, which is where you are while planning the parent. Without `--on
 into this checkout and doesn't commit; on a branch other than `mainBranch` it reminds you about
 `--on`.
 
+**From a phone**, without building anything: with Claude Code's
+[Remote Control](https://code.claude.com/docs/en/remote-control), the Claude app drives a
+session on your computer, so the skill and `--on main` work as they do at the desk. A photo
+or screenshot attached in the app is saved under `~/.claude/uploads/`, and the agent can copy it
+into `<dir>/attachments/<id>/` (SPEC §7.8). Crop or draw over personal data on the phone before
+attaching it. A cloud session works too, but it commits on its own branch, which then needs
+merging into `mainBranch`.
+
 ## Viewing tickets
 
 ```sh
