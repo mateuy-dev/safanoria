@@ -68,7 +68,7 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
 - [x] `v1-tooling-cli-core`: KMP `core` + `cli` modules, config loading, ticket parser with line
       numbers, targeted-edit writer.
 - [x] `v1-tooling-validate`: all SPEC §12 checks.
-- [ ] `v1-tooling-new`: `new` command.
+- [x] `v1-tooling-new`: `new` command.
 - [ ] `v1-tooling-board`: `list` and `board` commands.
 - [ ] `v1-tooling-spec-decisions`: decide and specify Safanoria's versioning, attachments and
       per-type templates.
@@ -123,3 +123,5 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
   `Repository`; CI tests on Linux, Windows and macOS. 16–26 ms to load this repository.
 - **2026-10-02** · v1-tooling-validate · Done and merged: `safanoria validate` (all §12 rules,
   files / `--staged` / JSON), 35 fixtures, CI validates our tickets; `schema/check.py` removed.
+- **2026-10-02** · v1-tooling-new · Done and merged: `safanoria new` (id suggestion, template,
+  parent Plan item, `--dry-run`); usage errors exit 2 in every command; skill Create uses it.

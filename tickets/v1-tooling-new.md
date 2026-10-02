@@ -2,7 +2,7 @@
 id: v1-tooling-new
 type: feature
 title: "`safanoria new`: create a ticket from a title"
-status: review
+status: done
 priority: medium
 size: S
 created: 2026-10-01
@@ -94,3 +94,4 @@ parent, so the GUI can reuse it; the CLI writes them. Nothing is written when a 
   then requests by hand and `validate`; the manual steps stay for projects without it. Skill
   Finish also runs `safanoria validate`. README "Creating tickets"; `new` out of Planned.
 - **2026-10-02** · status · review. `allTests` green; this repository validates clean.
+- **2026-10-02** · status · done. Merged into `v1-tooling`.
