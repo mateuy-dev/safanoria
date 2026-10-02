@@ -42,4 +42,16 @@ From `v1-tooling-native-spike`:
   for editors).
 - Staged-files mode still needs every ticket's frontmatter (references), not every body.
 
+From `v1-tooling-cli-core` (what `core` already provides):
+
+- `Repository` (config, tickets by the §1 rule, lazy parsing), `Frontmatter.schemaDiagnostics()`
+  and `ConfigResult.diagnostics` (schema rules with lines), `Ticket.parseDiagnostics` (YAML
+  syntax, malformed Work Log entries, Learning resolutions, quote attributions), `Body`
+  (sections, checklists with child items, learnings, work log, quotes), `Git.stagedFiles()`.
+  `validate` adds the cross-file and structural §12 rules on top.
+- The hidden `safanoria dump` (no argument) already parses and schema-checks every ticket:
+  18 ms here, 32 ms for VacAppKMP's 47 tickets, 144 ms for 504 synthetic ones (Linux).
+- When `validate` checks this repository's tickets in CI, remove `schema/check.py` and its
+  workflow (the Kotlin `SchemaExamplesTest` covers the examples), and update the README.
+
 ## Work Log

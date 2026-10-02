@@ -32,8 +32,28 @@ Ticket frontmatter is inside markdown, which editors don't check against a schem
 
 ## Planned
 
-- `cli/`: `new`, `validate`, `board`, `release <component> <version>`.
+- CLI commands: `new`, `validate`, `list`, `board`, `release <component> <version>`, `init`.
 - `apps/`: viewers and editors.
+
+## Development
+
+The CLI is Kotlin Multiplatform: `core/` holds all logic (config, parser, schema checks,
+targeted edits, git) and is shared with future apps; `cli/` is the `safanoria` command, built
+as a native binary for Linux (x64), Windows (x64) and macOS (arm64).
+
+```sh
+./gradlew allTests                                  # JVM tests + native tests for this OS
+./gradlew :cli:linkReleaseExecutableLinuxX64        # or …MingwX64, …MacosArm64 (on that OS)
+cli/build/bin/linuxX64/releaseExecutable/safanoria.kexe version
+python3 tools/bench.py cli/build/bin/linuxX64/releaseExecutable/safanoria.kexe   # startup times
+```
+
+- Needs JDK 21. The first build downloads the Kotlin/Native toolchain into `~/.konan`.
+- Linux binaries link the system `libunistring.so.5` (Ubuntu 24.04+, `libunistring5`), needed by
+  the JSON Schema validator; they are built on Linux only.
+- Tests also read other local repositories' tickets when `SAFANORIA_EXTRA_REPOS` lists their
+  roots (`:`-separated). Those tickets are only read, never copied here.
+- `schema/*.json` are embedded into `core` at build time; edit the schemas, not the generated code.
 
 ## License
 

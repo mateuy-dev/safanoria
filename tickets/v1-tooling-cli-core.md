@@ -2,11 +2,11 @@
 id: v1-tooling-cli-core
 type: feature
 title: KMP core module, CLI skeleton, ticket parser and targeted-edit writer
-status: backlog
+status: review
 priority: high
 size: M
 created: 2026-10-01
-updated: 2026-10-01
+updated: 2026-10-02
 parent: v1-tooling
 blockedBy: [v1-tooling-native-spike]
 ---
@@ -29,14 +29,55 @@ The base every command builds on, as decided in `v1-tooling`'s Plan (Kotlin Mult
 
 ## Acceptance Criteria
 
-- [ ] Parsing and then applying no edits to any ticket in this repository (and VacAppKMP's) gives
+- [x] Parsing and then applying no edits to any ticket in this repository (and VacAppKMP's) gives
       the same bytes; each edit changes only the lines it targets
-- [ ] Parse errors carry file and line
-- [ ] The native CLI starts fast enough for a pre-commit hook (target: under 100 ms on this
+- [x] Parse errors carry file and line
+- [x] The native CLI starts fast enough for a pre-commit hook (target: under 100 ms on this
       repository)
-- [ ] `core` tests run on the JVM and on the native target
+- [x] `core` tests run on the JVM and on the native target
 
 ## Plan
+
+Layout: Gradle build at the repository root with modules `core/` and `cli/` (later `gui/` for
+`gui-viewer`); versions in `gradle/libs.versions.toml`. Packages `dev.mateuy.safanoria.core`
+and `dev.mateuy.safanoria.cli` (chosen by the user).
+`core` reads lazily: listing tickets reads only frontmatter; the body is parsed when asked.
+
+- [x] Build skeleton: root Gradle project, `core` (jvm, linuxX64, mingwX64, macosArm64) and
+      `cli` (native executables + JVM for tests); `safanoria version` runs. Two build tasks that
+      keep sources single: generate `Schemas.kt` (string constants) from `schema/*.json`, so
+      the CLI embeds the same schemas the repo publishes; and, on Linux, create the
+      `libunistring.so` symlink the linker needs (spike learning) instead of a manual step.
+      CI workflow `cli.yml`: build and run tests on ubuntu-24.04, windows-2022, macos-14
+      (JVM tests + that OS's native tests), caching `~/.konan`.
+- [x] Config: find the repository root (walk up to `safanoria.yaml`), load it with SPEC §2
+      defaults into `Config`, keeping the kaml node for lines. `Diagnostic(file, line, column,
+      code, message)` is the one error type every command reports.
+- [x] Frontmatter: split it from the body (with its line offset), parse to a kaml node tree,
+      typed accessors (`id`, `status`, `parent`, `blockedBy`…) that keep each value's line.
+      `FrontmatterSchema` validates with the embedded ticket schema and maps JSON pointers to
+      lines; same for `safanoria.yaml`. Tests run every `schema/examples/` file with its
+      `# expect:` line, on JVM and native.
+- [x] Body: sections (name, heading line, range), checklists with continuation lines and child
+      items (`` `id` `` first), Learnings with their `→` resolution (promoted / new ticket /
+      ticket only / pending), Work Log entries (`date`, `ref`, text), User Requests quotes with
+      attribution lines. Malformed parts become diagnostics, not exceptions.
+- [x] Targeted editor: `setField` (replace the line, or insert at its §5 position), `setMapEntry`
+      (e.g. `resolvedIn.app`, turning `resolvedIn: null` into a block), `setChecked(item)`,
+      `appendWorkLog(entry)`. It edits the original text, so unedited files are the same bytes;
+      it keeps the file's line endings and final newline. Refuses values it can't edit safely
+      (multi-line block scalars) with a diagnostic instead of guessing.
+      Tests: no-op round trip, and each edit changes only its lines, over this repository's
+      tickets and, when `SAFANORIA_EXTRA_REPOS` points at local checkouts (VacAppKMP), theirs.
+      Private tickets are never copied into this repository.
+- [x] Processes and git in `core` (from the spike: `popen`/`_popen`/`ProcessBuilder`), and a
+      `Repository` facade: config, ticket list (lazy), git helpers (`branchExists`,
+      `stagedFiles`). Hidden `safanoria dump <file>` prints what the parser sees (debugging and
+      a smoke test for the binary).
+- [x] Startup check: `tools/bench.py` (from the spike) on the release binary; record times for
+      this repository and 504 tickets on each CI OS. Target: < 100 ms here.
+- [x] README: build, test and run instructions for contributors. `schema/check.py` stays until
+      `validate` checks this repository's tickets in CI (note added to `v1-tooling-validate`).
 
 ## Design
 
@@ -59,4 +100,103 @@ From `v1-tooling-native-spike` (proven on Linux, Windows and macOS):
   validator, honouring each invalid file's `# expect: <keyword> <pointer>` line. Once they pass,
   `schema/check.py` can be removed if nothing else needs it.
 
+## Learnings
+
+- Gradle doesn't treat a test task's environment variables as inputs: changing one can reuse
+  a cached (or up-to-date) result. Declare them with `inputs.property`.
+  → promoted: core/build.gradle.kts (comment)
+- OptimumCode `json-schema-validator` reports an `anyOf`/`oneOf` failure as its failing
+  branches, and `propertyNames` at the offending key; Python's `jsonschema` reports the
+  combinator or the map. Same problem, different detail.
+  → promoted: core/src/commonTest/…/SchemaExamplesTest.kt (comment on `matches`)
+- kaml doesn't keep a scalar's style, so `"2026"` and `2026` look the same; whether a value is
+  a string must be read from the source at the node's position.
+  → promoted: core/src/commonMain/…/YamlNodes.kt (`isExplicitString`)
+- Kotlin/Native cross-links Linux binaries on macOS and Windows hosts, and `allTests` links
+  them; anything Linux-specific in linking (here, the system `libunistring`) breaks other hosts
+  unless those link tasks are disabled there.
+  → promoted: build.gradle.kts (comment)
+
 ## Work Log
+
+- **2026-10-01** · status · Started. Branch `v1-tooling-cli-core` from `v1-tooling`, worktree
+  `../safanoria--v1-tooling-cli-core`.
+- **2026-10-01** · plan · Root Gradle build with `core` and `cli`. Schemas embedded by code
+  generation from `schema/*.json` (one source). The schema validator lives in `core` here (its
+  examples test is this ticket's); cross-file rules stay in `validate`. VacAppKMP round-trip
+  tests read local checkouts through `SAFANORIA_EXTRA_REPOS`; private tickets never committed.
+- **2026-10-01** · plan · Approved, with packages under `dev.mateuy.safanoria` (user's choice).
+- **2026-10-02** · step 1 · Root Gradle build (wrapper 9.3.0, Kotlin 2.4.20, versions catalog),
+  `core` (explicit API) and `cli`. `generateEmbedded` writes `Embedded.kt` (version + both
+  schemas as multi-dollar raw strings, so `$schema` stays literal) into `core`'s generated
+  sources. `linkUnistring` (root build, all KMP subprojects) symlinks the system
+  `libunistring.so.5` for every linuxX64 link, including test binaries; it fails with a clear
+  message when the library is missing. `safanoria version` runs; native Windows `.exe` 2.7 MB.
+  `allTests` passes locally (JVM + linuxX64). `cli.yml` runs `allTests`, links and runs the
+  binary on ubuntu-24.04, windows-2022 and macos-14.
+- **2026-10-02** · step 2 · `ConfigLoader.findRoot/load/parse` → `Config` with §2 defaults,
+  typed `Component`/`VersionSource`/`RefSystem`, and the line of every top-level key. Loading is
+  lenient (wrong types fall back to defaults); only YAML syntax errors are reported here, since
+  type and value rules come from the schema in step 3 (one source of rules). `Diagnostic`
+  prints as `file:line:col: error[code]: message`. Internal `YamlBlock` maps kaml's block lines
+  to file lines. 7 tests, JVM and linuxX64.
+- **2026-10-02** · step 3 · `Frontmatter.parse` (bounds, CRLF-tolerant) → typed fields as
+  `Located<T>` with file lines, enums with their spec spelling, `requests`, `resolvedIn`, all
+  keys. `SchemaValidator` (internal) checks frontmatter and `safanoria.yaml` (now part of
+  `ConfigLoader.parse`) against the embedded schemas and maps JSON pointers to file lines (a
+  nested map or list points at its key's line). YAML→JSON typing follows YAML 1.2 but treats
+  quoted and block scalars as strings, found from the source since kaml drops the style
+  (`title: "2026"` is valid, `title: 2026` is a type error). Examples test: all 56 pass on JVM
+  and linuxX64. Deviation: OptimumCode reports `anyOf`/`oneOf` as their failing branches and
+  `propertyNames` at the offending key, where Python's jsonschema reports the combinator or the
+  map; the test accepts the expected keyword, or any branch error, at or under the pointer.
+  VacAppKMP's config and 49 tickets pass (`SAFANORIA_EXTRA_REPOS`). Fixed on the way: test
+  environment variables are now Gradle task inputs; before, changing them reused a cached result.
+- **2026-10-02** · step 1 · Fix: CI failed on Windows and macOS because `allTests` also linked a
+  linuxX64 binary there (Kotlin/Native cross-links) and `linkUnistring` found no library. Linux
+  link tasks are now disabled on non-Linux hosts; Linux binaries are built on Linux.
+- **2026-10-02** · step 4 · `Ticket` (lazy: frontmatter and body parse separately) and `Body`:
+  sections (headings inside fenced code blocks ignored), checklists with continuation lines and
+  child items, Learnings with `Resolution`, Work Log entries (refs may contain spaces:
+  `step 2`), User Requests quotes. Malformed entries, resolutions and attributions are
+  diagnostics with their line. Section order and required content (§7.1) are left to
+  `validate`. 27 tests on JVM and linuxX64; this repository's tickets parse cleanly, and the
+  parent's Plan children equal the tickets naming it as parent. VacAppKMP: 47 tickets (49 files
+  minus README and template; step 3's "49" was the file count), 0 parse diagnostics.
+- **2026-10-02** · step 5 · `TicketEditor`: `setField`, `setList` (flow style), `setMapEntry`
+  (absent / `null` / `{}` → block; replace or append an entry), `setChecked(line)`,
+  `appendWorkLog` (multi-line text as indented continuation). Edits the original lines only:
+  keeps CRLF, a missing final newline, and a plain value's trailing comment with its spacing.
+  Values are written plain when unambiguous, else double-quoted (`"Map: pick"`, `"true"`).
+  Refuses block scalars, flow-style maps and non-checklist lines. Added `setList`, not in the
+  plan, for `new` (`blockedBy`). 12 tests on JVM and linuxX64, including a no-op round trip and
+  three targeted edits on every real ticket, here and VacAppKMP's 47.
+- **2026-10-02** · step 6 · `runCommand` (`popen`/`_popen`/`ProcessBuilder`, from the spike)
+  and `Git` (`branchExists` local or remote, `currentBranch`, `stagedFiles`; arguments with a
+  quote are rejected). `Repository.find` (from `--root` or the working directory) with config,
+  ticket paths by the §1 rule (`<id>.md` with a valid id; README, templates and bad names are
+  not tickets), lazily read tickets and `git`. CLI: global `--root`, a shared `CliContext`,
+  `RepositoryCommand` base for the next commands, and hidden `dump <file>` (fields with lines,
+  sections, checklists and children, learnings, work log; diagnostics on stderr, exit 1).
+  CI runs `dump` on every ticket on each OS. 5 more tests (JVM and linuxX64), real git included.
+  CI for the step 1 fix: green on Linux, Windows and macOS.
+- **2026-10-02** · step 7 · `tools/bench.py` (release binary; `version`, `dump` over this
+  repository and over 504 synthetic tickets). `dump` without a file parses and schema-checks
+  every ticket, the workload `validate` will have. CI run 36933952902, all green:
+
+  | runner | `version` | this repository (12) | synthetic (504) |
+  |---|---|---|---|
+  | local Linux | 13 ms | 19 ms | 144 ms |
+  | ubuntu-24.04 | 5 ms | 16 ms | 179 ms |
+  | windows-2022 | 7 ms | 21 ms | 262 ms |
+  | macos-14 | 10 ms | 26 ms | 202 ms |
+
+  VacAppKMP's 47 tickets, locally: 32 ms. The < 100 ms target holds for real repositories; full
+  body parsing and schema checks of ~500 tickets don't, hence the note in `v1-tooling-validate`
+  to check fully only what a hook needs.
+- **2026-10-02** · step 8 · README: Development section (modules, build, test, bench,
+  `libunistring`, `SAFANORIA_EXTRA_REPOS`, generated schemas); Planned list updated.
+  `v1-tooling-validate` Design: what `core` provides, timings, and removing `schema/check.py`
+  once `validate` checks tickets in CI. Learnings promoted as code comments. `allTests` green
+  locally and on the three CI OSes.
+- **2026-10-02** · status · review.
