@@ -142,6 +142,18 @@ public class TicketEditor(original: String) {
     }
 
     /**
+     * Replaces a section's lead text: its content up to the first `### ` subsection, which is
+     * kept (e.g. a bug template's Steps to reproduce). Without subsections, the whole content.
+     */
+    public fun replaceSectionIntro(name: String, text: String): TicketEditor = apply {
+        val (heading, end) = sectionBounds(name)
+        val sub = ((heading + 1) until end).firstOrNull { lines[it].startsWith("### ") } ?: end
+        repeat(sub - heading - 1) { lines.removeAt(heading + 1) }
+        val content = listOf("") + text.trim('\n').split('\n') + if (heading + 1 < lines.size) listOf("") else emptyList()
+        lines.addAll(heading + 1, content)
+    }
+
+    /**
      * Appends `- [ ] <text>` to `## Plan`: after its last checklist item (and that item's
      * continuation lines), else after its last content line, else after the heading.
      */

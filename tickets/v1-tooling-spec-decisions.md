@@ -2,7 +2,7 @@
 id: v1-tooling-spec-decisions
 type: feature
 title: Decide Safanoria versioning, attachments and per-type templates
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-10-01
@@ -24,10 +24,10 @@ Open points left in SPEC v1, to decide and write into SPEC.md:
 
 ## Acceptance Criteria
 
-- [ ] Each point decided, with the rejected alternatives in this ticket (Design)
-- [ ] SPEC.md updated; spec version bumped only if SPEC §13 requires it
+- [x] Each point decided, with the rejected alternatives in this ticket (Design)
+- [x] SPEC.md updated; spec version bumped only if SPEC §13 requires it
 - [x] This repository's `safanoria` component has a `version` source
-- [ ] `validate` checks attachment links; `new` uses per-type templates
+- [x] `validate` checks attachment links; `new` uses per-type templates
 
 ## Plan
 
@@ -49,7 +49,7 @@ stays at version 1 (§13). Rejected alternatives go to Design as each step lands
       files (videos, dumps) go elsewhere, linked by URL. §10 applies: no personal data in
       screenshots. `validate`: `attachment-missing` (error, a link to a file that isn't
       there) and `attachment-large` (warning, over 1 MB). SPEC §1, §7, §12; fixtures; README.
-- [ ] Templates per type: optional `<dir>/_TEMPLATE.<type>.md`, ignored like `_TEMPLATE.md`;
+- [x] Templates per type: optional `<dir>/_TEMPLATE.<type>.md`, ignored like `_TEMPLATE.md`;
       `new --type T` uses it, else `_TEMPLATE.md`, else the built-in one for T, else the
       built-in default. No new sections (§7 stays uniform, so tools and `validate` don't
       change): the built-in `bug` template puts steps to reproduce, expected and actual as
@@ -91,6 +91,24 @@ SHOULD with a warning (SPEC §7.8). Rejected:
 - **Checking every relative link** (e.g. to source files): those break on renames that have
   nothing to do with tickets; only links into `attachments/` are the ticket's responsibility.
 
+### Templates per type
+
+Decided: same sections for every type; per-type guidance lives inside them (SPEC §6.2).
+Lookup: `_TEMPLATE.<type>.md`, `_TEMPLATE.md`, built-in for the type (`bug`, `research`),
+built-in default. Rejected:
+
+- **Required sections per type** (e.g. `## Steps to reproduce`): every tool, the validator and
+  the section order of §7 would branch on type; `###` subsections inside Objective are free
+  (§7) and need nothing.
+- **A `templates:` map in `safanoria.yaml`**: the file-name convention needs no config and is
+  visible in the ticket directory.
+- **Built-in per-type templates before the project's `_TEMPLATE.md`**: a project that
+  customised `_TEMPLATE.md` (extra sections, comments) would lose that for bugs. Consequence:
+  a project set up with `_TEMPLATE.md` (VacAppKMP) gets the bug template only once it has
+  `_TEMPLATE.bug.md`, so `init`/`update` (`v1-tooling-install`) should install the per-type
+  templates too.
+- **Templates for `feature` and `maintenance`**: the default fits them; no shape was missing.
+
 ## Work Log
 
 - **2026-10-02** · status · Started. Branch `v1-tooling-spec-decisions` from `v1-tooling`,
@@ -112,3 +130,12 @@ SHOULD with a warning (SPEC §7.8). Rejected:
   `validate <ticket>` reports it. Fixture `attachment-missing` (generator now writes extra
   files); the large case is a FakeFileSystem test, to keep a 1 MB file out of this
   repository. This repository and VacAppKMP still validate clean.
+- **2026-10-02** · step 3 · SPEC §1, §6.2, §11; `templates/bug.md` and `templates/research.md`,
+  embedded as `Embedded.TYPE_TEMPLATES`; `NewTicket.template(repository, type)` does the
+  lookup. New editor op `replaceSectionIntro`: `--objective` replaces the Objective up to its
+  first `###`, so a bug's Steps to reproduce stay (it replaced the whole section before). Skill
+  Create and README. Tests: lookup order, bug ticket validates, editor op; the old
+  built-in-template test now uses `maintenance` (it used `bug`). Found: VacAppKMP's
+  `_TEMPLATE.md` wins over the built-in bug template (see Design).
+- **2026-10-02** · status · review. `allTests` green; this repository and VacAppKMP validate
+  clean. Spec version stays 1: every addition is optional (§13).

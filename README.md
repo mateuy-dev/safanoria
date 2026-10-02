@@ -6,7 +6,9 @@ for humans and AI agents.
 - [`SPEC.md`](SPEC.md): the format, version 1. The contract for every tool.
 - [`skill/`](skill/): agent workflow (Claude Code skill). Install by copying `skill/SKILL.md`
   and `SPEC.md` into the project's `.claude/skills/safanoria/`.
-- [`templates/ticket.md`](templates/ticket.md): blank ticket; copy to `<dir>/_TEMPLATE.md`.
+- [`templates/`](templates/): blank tickets. `ticket.md` for any type (copy to
+  `<dir>/_TEMPLATE.md` to customise it), `bug.md` and `research.md` for those types (copy to
+  `<dir>/_TEMPLATE.<type>.md`). The CLI embeds them.
 - [`schema/`](schema/): JSON Schemas for ticket frontmatter and `safanoria.yaml`, with valid and
   invalid examples (checked by `core`'s tests). The CLI embeds them.
 
@@ -38,7 +40,9 @@ safanoria new "Herd photos from the field" --id herd-photos --size M --objective
 safanoria new "Map pin" --parent herd-locations          # child: herd-locations-map-pin, added to the parent's Plan
 ```
 
-`new` fills `<dir>/_TEMPLATE.md` (or the built-in template) with the id, title, type,
+`new` fills the template for the type (`<dir>/_TEMPLATE.<type>.md`, else `<dir>/_TEMPLATE.md`,
+else the built-in one, which for bugs has Steps to reproduce, Expected and Actual; `--objective`
+keeps those subsections) with the id, title, type,
 priority, size, `area` (required when there are several components), `status: backlog` and
 today's date. It refuses an id that exists (ids are never reused), an unknown parent, and a
 parent that can't have children; a branch with the same name is a warning. The suggested id is

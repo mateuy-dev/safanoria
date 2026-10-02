@@ -9,6 +9,10 @@ val generateEmbedded = tasks.register("generateEmbedded") {
     val ticketSchema = schemaDir.file("ticket.schema.json")
     val configSchema = schemaDir.file("safanoria.schema.json")
     val ticketTemplate = rootProject.layout.projectDirectory.file("templates/ticket.md")
+    // templates/<type>.md: built-in templates for one type (SPEC §6.2).
+    val typeTemplates = listOf("feature", "bug", "maintenance", "research")
+        .map { rootProject.layout.projectDirectory.file("templates/$it.md") }
+        .filter { it.asFile.exists() }
     // gradle.properties holds the version being developed (plain MAJOR.MINOR.PATCH, read by
     // `safanoria release` as this repository's component version). Only release builds
     // (-Prelease, from the vX.Y.Z tag) report it as is; every other build is "-dev".
@@ -16,7 +20,7 @@ val generateEmbedded = tasks.register("generateEmbedded") {
     require(Regex("""\d+\.\d+\.\d+""").matches(plain)) { "gradle.properties version must be MAJOR.MINOR.PATCH, got '$plain'" }
     val version = if (providers.gradleProperty("release").isPresent) plain else "$plain-dev"
     val outDir = layout.buildDirectory.dir("generated/embedded")
-    inputs.files(ticketSchema, configSchema, ticketTemplate)
+    inputs.files(ticketSchema, configSchema, ticketTemplate, typeTemplates)
     inputs.property("version", version)
     outputs.dir(outDir)
     doLast {
@@ -34,6 +38,10 @@ val generateEmbedded = tasks.register("generateEmbedded") {
             |    public const val TICKET_SCHEMA: String = ${raw(ticketSchema)}
             |    public const val CONFIG_SCHEMA: String = ${raw(configSchema)}
             |    public const val TICKET_TEMPLATE: String = ${raw(ticketTemplate)}
+            |    /** Built-in template per type (`bug`, `research`); others use [TICKET_TEMPLATE]. */
+            |    public val TYPE_TEMPLATES: Map<String, String> = mapOf(
+            |        ${typeTemplates.joinToString(",\n|        ") { "\"${it.asFile.nameWithoutExtension}\" to ${raw(it)}" }}
+            |    )
             |}
             |""".trimMargin()
         )

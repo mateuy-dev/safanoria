@@ -17,7 +17,8 @@ viewers, editors). The key words MUST, MUST NOT, SHOULD and MAY are used as in R
     herd-locations.md
     attachments/<id>/...      ← optional files referenced from a ticket (§7.8)
     README.md                 ← ignored (not a ticket)
-    _TEMPLATE.md              ← ignored (not a ticket)
+    _TEMPLATE.md              ← ignored (not a ticket): the template for new tickets
+    _TEMPLATE.bug.md          ← ignored: optional template for one type (_TEMPLATE.<type>.md)
 ```
 
 A file in the ticket directory is a ticket if and only if its name is `<id>.md` and `<id>` is a
@@ -150,6 +151,15 @@ A request is:
 
 `research` tickets MUST NOT have children, and never get `resolvedIn`. Work that follows from
 them becomes new tickets linked with `related`.
+
+Every type has the same sections (§7). What differs goes inside them:
+
+- `bug`: Objective SHOULD have `### Steps to reproduce`, `### Expected` and `### Actual`.
+- `research`: Acceptance Criteria are the questions, one per item, checked when answered;
+  the answers are Learnings.
+
+A new ticket of type `<type>` is created from `<dir>/_TEMPLATE.<type>.md` if it exists, else
+from `<dir>/_TEMPLATE.md`, else from the template Safanoria provides for that type.
 
 ## 7. Body
 
@@ -322,7 +332,7 @@ Tickets live in git, whose history is permanent and copied to every clone.
 These rules apply to agents and to tools that automate work.
 
 1. **Create.** Propose an id, check it is unused (file and branch), confirm it with the human,
-   copy the template, set `status: backlog`, fill Objective. Add requests and quotes if it comes from users.
+   copy the template for its type (§6.2), set `status: backlog`, fill Objective. Add requests and quotes if it comes from users.
 2. **Start** — only when the human says so. Create the branch `<id>` (from the parent's branch if
    `childrenMergeInto: parent`, else from `mainBranch`) and, if configured, the worktree. Set
    `status: in-progress`.

@@ -33,7 +33,9 @@ Then do step 3 by hand, and run `safanoria validate <file>`. Without the CLI:
 
 1. Propose an id (SPEC §3). Check `<dir>/<id>.md` does not exist and
    `git branch -a --list '*<id>'` is empty. Confirm the id with the user.
-2. Copy `<dir>/_TEMPLATE.md` (or the template in SPEC §5), set `status: backlog`, fill Objective.
+2. Copy the template for the type (SPEC §6.2: `<dir>/_TEMPLATE.<type>.md`, else
+   `<dir>/_TEMPLATE.md`, else `templates/<type>.md` or `templates/ticket.md` from Safanoria), set
+   `status: backlog`, fill Objective (for a bug, its Steps to reproduce, Expected and Actual).
 3. If it comes from a user: add a `requests` entry and the verbatim quote in User Requests.
 4. If it belongs to a bigger ticket: set `parent`, and add the child item to the parent's Plan.
 
