@@ -13,7 +13,8 @@ class EmbeddedTest {
     }
 
     @Test
-    fun versionIsSet() {
-        assertTrue(Embedded.VERSION.isNotBlank())
+    fun versionIsSemver() {
+        // Tests run on non-release builds, which add -dev.
+        assertTrue(Regex("""\d+\.\d+\.\d+(-dev)?""").matches(Embedded.VERSION), Embedded.VERSION)
     }
 }

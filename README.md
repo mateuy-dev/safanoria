@@ -6,7 +6,9 @@ for humans and AI agents.
 - [`SPEC.md`](SPEC.md): the format, version 1. The contract for every tool.
 - [`skill/`](skill/): agent workflow (Claude Code skill). Install by copying `skill/SKILL.md`
   and `SPEC.md` into the project's `.claude/skills/safanoria/`.
-- [`templates/ticket.md`](templates/ticket.md): blank ticket; copy to `<dir>/_TEMPLATE.md`.
+- [`templates/`](templates/): blank tickets. `ticket.md` for any type (copy to
+  `<dir>/_TEMPLATE.md` to customise it), `bug.md` and `research.md` for those types (copy to
+  `<dir>/_TEMPLATE.<type>.md`). The CLI embeds them.
 - [`schema/`](schema/): JSON Schemas for ticket frontmatter and `safanoria.yaml`, with valid and
   invalid examples (checked by `core`'s tests). The CLI embeds them.
 
@@ -38,7 +40,9 @@ safanoria new "Herd photos from the field" --id herd-photos --size M --objective
 safanoria new "Map pin" --parent herd-locations          # child: herd-locations-map-pin, added to the parent's Plan
 ```
 
-`new` fills `<dir>/_TEMPLATE.md` (or the built-in template) with the id, title, type,
+`new` fills the template for the type (`<dir>/_TEMPLATE.<type>.md`, else `<dir>/_TEMPLATE.md`,
+else the built-in one, which for bugs has Steps to reproduce, Expected and Actual; `--objective`
+keeps those subsections) with the id, title, type,
 priority, size, `area` (required when there are several components), `status: backlog` and
 today's date. It refuses an id that exists (ids are never reused), an unknown parent, and a
 parent that can't have children; a branch with the same name is a warning. The suggested id is
@@ -107,6 +111,8 @@ exec safanoria validate --staged
 | `parent-nested`, `research-parent` | Two levels of parents; research ticket with children (§8.1, §6.2) |
 | `parent-plan-missing-child`, `parent-plan-duplicate-child`, `plan-item-not-child`, `child-check-mismatch` | Parent Plan and children out of sync (§7.5, §8.1) |
 | `child-resolved-later` | A child released after its parent (§9) |
+| `attachment-missing` | A link to a file under `attachments/` that isn't there (§7.8) |
+| `attachment-large` (warning) | An attachment over 1 MB (§7.8); warnings don't change the exit code |
 
 ## Planned
 
@@ -120,6 +126,7 @@ targeted edits, git) and is shared with future apps; `cli/` is the `safanoria` c
 as a native binary for Linux (x64), Windows (x64) and macOS (arm64).
 
 ```sh
+make install                                        # build for this OS, copy to ~/.local/bin/safanoria (PREFIX=… to change)
 ./gradlew allTests                                  # JVM tests + native tests for this OS
 ./gradlew :cli:linkReleaseExecutableLinuxX64        # or …MingwX64, …MacosArm64 (on that OS)
 cli/build/bin/linuxX64/releaseExecutable/safanoria.kexe version
@@ -132,6 +139,10 @@ python3 tools/bench.py cli/build/bin/linuxX64/releaseExecutable/safanoria.kexe  
 - Tests also read other local repositories' tickets when `SAFANORIA_EXTRA_REPOS` lists their
   roots (`:`-separated). Those tickets are only read, never copied here.
 - `schema/*.json` are embedded into `core` at build time; edit the schemas, not the generated code.
+- Versions (SPEC §13): `gradle.properties` `version` is the Safanoria version being developed,
+  plain `MAJOR.MINOR.PATCH`; it is also this repository's `safanoria` component version. Builds
+  report it with `-dev`; release builds (`-Prelease`, from the `vX.Y.Z` tag) report it as is.
+  The spec version (`safanoria: 1`) changes only on breaking spec changes.
 
 ## License
 

@@ -170,4 +170,17 @@ class TicketEditorTest {
             }
         }
     }
+
+    @Test
+    fun replaceSectionIntroKeepsSubsections() {
+        val bug = "## Objective\n\nWhat is wrong.\n\n### Steps to reproduce\n\n1. Open\n\n## Plan\n"
+        assertEquals(
+            "## Objective\n\nSaving crashes.\n\n### Steps to reproduce\n\n1. Open\n\n## Plan\n",
+            TicketEditor(bug).replaceSectionIntro("Objective", "Saving crashes.").text,
+        )
+        assertEquals(
+            "## Objective\n\nNew.\n\n## Plan\n",
+            TicketEditor("## Objective\n\nOld.\n\n## Plan\n").replaceSectionIntro("Objective", "New.").text,
+        )
+    }
 }

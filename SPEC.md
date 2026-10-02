@@ -15,9 +15,10 @@ viewers, editors). The key words MUST, MUST NOT, SHOULD and MAY are used as in R
   tickets/                    ← ticket directory (configurable)
     movement-animal-count.md  ← a ticket
     herd-locations.md
-    attachments/<id>/...      ← optional files referenced from a ticket
+    attachments/<id>/...      ← optional files referenced from a ticket (§7.8)
     README.md                 ← ignored (not a ticket)
-    _TEMPLATE.md              ← ignored (not a ticket)
+    _TEMPLATE.md              ← ignored (not a ticket): the template for new tickets
+    _TEMPLATE.bug.md          ← ignored: optional template for one type (_TEMPLATE.<type>.md)
 ```
 
 A file in the ticket directory is a ticket if and only if its name is `<id>.md` and `<id>` is a
@@ -151,6 +152,15 @@ A request is:
 `research` tickets MUST NOT have children, and never get `resolvedIn`. Work that follows from
 them becomes new tickets linked with `related`.
 
+Every type has the same sections (§7). What differs goes inside them:
+
+- `bug`: Objective SHOULD have `### Steps to reproduce`, `### Expected` and `### Actual`.
+- `research`: Acceptance Criteria are the questions, one per item, checked when answered;
+  the answers are Learnings.
+
+A new ticket of type `<type>` is created from `<dir>/_TEMPLATE.<type>.md` if it exists, else
+from `<dir>/_TEMPLATE.md`, else from the template Safanoria provides for that type.
+
 ## 7. Body
 
 Sections are level-2 headings with these exact names, in this order:
@@ -244,6 +254,22 @@ Format: `- **<YYYY-MM-DD>** · <ref> · <text>`, where `<ref>` is one of `plan`,
 a child id, `status`, `review`, `release`, or another single word. Entries SHOULD record
 decisions and deviations from the Plan with their reasons, not restate the diff.
 
+### 7.8 Attachments
+
+Files a ticket needs (screenshots, logs, sample data) go in `<dir>/attachments/<id>/`, where
+`<id>` is the ticket that owns them, and are referenced from it with relative links, which
+render on GitHub and in apps:
+
+```markdown
+![Crash on save](attachments/movement-animal-count/crash.png)
+```
+
+- File names SHOULD be lowercase, without spaces.
+- Each file SHOULD be under 1 MB: the repository keeps every version forever. Larger files
+  (videos, dumps) go elsewhere and are linked by URL.
+- §10 applies: crop or redact personal data from screenshots and logs.
+- A ticket SHOULD link only to its own attachments.
+
 ## 8. Relations
 
 Every relation is written on one side only. Tools derive the reverse direction.
@@ -306,7 +332,7 @@ Tickets live in git, whose history is permanent and copied to every clone.
 These rules apply to agents and to tools that automate work.
 
 1. **Create.** Propose an id, check it is unused (file and branch), confirm it with the human,
-   copy the template, set `status: backlog`, fill Objective. Add requests and quotes if it comes from users.
+   copy the template for its type (§6.2), set `status: backlog`, fill Objective. Add requests and quotes if it comes from users.
 2. **Start** — only when the human says so. Create the branch `<id>` (from the parent's branch if
    `childrenMergeInto: parent`, else from `mainBranch`) and, if configured, the worktree. Set
    `status: in-progress`.
@@ -336,9 +362,19 @@ A validator MUST report:
 - Unchecked Plan items or pending Learnings at `review`/`done`.
 - `requests` and User Requests quotes not matching in count; `channel` not in `channels`.
 - A child's `resolvedIn` later than its parent's.
+- A link to a file under `attachments/` that does not exist.
+
+A validator SHOULD warn about attachment files over 1 MB.
 
 ## 13. Versioning of this spec
 
 `safanoria.yaml` declares the spec version. Additions that old tools can ignore (new optional
 fields, new sections) keep the version. Changes that make valid tickets invalid, or change a
 field's meaning, increase it.
+
+The spec version is not the **Safanoria version**. Safanoria (this spec, the agent skill, the
+ticket templates and the `safanoria` CLI) is released as one unit with one `MAJOR.MINOR.PATCH`
+version, which says which spec versions it supports. A project records only the spec version.
+Copies installed into a project (the skill, this file) SHOULD end with a
+`<!-- safanoria X.Y.Z -->` line naming the Safanoria version they came from, so tools can tell
+what is installed and update it.

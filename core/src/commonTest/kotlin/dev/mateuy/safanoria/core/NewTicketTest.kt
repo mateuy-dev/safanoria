@@ -35,14 +35,14 @@ class NewTicketTest {
     @Test
     fun createsFromTheBuiltInTemplate() {
         val (fs, repo) = repo()
-        val r = assertIs<NewTicketResult.Ready>(NewTicket.prepare(repo, NewTicketRequest("Map input: pick a place", type = TicketType.BUG, size = Size.M, objective = "Users pick a place on a map."), today))
+        val r = assertIs<NewTicketResult.Ready>(NewTicket.prepare(repo, NewTicketRequest("Map input: pick a place", type = TicketType.MAINTENANCE, size = Size.M, objective = "Users pick a place on a map."), today))
         assertEquals("map-input-pick-place", r.id)
         assertTrue(r.idSuggested)
         val created = r.files.single()
         assertEquals(root / "tickets" / "map-input-pick-place.md", created.path)
         val f = Frontmatter.parse(created.path, created.text).first!!
         assertEquals("Map input: pick a place", f.title!!.value)
-        assertEquals(listOf(TicketType.BUG, Status.BACKLOG, Size.M), listOf(f.type, f.status, f.size))
+        assertEquals(listOf(TicketType.MAINTENANCE, Status.BACKLOG, Size.M), listOf(f.type, f.status, f.size))
         assertEquals("2026-10-02", f.created!!.value)
         assertTrue(created.text.contains("## Objective\n\nUsers pick a place on a map.\n\n## Acceptance Criteria"), created.text)
         write(fs, r)
@@ -82,6 +82,31 @@ class NewTicketTest {
         val text = r.files.single().text
         assertTrue(text.contains("## Notes\n\nProject section.") && text.contains("<!-- What and why -->"), text)
         assertTrue(text.contains("id: herd-photos\n"))
+    }
+
+    @Test
+    fun templatePerType() {
+        val (fs, repo) = repo()
+        fun created(type: TicketType) = assertIs<NewTicketResult.Ready>(
+            NewTicket.prepare(repo, NewTicketRequest("Save crashes", type = type, objective = "Saving a movement crashes."), today),
+        ).files.single()
+
+        // Built-in bug template: the objective replaces the lead text, the subsections stay.
+        val bug = created(TicketType.BUG)
+        assertTrue(bug.text.contains("## Objective\n\nSaving a movement crashes.\n\n### Steps to reproduce\n"), bug.text)
+        assertTrue(created(TicketType.RESEARCH).text.contains("## Learnings\n"))
+        fs.write(bug.path) { writeUtf8(bug.text) }
+        assertEquals(emptyList(), Validator(Repository(root, fs)).validate(listOf(bug.path)).map { it.toString() })
+        fs.delete(bug.path)
+
+        // The project's _TEMPLATE.md wins over built-in per-type ones; _TEMPLATE.<type>.md over both.
+        fs.write(root / "tickets" / "_TEMPLATE.md") { writeUtf8(ticket("the-ticket-id").replace("Why.", "Project default.")) }
+        assertEquals(root / "tickets" / "_TEMPLATE.md", NewTicket.template(Repository(root, fs), TicketType.BUG).first)
+        fs.write(root / "tickets" / "_TEMPLATE.bug.md") { writeUtf8(ticket("the-ticket-id").replace("Why.", "Project bug.")) }
+        val repo2 = Repository(root, fs)
+        assertEquals(root / "tickets" / "_TEMPLATE.bug.md", NewTicket.template(repo2, TicketType.BUG).first)
+        assertEquals(root / "tickets" / "_TEMPLATE.md", NewTicket.template(repo2, TicketType.FEATURE).first)
+        assertEquals(emptyList(), repo2.tickets.filter { it.fileId.startsWith("_") }, "templates are not tickets")
     }
 
     @Test

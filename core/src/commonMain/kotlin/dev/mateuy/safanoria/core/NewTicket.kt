@@ -53,8 +53,7 @@ public object NewTicket {
         request.area.firstOrNull { it !in components }?.let { return refused("'$it' is not a component: ${components.joinToString()}") }
         if (request.area.isEmpty() && components.size > 1) return refused("give the area: one or more of ${components.joinToString()} (§5)")
 
-        val templatePath = repository.ticketDir / TEMPLATE_FILE
-        val template = if (repository.fileSystem.exists(templatePath)) repository.fileSystem.read(templatePath) { readUtf8() } else Embedded.TICKET_TEMPLATE
+        val (templatePath, template) = template(repository, request.type)
 
         val text = try {
             TicketEditor(template).apply {
@@ -68,10 +67,10 @@ public object NewTicket {
                 setField("created", today)
                 setField("updated", today)
                 parent?.let { setField("parent", it.fileId) }
-                request.objective?.let { replaceSectionContent("Objective", it) }
+                request.objective?.let { replaceSectionIntro("Objective", it) }
             }.text
         } catch (e: TicketEditException) {
-            return refused("the template ${if (repository.fileSystem.exists(templatePath)) templatePath else "(built-in)"} can't be filled: ${e.message}")
+            return refused("the template ${templatePath ?: "(built-in)"} can't be filled: ${e.message}")
         }
 
         val files = mutableListOf(PlannedFile(path, text, isNew = true))
@@ -84,6 +83,20 @@ public object NewTicket {
             files += PlannedFile(parent.path, parentText, isNew = false)
         }
         return NewTicketResult.Ready(id, idSuggested = request.id == null, files = files)
+    }
+
+    /**
+     * The template for [type] (SPEC §1): the project's `_TEMPLATE.<type>.md`, else its
+     * `_TEMPLATE.md`, else the built-in one for the type, else the built-in default. The path is
+     * null for built-in ones.
+     */
+    public fun template(repository: Repository, type: TicketType): Pair<Path?, String> {
+        val fs = repository.fileSystem
+        for (name in listOf("_TEMPLATE.${type.text}.md", TEMPLATE_FILE)) {
+            val path = repository.ticketDir / name
+            if (fs.exists(path)) return path to fs.read(path) { readUtf8() }
+        }
+        return null to (Embedded.TYPE_TEMPLATES[type.text] ?: Embedded.TICKET_TEMPLATE)
     }
 
     private fun refused(reason: String) = NewTicketResult.Refused(reason)
