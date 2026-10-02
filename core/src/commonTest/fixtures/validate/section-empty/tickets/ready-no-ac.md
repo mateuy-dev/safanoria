@@ -1,7 +1,7 @@
 ---
-id: ready-empty
+id: ready-no-ac
 type: feature
-title: Ticket ready-empty
+title: Ticket ready-no-ac
 status: ready
 priority: medium
 size: S
@@ -15,7 +15,6 @@ Why.
 
 ## Acceptance Criteria
 
-<!-- fill in -->
 
 ## Plan
 

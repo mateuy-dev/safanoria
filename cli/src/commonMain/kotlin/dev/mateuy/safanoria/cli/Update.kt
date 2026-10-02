@@ -12,7 +12,8 @@ import dev.mateuy.safanoria.core.SystemFileSystem
 class Update : RepositoryCommand(name = "update") {
     override fun help(context: Context) =
         "Replace the installed skill and SPEC.md with this version's, and add missing templates. " +
-            "Templates, the ticket README and CLAUDE.md are the project's: changed only after asking (or --yes)."
+            "Templates, the ticket README, CLAUDE.md and .claude/settings.json (the SessionStart hook) are the project's: " +
+            "changed only after asking (or --yes)."
 
     private val yes by option("--yes", help = "Replace the project's templates and add the CLAUDE.md paragraph without asking").flag()
     private val dryRun by option("--dry-run", help = "Show what would change, write nothing").flag()

@@ -1,5 +1,0 @@
-safanoria: 1
-components:
-  app:
-    version: { file: gradle.properties, property: version }
-channels: [email, whatsapp]

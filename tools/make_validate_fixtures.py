@@ -151,18 +151,19 @@ case("child-resolved-later", {
 }, [("child-one", "app: 1.10.0", "child-resolved-later")])
 
 # --- sections (§7) -----------------------------------------------------------------------------
-case("section-missing", {"no-plan": ticket("no-plan", sections=[("Objective", "Why."), ("Acceptance Criteria", ""), ("Work Log", "")])},
-     [("no-plan", "## Work Log", "section-missing")])
+case("section-missing", {
+    "no-objective": ticket("no-objective", sections=[("Acceptance Criteria", ""), ("Work Log", "")]),
+    "no-plan": ticket("no-plan", sections=[("Objective", "Why."), ("Work Log", "")]),  # Plan and AC are optional
+}, [("no-objective", "## Acceptance Criteria", "section-missing")])
 case("section-order", {"swapped": ticket("swapped", sections=[("Objective", "Why."), ("Plan", ""), ("Acceptance Criteria", ""), ("Work Log", "")])},
      [("swapped", "## Acceptance Criteria", "section-order")])
 case("section-duplicate", {"twice": ticket("twice", sections=[("Objective", "Why."), ("Acceptance Criteria", ""), ("Plan", ""), ("Plan", ""), ("Work Log", "")])},
      [("twice", "## Work Log", "section-duplicate")])  # marker fixed below: the second Plan heading
-case("section-empty", {"ready-empty": ticket("ready-empty", status="ready", ac="<!-- fill in -->")},
-     [("ready-empty", "## Acceptance Criteria", "section-empty")])
-case("plan-unchecked", {"almost": ticket("almost", status="review", ac="- [x] A", plan="- [x] One\n- [ ] Two", log=LOG)},
-     [("almost", "- [ ] Two", "plan-unchecked")])
-case("learning-pending", {"open-learning": ticket("open-learning", learnings="- Something learned.", **DONE)},
-     [("open-learning", "- Something learned.", "learning-pending")])
+case("section-empty", {
+    "started-empty": ticket("started-empty", status="in-progress", log="<!-- fill in -->"),
+    "ready-no-ac": ticket("ready-no-ac", status="ready"),  # Acceptance Criteria may stay empty
+    "review-loose-ends": ticket("review-loose-ends", status="review", plan="- [ ] Two", learnings="- Something learned.", log=LOG),
+}, [("started-empty", "## Work Log", "section-empty")])
 
 # --- requests (§7.3, §5) -----------------------------------------------------------------------
 case("requests-quotes-mismatch", {

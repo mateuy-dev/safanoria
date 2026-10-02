@@ -1,8 +1,8 @@
 ---
-id: open-learning
+id: review-loose-ends
 type: feature
-title: Ticket open-learning
-status: done
+title: Ticket review-loose-ends
+status: review
 priority: medium
 size: S
 created: 2026-10-01
@@ -15,11 +15,10 @@ Why.
 
 ## Acceptance Criteria
 
-- [x] It works
 
 ## Plan
 
-- [x] Do it
+- [ ] Two
 
 ## Learnings
 

@@ -1,8 +1,8 @@
 ---
-id: almost
+id: started-empty
 type: feature
-title: Ticket almost
-status: review
+title: Ticket started-empty
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-01
@@ -15,13 +15,10 @@ Why.
 
 ## Acceptance Criteria
 
-- [x] A
 
 ## Plan
 
-- [x] One
-- [ ] Two
 
 ## Work Log
 
-- **2026-10-01** · status · Started.
+<!-- fill in -->

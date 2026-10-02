@@ -24,7 +24,7 @@ import dev.mateuy.safanoria.core.VersionSource
 class Init : CliktCommand(name = "init") {
     override fun help(context: Context) =
         "Set up Safanoria here (or in --root): safanoria.yaml, the ticket directory with templates, " +
-            "the agent skill and SPEC.md, and the CLAUDE.md paragraph. Asks for the components unless given."
+            "the agent skill and SPEC.md, the CLAUDE.md paragraph and the SessionStart hook in .claude/settings.json. Asks for the components unless given."
 
     private val cli by requireObject<CliContext>()
     private val dir by option("--dir", help = "Ticket directory").default("tickets")

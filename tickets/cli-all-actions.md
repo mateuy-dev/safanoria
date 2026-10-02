@@ -2,7 +2,7 @@
 id: cli-all-actions
 type: feature
 title: Powerful cli
-status: backlog
+status: wontfix
 priority: medium
 size: S
 created: 2026-10-02
@@ -23,3 +23,4 @@ Replaces the `cli-start-command` ticket (deleted before it was committed). Its i
 
 ## Work Log
 
+- **2026-10-02** · status · Obsolete: plan and work are no longer separate actions (a ticket session is an ordinary session), and `safanoria start` and `finish` cover the rest.

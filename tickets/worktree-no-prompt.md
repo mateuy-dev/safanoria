@@ -2,7 +2,7 @@
 id: worktree-no-prompt
 type: feature
 title: Worktrees under .claude/worktrees so switching into them needs no permission prompt
-status: backlog
+status: wontfix
 priority: low
 size: S
 created: 2026-10-02
@@ -45,4 +45,4 @@ the path. Moving the worktrees is what fixes it.
 
 - **2026-10-02** · status · Created from a user question about the permission prompts they get
   when the agent switches into a ticket's worktree.
-
+- **2026-10-02** · status · Obsolete: sessions no longer switch into ticket worktrees with EnterWorktree. The user runs `safanoria start` and opens a session in the worktree, so there is no switch to prompt for.

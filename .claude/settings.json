@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "safanoria context 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}

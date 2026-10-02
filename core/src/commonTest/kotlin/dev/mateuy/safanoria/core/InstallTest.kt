@@ -39,6 +39,7 @@ class InstallTest {
                 "issues/_TEMPLATE.research.md" to FileAction.CREATE,
                 "issues/README.md" to FileAction.CREATE,
                 "CLAUDE.md" to FileAction.CREATE,
+                ".claude/settings.json" to FileAction.CREATE,
             ),
             actions("issues"),
         )
@@ -68,9 +69,32 @@ class InstallTest {
                 "tickets/_TEMPLATE.research.md" to FileAction.CREATE,
                 "tickets/README.md" to FileAction.SAME,
                 "CLAUDE.md" to FileAction.SAME,
+                ".claude/settings.json" to FileAction.CREATE,
             ),
             actions(),
         )
+    }
+
+    @Test
+    fun sessionStartHook() {
+        val created = Install.settingsWithHook(null)!!
+        assertTrue(Install.CONTEXT_HOOK in created, created)
+        assertEquals(created, Install.settingsWithHook(created), "already there: unchanged")
+
+        // Existing settings and hooks are kept; the hook is added to SessionStart.
+        val existing = """{"permissions": {"allow": ["Bash(ls)"]}, "hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "echo hi"}]}], "Stop": []}}"""
+        val merged = Install.settingsWithHook(existing)!!
+        for (kept in listOf("Bash(ls)", "echo hi", "\"Stop\"", Install.CONTEXT_HOOK)) assertTrue(kept in merged, merged)
+        assertTrue(merged.indexOf("echo hi") < merged.indexOf(Install.CONTEXT_HOOK), merged)
+
+        assertNull(Install.settingsWithHook("not json"))
+        assertNull(Install.settingsWithHook("""{"hooks": []}"""), "a shape we don't know is left alone")
+
+        fs.createDirectories(root / ".claude")
+        fs.write(root / Install.SETTINGS_FILE) { writeUtf8(existing) }
+        assertEquals(FileAction.DIFFERS, actions()[Install.SETTINGS_FILE], "existing settings change only after asking")
+        fs.write(root / Install.SETTINGS_FILE) { writeUtf8("not json") }
+        assertEquals(FileAction.SAME, actions()[Install.SETTINGS_FILE])
     }
 
     @Test

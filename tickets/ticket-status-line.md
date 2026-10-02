@@ -2,7 +2,7 @@
 id: ticket-status-line
 type: feature
 title: Show the current ticket in the Claude Code status line
-status: backlog
+status: wontfix
 priority: low
 size: S
 created: 2026-10-02
@@ -19,3 +19,4 @@ Show the ticket a Claude Code session is working on in the status line: its id (
 
 ## Work Log
 
+- **2026-10-02** · status · Obsolete: it showed where a session had moved to. Sessions now live in their ticket's worktree and get the ticket from the SessionStart hook (`safanoria context`), so they don't move.

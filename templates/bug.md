@@ -25,6 +25,4 @@ What is wrong, who it affects and how badly.
 
 ## Acceptance Criteria
 
-## Plan
-
 ## Work Log

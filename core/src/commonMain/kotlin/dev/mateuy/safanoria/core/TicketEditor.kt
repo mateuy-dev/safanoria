@@ -155,9 +155,11 @@ public class TicketEditor(original: String) {
 
     /**
      * Appends `- [ ] <text>` to `## Plan`: after its last checklist item (and that item's
-     * continuation lines), else after its last content line, else after the heading.
+     * continuation lines), else after its last content line, else after the heading. Plan is
+     * optional (SPEC §7): without one, it is added where §7 puts it.
      */
     public fun appendPlanItem(text: String, checked: Boolean = false): TicketEditor = apply {
+        if (lines.none { it == "## Plan" }) addSection("Plan", before = listOf("Design", "Learnings", "Work Log"))
         val (heading, end) = sectionBounds("Plan")
         val item = "- [${if (checked) "x" else " "}] $text"
         val lastItem = ((heading + 1) until end).lastOrNull { CHECKBOX.containsMatchIn(lines[it]) }
@@ -175,6 +177,17 @@ public class TicketEditor(original: String) {
             lines.add(heading + 1, "")
             lines.add(heading + 2, item)
             if (heading + 3 < lines.size && lines[heading + 3].isNotBlank()) lines.add(heading + 3, "")
+        }
+    }
+
+    /** Adds an empty `## <name>` before the first of the sections in [before] present, else at the end. */
+    private fun addSection(name: String, before: List<String>) {
+        val next = lines.indexOfFirst { l -> before.any { l == "## $it" } }
+        if (next >= 0) {
+            lines.addAll(next, listOf("## $name", ""))
+        } else {
+            while (lines.isNotEmpty() && lines.last().isBlank()) lines.removeAt(lines.size - 1)
+            lines.addAll(listOf("", "## $name", ""))
         }
     }
 

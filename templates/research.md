@@ -17,8 +17,6 @@ What we need to know, why, and which decision it feeds. `size` is the time box.
 
 <!-- One question per item, checked when answered. -->
 
-## Plan
-
 ## Learnings
 
 <!-- The answers, each resolved (SPEC §7.6): promoted, a new ticket, or ticket only. Work that follows becomes new tickets in related, never children. -->

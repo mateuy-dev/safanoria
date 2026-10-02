@@ -1,129 +1,75 @@
 ---
 name: safanoria
 description: >
-  Create, plan and work on Safanoria tickets: markdown files in the project's ticket directory
-  (see safanoria.yaml). Use when the user asks to create a ticket, log a user request, plan or refine
-  a ticket, start / fix / work on / continue a ticket (by id or title), resume work after a restart
-  (`/safanoria resume …`), or finish one; or when working on a branch whose name is a ticket id.
+  Create and keep Safanoria tickets: markdown files in the project's ticket directory (see
+  safanoria.yaml) that track the backlog and the progress of each feature. Use when the user asks
+  to create a ticket or log a user request, or to finish a ticket; and in any session on a branch
+  whose name is a ticket id, to keep that ticket current.
 ---
 
-The format is defined in `SPEC.md` next to this file. Read it before writing a ticket and follow
-it exactly. Project settings (ticket directory, components, channels, worktree path, main branch)
-are in `safanoria.yaml` at the repository root.
+The format is defined in `SPEC.md` next to this file; read it before writing a ticket. Project
+settings (ticket directory, components, channels, worktree path, main branch) are in
+`safanoria.yaml` at the repository root.
 
-## Rules that are easy to get wrong
+Tickets record what is wanted and what was decided. They don't script the work: there is no
+planning or approval step, and a session works as the user directs it.
 
-- **Never start work on your own.** Move a ticket to `in-progress` only when the user tells you to
-  start or fix it.
-- The ticket is the context. Decisions, rejected alternatives and deviations go into the ticket,
-  not only into the chat.
+## Rules
+
+- **Never start a ticket.** The user starts tickets with `safanoria start <id>` and opens a
+  session in the worktree. Don't create ticket branches or worktrees, don't switch the session
+  into another worktree, and don't set `in-progress` yourself.
 - Set `updated` to today on every change. Keep frontmatter field order. Preserve unknown fields and sections.
-- **Never set `resolvedIn`.** Release stamping does that (`safanoria release <component>`, run
-  by the project's release process, not while working on a ticket).
+- User Requests and Work Log are append-only.
+- **Never set `resolvedIn`.** The project's release process does that (`safanoria release`).
 - **No personal data**: `requests[].user` is the project's user id; never names, emails or phones.
   Quotes are verbatim, in the original language.
-- User Requests and Work Log are append-only.
 
 ## Create
 
-**On which branch** (SPEC §14.2): a top-level ticket goes on `mainBranch`, also when you find
-out-of-scope work while on another ticket's branch; a child goes on its parent's branch (where
-you are while planning the parent). Never switch the user's checkout to do it. If `mainBranch`
-can't be written to (protected), create it on the current branch and say so. Don't edit a ticket
-you created on `mainBranch` from the branch you are on: the file isn't there.
+1. Write the ticket from the conversation. The Objective is the most valuable part: what is
+   wanted and why, with the context a later session will need. For a bug, also Steps to
+   reproduce, Expected and Actual. Acceptance Criteria only if they are clear already.
+2. With the `safanoria` CLI (`safanoria version` works): `safanoria new "<title>" --objective "…"
+   [--type …] [--area …] [--size …] [--parent <id>] [--on <branch>]`. It picks the id, fills the
+   template and validates. Don't ask the user to confirm the id: tell them which one it got,
+   and rename it if they ask (rename the file, its `id`, and any references; fine while the
+   ticket is only on one branch).
+3. **Which branch** (SPEC §14.2):
+   - A top-level ticket goes on `mainBranch`. In a session on another branch, use `--on <mainBranch>`:
+     it commits the ticket there without touching this checkout. If that fails (e.g. `main` is
+     protected), create it on the current branch and tell the user it needs moving.
+   - A child of the current ticket goes on this branch, without `--on`, and is committed here.
+   - Don't edit, from another branch, a ticket you created on `mainBranch`: the file isn't there.
+4. From a user: add the `requests` entry and the verbatim quote in User Requests (SPEC §7.3).
+   With `--on`, edit and commit that where `mainBranch` is checked out (`git worktree list`;
+   `git -C <worktree> commit -- <file>`), or ask the user.
+5. `safanoria validate <file>`.
 
-With the `safanoria` CLI installed (`safanoria version` works), steps 1, 2 and 4 are:
-`safanoria new "<title>" [--parent <id>] [--type …] [--area …] [--on <branch>] --dry-run` to get
-a suggested id and see what it would write, confirm the id with the user, then the same command
-without `--dry-run` (add `--id <id>` if the user chose another one, `--objective "…"` to fill
-it). `--on <mainBranch>` writes and commits the ticket on that branch without touching the
-current checkout; leave it out when the ticket belongs on the current branch. For step 3 on a
-ticket created with `--on`, add the request and quote in the same way where that branch is
-checked out, or ask the user. Then run `safanoria validate <file>`. Without the CLI:
+Without the CLI: pick an id (SPEC §3) that no branch has used (`git rev-list --all -1 --
+'<dir>/<id>.md'` and `git branch -a --list '*<id>'` print nothing), copy the template (SPEC §6.2),
+set `status: backlog`, today's dates, and for a child `parent` plus its item in the parent's Plan.
 
-1. Propose an id (SPEC §3). Check that no branch has ever had the file
-   (`git rev-list --all -1 -- '<dir>/<id>.md'` prints nothing) and that
-   `git branch -a --list '*<id>'` is empty. Confirm the id with the user. To create it on
-   `mainBranch` from another branch, write and commit it where `mainBranch` is checked out
-   (`git worktree list`; `git -C <that worktree> commit -- <file>` commits only that file); if
-   it isn't checked out anywhere, ask the user.
-2. Copy the template for the type (SPEC §6.2: `<dir>/_TEMPLATE.<type>.md`, else
-   `<dir>/_TEMPLATE.md`, else `templates/<type>.md` or `templates/ticket.md` from Safanoria), set
-   `status: backlog`, fill Objective (for a bug, its Steps to reproduce, Expected and Actual).
-3. If it comes from a user: add a `requests` entry and the verbatim quote in User Requests.
-4. If it belongs to a bigger ticket: set `parent`, and add the child item to the parent's Plan.
+## Working on a ticket's branch
 
-## Start
-
-Only when the user says so.
-
-1. Branch `<id>`: from the parent's branch if the parent has `childrenMergeInto: parent`
-   (the default), otherwise from `mainBranch`.
-2. If `safanoria.yaml` has `worktree`, create the worktree there (`{id}` replaced) and work in it:
-   - `git worktree add` does not move the session. Switch into it (Claude Code: `EnterWorktree`
-     with `path`); otherwise you keep editing the original checkout. If the session is already
-     in another worktree (e.g. the parent's), `ExitWorktree` with `keep` first: `EnterWorktree`
-     refuses to jump from one external worktree to another.
-   - Uncommitted changes in the original checkout are not in the worktree. If the ticket needs
-     them, copy them over and say so in the Work Log.
-   - `.claude/settings.local.json` is ignored by git, so it is missing in the worktree. If the
-     user relies on local settings (permissions, extra directories), tell them to recreate it.
-3. Set `status: in-progress` and log `status · started`.
-4. Then do what the user asked:
-   - **Plan**: read the relevant code; write Acceptance Criteria and Plan (a checklist, one item
-     per commit-sized step, decisions inline); log `plan`; stop and wait for approval.
-   - **Fix directly**: implement, still writing the Plan checklist and Work Log as you go.
-   - **No instruction**: plan and wait.
-
-## Resume
-
-When the user runs `/safanoria resume [<id, title or words>]` or asks to resume or continue work
-on a ticket. Continue from the ticket and git, not from what this session remembers: after a
-restart, or when work moved into a child's worktree, the session doesn't know where it is.
-
-1. Find the place: `safanoria resume <what the user gave> --format json`. It matches an id, or
-   words against the titles of tickets in progress or review; with nothing, every ticket in
-   progress. A parent leads to its children in progress, which the user may not know were
-   started. Without the CLI: the ticket branches (`git branch`), where each is checked out
-   (`git worktree list`), and each ticket's `status` and `parent` on its own branch
-   (`git show <id>:<dir>/<id>.md`).
-2. No match: say so and show `safanoria list --status in-progress,review`. More than one: show
-   them (id, title, next Plan item) and ask which one.
-3. Go there. `here: true`: you are there. Else a worktree: switch the session into it
-   (Claude Code: `EnterWorktree` with `path`, after `ExitWorktree` with `keep` if already in
-   another one). No worktree but a branch: run `command` (it creates the worktree, or switches
-   the branch when worktrees aren't configured; don't switch the user's checkout if it has
-   uncommitted changes, ask). No branch: the ticket isn't started; say so.
-4. Read the ticket: Plan, Work Log, Learnings. Check `git status` there: uncommitted changes
-   are work in progress from before; look at them before going on.
-5. Tell the user in two or three lines where you are and what's next, then continue (Work) from
-   the next unchecked Plan item. If the ticket is waiting for approval of its plan, or in
-   review, ask instead.
-
-## Work
-
-Before changing files, check that the current branch is `<id>` (`git branch --show-current`).
-If it isn't, go there first (Resume step 3): otherwise the changes land on another branch,
-often `mainBranch`.
-
-For each Plan item, in order:
-
-1. Implement it, following the project's CLAUDE.md.
-2. Check the item. Add a Work Log entry if there is a decision or deviation worth recording.
-3. Commit code and ticket together: `<id>: <short description>`.
-
+When the current branch is a ticket id (a SessionStart hook usually gives you the ticket; else
+read `<dir>/<id>.md`), the session belongs to that ticket. Work normally, as the user directs.
 Along the way:
-- Plan wrong? Update Plan / Acceptance Criteria and log why.
-- Found out-of-scope work? Create a new `backlog` ticket on `mainBranch` (see Create) and add it
-  to `related`.
-- Discovered something true beyond this ticket? Add it to Learnings right away (SPEC §7.6).
+
+- **Decisions** go into the Work Log: `- **<date>** · decision · <what and why>`. One or two
+  lines, for choices a later reader would wonder about: an approach taken or rejected, a
+  deviation from the Objective, a constraint found. Not progress, not a summary of the diff.
+  Commit the entry together with the code it explains.
+- **The goal changed?** Update Objective or Acceptance Criteria and log why.
+- **Out-of-scope work**: a new `backlog` ticket on `mainBranch` (Create, `--on`), added to this
+  ticket's `related`.
+- **Something true beyond this ticket** (about the code, a library, an external system): add it
+  to Learnings (SPEC §7.6), and promote it to the project's `learningTargets` when it is clear.
+- A Plan is optional. Write one only if the user asks or it helps; a parent's Plan lists its children.
 
 ## Finish
 
-1. Resolve every learning: promote it (to the project's `learningTargets`: CLAUDE.md, docs, a skill,
-   or a code comment next to the code), turn it into a new ticket, or mark it `ticket only`.
-2. Run the project's tests for the touched components, and `safanoria validate` if the CLI is
-   installed.
-3. Set `status: review` and log it.
-4. Set `done` only when the user says it is merged into its target.
-5. On a parent: when a child becomes `done`, check its item in the parent's Plan.
+When the user says the work is done: `safanoria finish <id>` (or set `status: review` and log
+`status · review` yourself, and commit). Resolve pending Learnings if you can, and run the
+project's tests first. Set `done` (`safanoria finish <id> --done`) only when the user says it is
+merged; that also checks the item in the parent's Plan.

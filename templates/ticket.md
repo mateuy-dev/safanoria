@@ -15,7 +15,5 @@ What we want and why.
 
 ## Acceptance Criteria
 
-## Plan
-
 ## Work Log
 

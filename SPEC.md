@@ -129,7 +129,7 @@ A request is:
 | Status | Meaning |
 |---|---|
 | `backlog` | Recorded, not prepared. |
-| `ready` | Acceptance Criteria (and Plan, if planned) written and approved. |
+| `ready` | Prepared: clear enough to start. |
 | `in-progress` | Being worked on in its branch. |
 | `review` | Work complete in its branch, waiting for review or merge. |
 | `done` | Merged into its target (`mainBranch`, or the parent's branch). |
@@ -171,11 +171,11 @@ Sections are level-2 headings with these exact names, in this order:
 |---|---|
 | `## Objective` | no |
 | `## User Requests` | yes; present when `requests` is not empty |
-| `## Acceptance Criteria` | no (may be empty in `backlog`) |
-| `## Plan` | no (may be empty in `backlog`) |
+| `## Acceptance Criteria` | yes |
+| `## Plan` | yes; present in a parent (§8.1) |
 | `## Design` | yes |
 | `## Learnings` | yes |
-| `## Work Log` | no (may be empty in `backlog`) |
+| `## Work Log` | no (may be empty in `backlog` and `ready`) |
 
 Other `##` sections MAY be added. Tools MUST preserve them and their position.
 Level-3 and deeper headings inside a section are free.
@@ -185,10 +185,11 @@ Level-3 and deeper headings inside a section are free.
 | Status | MUST be non-empty |
 |---|---|
 | `backlog` | Objective |
-| `ready` | plus Acceptance Criteria |
-| `in-progress` | plus Plan, Work Log |
-| `review` | plus: every Plan item checked; every Learning resolved (§7.6) |
-| `done` | same as `review` |
+| `ready` | Objective |
+| `in-progress`, `review`, `done`, `wontfix` | plus Work Log |
+
+Acceptance Criteria, Plan and Design are written when they help, never required. Work is not
+gated on them: there is no planning or approval step (§11).
 
 ### 7.2 Objective
 
@@ -212,12 +213,13 @@ request's `who`. Personal data MUST NOT appear (§10).
 
 ### 7.4 Acceptance Criteria
 
-A checklist (`- [ ]` / `- [x]`) of observable outcomes, optionally followed by a line
+Optional. A checklist (`- [ ]` / `- [x]`) of observable outcomes, optionally followed by a line
 `Out of scope:` and a plain list. For `research`, the items are questions to answer.
 
 ### 7.5 Plan
 
-An ordered checklist. It is the task list: there is no separate task field.
+Optional, except in a parent, where it lists the children. An ordered checklist: the task list
+when one helps, as there is no separate task field.
 
 - An item is checked when that step is done. The current step is the first unchecked one.
 - Decisions and rejected alternatives SHOULD be written in the item they affect.
@@ -241,7 +243,8 @@ where it went:
   → ticket only
 ```
 
-A learning without a `→` line is pending. A ticket MUST NOT reach `review` with pending learnings.
+A learning without a `→` line is pending. Pending learnings SHOULD be resolved when the ticket
+reaches `review`; tools do not block on them.
 "Promoted" means copied to where future work will read it (the project's `learningTargets`).
 
 ### 7.7 Work Log
@@ -252,9 +255,10 @@ Append-only, chronological. One entry per list item:
 - **2026-10-02** · step 2 · Deviation: movements already sent to the official registry must not change animals; added a criterion.
 ```
 
-Format: `- **<YYYY-MM-DD>** · <ref> · <text>`, where `<ref>` is one of `plan`, `step <n>`,
-a child id, `status`, `review`, `release`, or another single word. Entries SHOULD record
-decisions and deviations from the Plan with their reasons, not restate the diff.
+Format: `- **<YYYY-MM-DD>** · <ref> · <text>`, where `<ref>` is one of `decision`, `status`,
+a child id, `step <n>`, `review`, `release`, or another single word. Entries are short and
+record decisions, with their reasons, and deviations; not progress, and never a restatement of
+the diff. They are committed together with the code they explain.
 
 ### 7.8 Attachments
 
@@ -341,28 +345,25 @@ Tickets live in git, whose history is permanent and copied to every clone.
 
 ## 11. Workflow
 
-These rules apply to agents and to tools that automate work.
+These rules apply to agents and to tools that automate work. Tickets record what is wanted and
+what was decided; they do not script the work. Working on a ticket is an ordinary agent session.
 
-1. **Create.** Propose an id, check it is unused (a ticket file on any branch, and a branch
-   name), confirm it with the human, copy the template for its type (§6.2), set
-   `status: backlog`, fill Objective. Add requests and quotes if it comes from users. Create it
-   on the branch §14.2 says, which is often not the current one.
+1. **Create.** Pick an id that is unused (a ticket file on any branch, and a branch name), copy
+   the template for its type (§6.2), set `status: backlog`, fill Objective. Add requests and
+   quotes if it comes from users. Create it on the branch §14.2 says, which is often not the
+   current one. The id need not be confirmed first: it can be renamed while the ticket is
+   only on one branch.
 2. **Start** — only when the human says so. Create the branch `<id>` (from the parent's branch if
    `childrenMergeInto: parent`, else from `mainBranch`) and, if configured, the worktree. Set
-   `status: in-progress`.
-3. **Plan or fix**, as the human instructs:
-   - *Plan*: read the code, write Acceptance Criteria and Plan, log `plan`, and wait for approval.
-   - *Fix directly*: implement, but still write the Plan checklist and Work Log as you go.
-   - No instruction: plan and wait.
-4. **Work** happens on branch `<id>` (in its worktree, if configured). To continue work, after
-   a restart or in a new session, find that place from the tickets and git (the ticket's
-   branch, the worktree it is checked out in, and for a parent its children in progress), not
-   from memory of an earlier session. For each Plan item: implement, check it, add a Work Log
-   entry if anything is worth recording, and commit code and ticket together with the message `<id>: <short description>`.
-   Changes to the plan are written into the Plan and logged with the reason. Out-of-scope work
-   becomes a new `backlog` ticket in `related`, created on `mainBranch` (§14.2). Learnings are added when discovered.
-5. **Finish.** Resolve every learning, run the project's tests, set `status: review`.
-   Set `done` only when it is merged into its target. Never set `resolvedIn`.
+   `status: in-progress` and log it.
+3. **Work** happens on branch `<id>` (in its worktree, if configured), in a session opened there.
+   The session knows its ticket from the branch name. It works as the human directs and keeps
+   the ticket current: decisions go into the Work Log (§7.7), committed with the code they
+   explain; Objective and Acceptance Criteria are updated when the goal changes. Out-of-scope
+   work becomes a new `backlog` ticket in `related`, created on `mainBranch` (§14.2). A child of
+   this ticket is created on this branch and started like any ticket, in its own session.
+4. **Finish.** Set `status: review` when the work is complete. Set `done` only when it is merged
+   into its target. Never set `resolvedIn`.
 
 ## 12. Validation
 
@@ -376,7 +377,6 @@ A validator MUST report:
   unknown ids; `blockedBy` cycles; more than one level of parents; `research` with children.
 - Parent Plan not listing each child exactly once; child item check state not matching child status.
 - Section missing, out of order, or empty when required by status (§7.1).
-- Unchecked Plan items or pending Learnings at `review`/`done`.
 - `requests` and User Requests quotes not matching in count; `channel` not in `channels`.
 - A child's `resolvedIn` later than its parent's.
 - A link to a file under `attachments/` that does not exist.
@@ -431,7 +431,7 @@ wins over a remote one with the same name.
 
 ### 14.2 Where a ticket is created
 
-- Top-level tickets, including out-of-scope ones found while working on another ticket (§11.4),
+- Top-level tickets, including out-of-scope ones found while working on another ticket (§11.3),
   are created on `mainBranch`, without checking it out. That reserves the id at once, the ticket
   survives if the branch that found it is abandoned, and it can be prioritized on its own.
 - Children of a parent with `childrenMergeInto: parent` are created on the parent's branch,

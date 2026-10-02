@@ -183,4 +183,16 @@ class TicketEditorTest {
             TicketEditor("## Objective\n\nOld.\n\n## Plan\n").replaceSectionIntro("Objective", "New.").text,
         )
     }
+
+    @Test
+    fun appendPlanItemAddsAMissingPlan() {
+        assertEquals(
+            "## Objective\n\nWhy.\n\n## Plan\n\n- [ ] `kid`: Kid\n\n## Work Log\n",
+            TicketEditor("## Objective\n\nWhy.\n\n## Work Log\n").appendPlanItem("`kid`: Kid").text,
+        )
+        assertEquals(
+            "## Objective\n\nWhy.\n\n## Plan\n\n- [ ] `kid`: Kid\n",
+            TicketEditor("## Objective\n\nWhy.\n\n").appendPlanItem("`kid`: Kid").text,
+        )
+    }
 }

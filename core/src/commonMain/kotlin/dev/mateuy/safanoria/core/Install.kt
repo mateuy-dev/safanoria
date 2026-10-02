@@ -1,5 +1,11 @@
 package dev.mateuy.safanoria.core
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
 import okio.FileSystem
 import okio.Path
 
@@ -35,6 +41,13 @@ public data class ComponentSpec(val name: String, val source: VersionSource.Prop
 public object Install {
     public const val SKILL_DIR: String = ".claude/skills/safanoria"
     public const val CLAUDE_FILE: String = "CLAUDE.md"
+    public const val SETTINGS_FILE: String = ".claude/settings.json"
+
+    /**
+     * The SessionStart hook command: puts the ticket of a ticket branch into the session (README
+     * "Agent sessions"). Quiet and successful without the CLI, so clones without it aren't bothered.
+     */
+    public const val CONTEXT_HOOK: String = "safanoria context 2>/dev/null || true"
     private val MARKER = Regex("""<!-- safanoria (\S+) -->""")
 
     /** The marker line installed copies end with. */
@@ -64,7 +77,27 @@ public object Install {
     /** The CLAUDE.md paragraph that points agents to the skill (README "Adding Safanoria"). */
     public fun claudeParagraph(dir: String): String =
         "Work is tracked as Safanoria tickets in `$dir/<id>.md` (settings: `$CONFIG_FILE`). The ticket id is " +
-            "also the branch name. When creating, planning or working on a ticket, use the `safanoria` skill.\n"
+            "also the branch name. When creating a ticket, or working on a ticket's branch, use the `safanoria` skill.\n"
+
+    @OptIn(ExperimentalSerializationApi::class)
+    private val json = Json { prettyPrint = true; prettyPrintIndent = "  " }
+
+    /**
+     * Claude Code settings ([existing], or none) with the SessionStart hook added; [existing]
+     * unchanged when it already runs `safanoria context`, null when it isn't a JSON object.
+     */
+    public fun settingsWithHook(existing: String?): String? {
+        if (existing != null && "safanoria context" in existing) return existing
+        val settings = if (existing == null) JsonObject(emptyMap()) else
+            runCatching { Json.parseToJsonElement(existing) as? JsonObject }.getOrNull() ?: return null
+        val hooks = settings["hooks"]?.let { it as? JsonObject ?: return null } ?: JsonObject(emptyMap())
+        val sessionStart = hooks["SessionStart"]?.let { it as? JsonArray ?: return null } ?: JsonArray(emptyList())
+        val entry = JsonObject(mapOf("hooks" to JsonArray(listOf(JsonObject(mapOf(
+            "type" to JsonPrimitive("command"), "command" to JsonPrimitive(CONTEXT_HOOK),
+        ))))))
+        val updated = JsonObject(settings + ("hooks" to JsonObject(hooks + ("SessionStart" to JsonArray(sessionStart + entry)))))
+        return json.encodeToString(JsonObject.serializer(), updated) + "\n"
+    }
 
     /** A new `safanoria.yaml`. */
     public fun config(dir: String, components: List<ComponentSpec>, mainBranch: String = "main"): String = buildString {
@@ -103,12 +136,19 @@ public object Install {
             "`safanoria` skill" in claudeText -> FileChange(claude, claudeText, FileAction.SAME, managed = false)
             else -> FileChange(claude, claudeText.trimEnd('\n') + "\n\n" + claudeParagraph(dir), FileAction.DIFFERS, managed = false)
         }
+        val settings = root / SETTINGS_FILE
+        val settingsText = read(settings)
+        val settingsChange = when (val wanted = settingsWithHook(settingsText)) {
+            null, settingsText -> FileChange(settings, settingsText.orEmpty(), FileAction.SAME, managed = false) // not JSON we can edit: left alone
+            else -> FileChange(settings, wanted, if (settingsText == null) FileAction.CREATE else FileAction.DIFFERS, managed = false)
+        }
         return managedFiles().map { (name, text) -> change(skillDir / name, text, managed = true) } +
             templates().map { (name, text) -> change(ticketDir / name, text, managed = false) } +
             listOf(change(ticketDir / "README.md", ticketReadme(), managed = false)).map {
                 // A README that exists is the project's, whatever it says.
                 if (it.action == FileAction.DIFFERS) it.copy(action = FileAction.SAME) else it
             } +
-            claudeChange
+            claudeChange +
+            settingsChange
     }
 }

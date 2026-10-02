@@ -122,15 +122,6 @@ public class Validator(private val repository: Repository, private val branches:
         // Sections (§7, §7.1)
         out += sectionDiagnostics(ticket, f, body)
 
-        // review / done (§7.1, §7.6)
-        if (status == Status.REVIEW || status == Status.DONE) {
-            for (item in body.checklist("Plan")) if (!item.checked) {
-                report(item.line, "plan-unchecked", "every Plan item must be checked at ${status.text}")
-            }
-            for (l in body.learnings) if (l.resolution == Resolution.Pending) {
-                report(l.line, "learning-pending", "learnings must be resolved (→ promoted / new ticket / ticket only) at ${status.text} (§7.6)")
-            }
-        }
         return out.map { Finding(it) }
     }
 
@@ -158,7 +149,7 @@ public class Validator(private val repository: Repository, private val branches:
         val required = buildList {
             add("Objective")
             if (f.requests.isNotEmpty()) add("User Requests")
-            add("Acceptance Criteria"); add("Plan"); add("Work Log")
+            add("Work Log")
         }
         for (name in required) if (body.section(name) == null) {
             // Point at where it belongs: the next standard section present, or the end.
@@ -169,8 +160,6 @@ public class Validator(private val repository: Repository, private val branches:
         val status = f.status ?: return out
         val nonEmpty = buildList {
             add("Objective")
-            if (status.ordinal >= Status.READY.ordinal && status != Status.WONTFIX) add("Acceptance Criteria")
-            if (status.ordinal >= Status.IN_PROGRESS.ordinal && status != Status.WONTFIX) add("Plan")
             if (status.ordinal >= Status.IN_PROGRESS.ordinal) add("Work Log") // wontfix: the Work Log says why (§6.1)
         }
         for (name in nonEmpty) {

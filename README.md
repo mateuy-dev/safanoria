@@ -1,7 +1,12 @@
 # Safanoria
 
-Tickets as markdown files in the project's own repository, written to be the working context
-for humans and AI agents.
+Tickets as markdown files in the project's own repository: the backlog and the progress of
+every feature, tracked in git next to the code.
+
+The way of working is deliberately plain. You ask an agent session to create tickets. To work
+on one, you start it with the CLI (a branch and a worktree) and open an ordinary Claude Code
+session in that worktree. The session knows its ticket from the branch, works as you direct it,
+and records its decisions in the ticket as it commits. No planning or approval steps.
 
 - [`SPEC.md`](SPEC.md): the format, version 1. The contract for every tool.
 - [`skill/`](skill/): agent workflow (Claude Code skill). `safanoria init` / `update` install it,
@@ -30,7 +35,8 @@ content. `safanoria --help` lists the commands; each is described below.
 | `init`, `update` | Set up a project; install or update the skill, SPEC.md and templates |
 | `new` | Create a ticket from a title: id, template, parent's Plan |
 | `list`, `board` | One line per ticket; a markdown board by status |
-| `resume` | Where to continue work on a ticket: branch, worktree, next Plan item |
+| `start`, `finish` | Start a ticket (branch, worktree, `in-progress`); set it `review`, or `done` once merged |
+| `context` | The current branch's ticket, for the agent session (SessionStart hook) |
 | `validate`, `hook` | Check every SPEC rule; before each commit |
 | `release` | Stamp `resolvedIn` on the tickets a release ships |
 
@@ -57,14 +63,21 @@ safanoria update                    # later: this version's skill and spec, and 
 
 `init` writes `safanoria.yaml`, the ticket directory (`_TEMPLATE.md`, `_TEMPLATE.bug.md`,
 `_TEMPLATE.research.md`, `README.md`), the skill and SPEC.md in `.claude/skills/safanoria/`,
-and the paragraph that points agents to the skill in `CLAUDE.md`. The skill and spec are
-Safanoria's and end with `<!-- safanoria X.Y.Z -->`; `update` replaces them and says which
-version was there before. Templates, the ticket README and `CLAUDE.md` are the project's: they
+the paragraph that points agents to the skill in `CLAUDE.md`, and the SessionStart hook in
+`.claude/settings.json` (see "Working on a ticket"). The skill and spec are Safanoria's and end
+with `<!-- safanoria X.Y.Z -->`; `update` replaces them and says which version was there before.
+Templates, the ticket README, `CLAUDE.md` and `.claude/settings.json` are the project's: they
 are created when missing and changed only after asking (`--yes` to accept, `--dry-run` to see).
 
 Then make the release process run `safanoria release <component>` (see "Releasing"; SPEC §9).
 
 ## Creating tickets
+
+Usually you ask the agent ("create a ticket for…", "log this user request"), in any session:
+the main checkout for backlog work, or a ticket's worktree when the work turns up there. It
+writes the Objective from the conversation, picks the id and tells you, and runs `new` for the
+rest. Ask it to rename the id if you don't like it: before the ticket is started that's cheap.
+The command, which you can use too:
 
 ```sh
 safanoria new "Herd photos from the field" --dry-run   # suggested id, files it would write
@@ -79,7 +92,7 @@ keeps those subsections) with the id, title, type, priority, size, `area` (requi
 are several components), `status: backlog` and today's date. It refuses an id that exists on
 any branch (ids are never reused), an unknown parent, and a parent that can't have children; a
 branch with the same name is a warning. The suggested id is short (filler words dropped, at
-most four words): confirm or change it, it's the branch name.
+most four words); it's the branch name.
 
 **Which branch** (SPEC §14.2): a new top-level ticket belongs on `mainBranch`, even when you
 find the work while on another ticket's branch. On `main` the id is taken at once, the ticket
@@ -115,8 +128,8 @@ safanoria list --remote                         # also origin/* branches (git fe
 safanoria list --checkout                       # only this checkout's files
 ```
 
-**Every branch.** A ticket you start moves to its own branch: there it becomes `in-progress`,
-gets a Plan and a Work Log, while `main` keeps the `backlog` copy until the merge. So `list` and
+**Every branch.** A ticket you start moves to its own branch: there it becomes `in-progress`
+and gets its Work Log, while `main` keeps the `backlog` copy until the merge. So `list` and
 `board` read every local branch, without checking any out, and show each ticket's real copy
 (SPEC §14.1):
 - The copy on branch `<id>` while that branch isn't merged.
@@ -148,45 +161,44 @@ committed one only changes when tickets do. For example:
 - [delete-birth-crash](tickets/delete-birth-crash.md) Deleting a birth crashes (bug, urgent)
 ```
 
-## Continuing work
-
-After a restart, or in a new session, ask the agent:
-
-```
-/safanoria resume                      # every ticket in progress; it asks which one
-/safanoria resume herd-locations       # a ticket id
-/safanoria resume map pins             # words from the title
-```
-
-The agent finds where the work is, switches into that worktree, reads the ticket and goes on
-from the next unchecked Plan item. Naming a parent is enough: while working on it, the agent may
-have started a child in its own worktree, and `resume` leads there.
-
-It doesn't need the earlier conversation: the ticket and git have what it needs. You can still
-reopen that conversation with `claude --resume`, but run it from the folder where the session
-started (often the main checkout). Claude Code keeps a session under that folder even after it
-moved into a ticket's worktree, so `--resume` from the worktree doesn't list it.
-
-The agent uses `safanoria resume`, which you can run too:
+## Working on a ticket
 
 ```sh
-safanoria resume                       # every ticket in progress (a parent: its children in progress)
-safanoria resume herd-locations        # that ticket; a parent leads to its children in progress
-safanoria resume map pins              # words matched against in-progress and review tickets' ids and titles
-safanoria resume --format json         # for agents: also `here` and the `command` to get there
+safanoria start herd-photos --dry-run       # what it would do
+safanoria start herd-photos                 # branch, status: in-progress, worktree
+cd ../VacAppKMP--herd-photos && claude      # an ordinary session, in the worktree
+safanoria finish herd-photos                # work complete: status: review
+safanoria finish herd-photos --done         # after the merge: status: done
 ```
 
-```
-herd-locations-map  in-progress  Herds on a map  (parent herd-locations)
-  branch    herd-locations-map
-  worktree  /home/me/VacAppKMP--herd-locations-map  (2 uncommitted files)
-  next      [ ] Pins coloured by herd
-  last log  2026-10-02 · plan · Plan written: …
-  go there  cd /home/me/VacAppKMP--herd-locations-map
+**Start.** `start` creates the branch `<id>` from the parent's branch (when the parent has
+`childrenMergeInto: parent`, the default) or from `mainBranch`, sets `status: in-progress`, logs
+`status · started` and commits that on the new branch as `<id>: start`. With `worktree` in
+`safanoria.yaml` (e.g. `worktree: ../VacAppKMP--{id}`) it adds the worktree there and leaves this
+checkout alone; without it, it switches this checkout to the branch (not when it has uncommitted
+changes; `--no-switch` to never). It refuses tickets that aren't `backlog` or `ready`, tickets
+already started (the branch exists), and children whose parent isn't started yet.
+
+**Work.** Open Claude Code in the worktree yourself. The session belongs to that worktree, so
+`claude --resume` there finds it again after a restart. The SessionStart hook that `init`
+installs runs `safanoria context`: on a ticket's branch it gives the session the ticket and
+what to do with it; elsewhere it prints nothing. From there it's an ordinary session: you
+direct the work. The session keeps the ticket current. Each decision, with its reason, gets a
+short Work Log entry, committed with the code it explains. It updates Objective or Acceptance
+Criteria when the goal changes, and creates tickets for out-of-scope work on `main`. A child
+ticket is started the same way, with `start`, in its own worktree and session.
+
+Hook in `.claude/settings.json`, if you set it up by hand:
+
+```json
+{ "hooks": { "SessionStart": [ { "hooks": [ { "type": "command", "command": "safanoria context 2>/dev/null || true" } ] } ] } }
 ```
 
-It only reads. `go there` is `cd <worktree>`, or `git worktree add …` / `git switch <id>` when
-the branch isn't checked out anywhere. It exits 1 when nothing matches.
+**Finish.** Tell the session the work is done, or run `finish`. It sets `status: review` and
+logs it. `finish --done` sets `done` once the branch is merged into its target (it refuses
+before), and checks the ticket's item in its parent's Plan. Either way, it commits only the
+ticket, on the branch that has its real copy. That's the worktree when the branch is checked
+out there, otherwise the branch itself, without checking it out.
 
 ## Releasing
 
@@ -267,7 +279,6 @@ Elsewhere, install with `install.sh` and run `safanoria validate`.
 | `channel-unknown`, `requests-quotes-mismatch` | request channel not configured; requests and quotes differ in count (§5, §7.3) |
 | `quote-attribution`, `work-log-entry`, `learning-resolution` | Malformed quote attribution, Work Log entry or Learning `→` line (§7.3, §7.7, §7.6) |
 | `section-missing`, `section-order`, `section-duplicate`, `section-empty` | Sections (§7, §7.1); extra sections may go anywhere |
-| `plan-unchecked`, `learning-pending` | Unfinished work at `review`/`done` (§7.1, §7.6) |
 | `ref-unknown` | `parent`, `blockedBy`, `related`, a Plan child item or a Learning names no ticket (§8) |
 | `blocked-by-cycle` | `blockedBy` cycle (§8.2) |
 | `parent-nested`, `research-parent` | Two levels of parents; research ticket with children (§8.1, §6.2) |

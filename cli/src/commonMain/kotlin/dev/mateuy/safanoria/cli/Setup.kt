@@ -40,15 +40,24 @@ internal fun CliktCommand.applyChanges(root: Path, changes: List<FileChange>, ye
             FileAction.REPLACE -> { write(); echo("${would}replace $shown") }
             FileAction.DIFFERS -> {
                 val claude = c.path.name == Install.CLAUDE_FILE
-                val why = if (claude) "doesn't point agents to the safanoria skill" else "differs from Safanoria's"
-                val what = if (claude) "add the Safanoria paragraph to it" else "replace it with Safanoria's"
+                val settings = shown == Install.SETTINGS_FILE
+                val why = when {
+                    claude -> "doesn't point agents to the safanoria skill"
+                    settings -> "has no SessionStart hook that gives sessions their ticket"
+                    else -> "differs from Safanoria's"
+                }
+                val what = when {
+                    claude -> "add the Safanoria paragraph to it"
+                    settings -> "add the hook to it"
+                    else -> "replace it with Safanoria's"
+                }
                 val answer = when {
                     yes -> true
                     dryRun -> false
                     else -> confirm("$shown $why. ${what.replaceFirstChar { it.uppercase() }}?")
                 }
                 when (answer) {
-                    true -> { write(); echo("${would}${if (claude) "update" else "replace"} $shown") }
+                    true -> { write(); echo("${would}${if (claude || settings) "update" else "replace"} $shown") }
                     false -> echo("${if (dryRun) "would ask about" else "kept"} $shown: it $why (--yes to $what)")
                     null -> echo("kept $shown: it $why, and there is no terminal to ask (--yes to $what)")
                 }
