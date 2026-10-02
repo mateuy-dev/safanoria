@@ -44,6 +44,35 @@ class StartTest {
     }
 
     @Test
+    fun printPathPrintsOnlyTheWorktree() {
+        val repo = GitRepo.scenario("start-print-worktree")
+        repo.write("safanoria.yaml", GitRepo.CONFIG + "worktree: ../start-print-worktree--{id}\n")
+        repo.commit("worktree setting")
+        val wt = repo.root.parent!! / "start-print-worktree--alpha"
+        SystemFileSystem.deleteRecursively(wt)
+        val r = run(repo, "start", "alpha", "--print-path")
+        assertEquals(0, r.statusCode, r.output)
+        assertEquals("$wt\n", r.stdout)
+        assertTrue("add worktree" in r.stderr, r.stderr)
+        assertEquals("alpha", repo.git("branch", "--show-current", at = wt).trim())
+    }
+
+    @Test
+    fun printPathWithoutAWorktreePrintsThisCheckout() {
+        val repo = GitRepo.scenario("start-print-switch")
+        val dry = run(repo, "start", "alpha", "--print-path", "--dry-run")
+        assertEquals(0, dry.statusCode, dry.output)
+        assertEquals("", dry.stdout)
+        assertEquals(2, run(repo, "start", "alpha", "--print-path", "--no-switch").statusCode)
+        assertFalse("alpha" in branches(repo))
+
+        val r = run(repo, "start", "alpha", "--print-path")
+        assertEquals(0, r.statusCode, r.output)
+        assertEquals("${repo.root}\n", r.stdout)
+        assertTrue("switched to alpha" in r.stderr, r.stderr)
+    }
+
+    @Test
     fun uncommittedChangesKeepTheCheckoutWhereItIs() {
         val repo = GitRepo.scenario("start-dirty")
         repo.write("tickets/beta.md", GitRepo.ticket("beta") + "\nedited\n")
