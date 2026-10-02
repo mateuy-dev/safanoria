@@ -2,7 +2,7 @@
 id: interactive-cli
 type: feature
 title: Interactive cli
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-02
@@ -25,3 +25,4 @@ Scripts and agents must keep working: the non-interactive behaviour stays the de
 
 ## Work Log
 
+- **2026-10-02** · status · started
