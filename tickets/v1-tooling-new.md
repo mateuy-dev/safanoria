@@ -31,8 +31,8 @@ Objective.
 The logic is in `core` (`NewTicket`): it returns the files to write and the edits to the
 parent, so the GUI can reuse it; the CLI writes them. Nothing is written when a check fails.
 
-- [ ] Id suggestion (`Ids.suggest`): like the curated ids in real tickets (VacAppKMP:
-      "Wire ApplyMovementAsSale Route" → `apply-movement-as-sale`), not a slug of the whole
+- [x] Id suggestion (`Ids.suggest`): like the curated ids in real tickets (VacAppKMP:
+      "Andalucia Dual-File Import" → `andalucia-dual-file-import`), not a slug of the whole
       title: split camelCase, fold accents (Catalan/Spanish titles), drop filler words
       (en/es/ca: the, of, for, de, la, per, amb…), keep up to 4 words, within 40 chars.
       With a parent: `<parent>-<words>`, trimmed by words to 40. Tests with real-like titles.
@@ -57,3 +57,10 @@ parent, so the GUI can reuse it; the CLI writes them. Nothing is written when a 
 - **2026-10-02** · plan · Logic in `core`, CLI writes. Id suggestion modelled on VacAppKMP's
   curated ids (short, filler words dropped), not full-title slugs. `--dry-run` supports the
   propose-then-confirm step of §11.
+- **2026-10-02** · step 1 · `Ids.suggest(title, parent?)`. Not overfitted to one example:
+  "Wire ApplyMovementAsSale Route" suggests `wire-apply-movement-sale` (the real id,
+  `apply-movement-as-sale`, drops "Wire" by judgement); plan text corrected. Added after the
+  first test run: words already in the parent id are dropped (else `herd-locations-map-input-
+  herd-locations`), and Catalan `l·l` stays one word (`col·lecció` → `colleccio`). Titles with
+  only filler words keep them; a leading number is dropped (ids start with a letter). 5 tests,
+  JVM and linuxX64.
