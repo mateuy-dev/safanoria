@@ -41,8 +41,14 @@ internal class YamlBlock(val file: Path?, val root: YamlNode, private val firstL
 internal fun parseYamlBlock(file: Path?, text: String, firstLine: Int): Pair<YamlBlock?, Diagnostic?> = try {
     YamlBlock(file, yaml.parseToYamlNode(text), firstLine, text) to null
 } catch (e: YamlException) {
-    null to Diagnostic(file, e.line + firstLine - 1, e.column, "yaml-syntax", e.message ?: "invalid YAML")
+    // kaml's message quotes lines of the block ("at line 5, column 11"); make them file lines.
+    val message = (e.message ?: "invalid YAML").replace(BLOCK_LINE) { m ->
+        "at line ${m.groupValues[1].toInt() + firstLine - 1}, column ${m.groupValues[2]}"
+    }
+    null to Diagnostic(file, e.line + firstLine - 1, e.column, "yaml-syntax", message)
 }
+
+private val BLOCK_LINE = Regex("at line (\\d+), column (\\d+)")
 
 internal fun YamlNode.unwrap(): YamlNode = if (this is YamlTaggedNode) innerNode.unwrap() else this
 

@@ -1,0 +1,1 @@
+tickets/study.md:10 resolved-in-not-allowed
