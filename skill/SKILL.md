@@ -25,6 +25,12 @@ are in `safanoria.yaml` at the repository root.
 
 ## Create
 
+With the `safanoria` CLI installed (`safanoria version` works), steps 1, 2 and 4 are:
+`safanoria new "<title>" [--parent <id>] [--type …] [--area …] --dry-run` to get a suggested
+id and see what it would write, confirm the id with the user, then the same command without
+`--dry-run` (add `--id <id>` if the user chose another one, `--objective "…"` to fill it).
+Then do step 3 by hand, and run `safanoria validate <file>`. Without the CLI:
+
 1. Propose an id (SPEC §3). Check `<dir>/<id>.md` does not exist and
    `git branch -a --list '*<id>'` is empty. Confirm the id with the user.
 2. Copy `<dir>/_TEMPLATE.md` (or the template in SPEC §5), set `status: backlog`, fill Objective.
@@ -70,7 +76,8 @@ Along the way:
 
 1. Resolve every learning: promote it (to the project's `learningTargets`: CLAUDE.md, docs, a skill,
    or a code comment next to the code), turn it into a new ticket, or mark it `ticket only`.
-2. Run the project's tests for the touched components.
+2. Run the project's tests for the touched components, and `safanoria validate` if the CLI is
+   installed.
 3. Set `status: review` and log it.
 4. Set `done` only when the user says it is merged into its target.
 5. On a parent: when a child becomes `done`, check its item in the parent's Plan.

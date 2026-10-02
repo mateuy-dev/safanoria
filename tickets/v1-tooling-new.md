@@ -2,7 +2,7 @@
 id: v1-tooling-new
 type: feature
 title: "`safanoria new`: create a ticket from a title"
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-10-01
@@ -20,11 +20,11 @@ Objective.
 
 ## Acceptance Criteria
 
-- [ ] Suggests a valid id from the title; `--id` overrides it
-- [ ] Refuses an id that exists as a ticket; warns when a branch has that name
-- [ ] `--parent <id>` sets `parent`, suggests a child id, and adds the child item to the
+- [x] Suggests a valid id from the title; `--id` overrides it
+- [x] Refuses an id that exists as a ticket; warns when a branch has that name
+- [x] `--parent <id>` sets `parent`, suggests a child id, and adds the child item to the
       parent's Plan
-- [ ] `--type`, `--priority`, `--size` options; uses `<dir>/_TEMPLATE.md` when present
+- [x] `--type`, `--priority`, `--size` options; uses `<dir>/_TEMPLATE.md` when present
 
 ## Plan
 
@@ -47,8 +47,17 @@ parent, so the GUI can reuse it; the CLI writes them. Nothing is written when a 
       agent proposes the id before confirming it, §11); warns, without failing, when a branch
       has the id; validates the written files and reports problems. Today from
       `kotlinx-datetime` in the local time zone. Tests on the JVM and native.
-- [ ] Skill and README: Create uses `safanoria new --dry-run` to propose and `safanoria new`
+- [x] Skill and README: Create uses `safanoria new --dry-run` to propose and `safanoria new`
       to create, when the CLI is installed; README usage.
+
+## Learnings
+
+- Clikt exits 1 on its own usage errors and its `test()` helper bypasses `main`, so exit codes
+  that differ from Clikt's must be mapped in `main` and checked on the binary.
+  → promoted: cli/src/commonMain/…/Main.kt (comment on `main`)
+- Gradle's `latest.release` for `kotlinx-datetime` resolves to `0.8.0-0.6.x-compat`, a
+  compatibility artifact, not the normal release: pin versions in the catalog.
+  → ticket only
 
 ## Work Log
 
@@ -81,3 +90,7 @@ parent, so the GUI can reuse it; the CLI writes them. Nothing is written when a 
   on its own usage errors; `main` now maps every `UsageError` to 2, as documented. Clikt's
   `test()` bypasses `main`, so that is checked on the binary (bad choice, missing argument,
   missing file, unknown command: all 2). `displayPath` shared by both commands.
+- **2026-10-02** · step 4 · Skill Create: with the CLI, `new --dry-run` → confirm id → `new`,
+  then requests by hand and `validate`; the manual steps stay for projects without it. Skill
+  Finish also runs `safanoria validate`. README "Creating tickets"; `new` out of Planned.
+- **2026-10-02** · status · review. `allTests` green; this repository validates clean.
