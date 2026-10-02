@@ -20,23 +20,46 @@ Things to consider: tickets are files in a git repository, so the phone needs a 
 
 <!-- One question per item, checked when answered. -->
 
-- [ ] Which routes can turn a phone capture (screenshot, quick idea) into a ticket, and how do
+Answer: **no native app for now.** Use Remote Control today (no build), and add an issue form
+plus a GitHub Action that turns a labeled issue into a ticket. Revisit an app with `gui-viewer`.
+
+- [x] Which routes can turn a phone capture (screenshot, quick idea) into a ticket, and how do
       they compare? Candidates: native Android app, share-sheet target only, web form / PWA,
       an issue on the hosting service, the GitHub mobile app's file editor, a note or email
       picked up later by an agent. Compare on taps to capture, offline use, screenshot
       handling, auth, commit path, validation, and the cost to build and maintain.
-- [ ] How does the capture become a commit on `mainBranch`: from the phone (GitHub REST
+      Table in the Work Log (step 1). Leading: a GitHub issue converted by an Action (cheap,
+      any GitHub user) and Claude Code from the Claude app (nothing to build). A native app
+      wins only on offline capture and taps, at the highest cost. File editor, web form and
+      a note inbox dropped.
+- [x] How does the capture become a commit on `mainBranch`: from the phone (GitHub REST
       contents / Git Data API, JGit), or through a hand-off (issue, note) that something else
       commits (a GitHub Action running `safanoria new`, an agent)? Can ticket and screenshot
       land in one commit?
-- [ ] Screenshots: how do they end up under 1 MB and in `<dir>/attachments/<id>/` (SPEC §7.8),
+      Through a hand-off that has a full clone: the Action (`fetch-depth: 0`) or the agent.
+      Yes, one commit: the Action commits both; an app would need the Git Data API (blobs, tree,
+      commit, ref), since the Contents API makes one commit per file. Details in step 2.
+- [x] Screenshots: how do they end up under 1 MB and in `<dir>/attachments/<id>/` (SPEC §7.8),
       and where does redaction of personal data (§10) happen: on the phone, or at the hand-off?
-- [ ] Ids: who proposes the id and checks it was never used on any branch (§3, §14.3), when
+      Resized by whatever commits (Action or agent), which also copies it into
+      `attachments/<id>/`. Redaction on the phone, before attaching: an issue attachment is
+      readable as soon as it's posted and may outlive the issue.
+- [x] Ids: who proposes the id and checks it was never used on any branch (§3, §14.3), when
       the phone has no clone? Is a provisional id that the hand-off finalises acceptable?
-- [ ] Can the KMP `core` module (parser, `NewTicket`, validator) run on Android? Which
+      The hand-off, with `safanoria new` on its clone; an optional form field can request an id.
+      No provisional id: only a phone app would need one, and it would still need a clone to
+      finalise it.
+- [x] Can the KMP `core` module (parser, `NewTicket`, validator) run on Android? Which
       dependencies support an Android target, and which parts need `git` through the shell
       and so can't run there?
-- [ ] Recommendation: which route, the smallest first version, and the follow-up tickets.
+      Yes, it compiles for Android unchanged (JVM sources as `androidMain`); every dependency
+      resolves. Not usable there: `Git`, `Branches`, `BranchView`, `GitTreeFileSystem`,
+      `Resume`, `Hooks`. `Repository`, the parser and `NewTicket.prepare` work on any
+      `FileSystem`. Step 3.
+- [x] Recommendation: which route, the smallest first version, and the follow-up tickets.
+      Above. Smallest first version: the README section on Remote Control (done here), then
+      `issue-to-ticket`, which needs `safanoria new` to attach a file and print the id
+      (`new-attach`).
 
 ## Plan
 
@@ -63,6 +86,36 @@ user's OK (an API spike would write to a repository).
 ## Learnings
 
 <!-- The answers, each resolved (SPEC §7.6): promoted, a new ticket, or ticket only. Work that follows becomes new tickets in related, never children. -->
+
+- From a phone, Claude Code's Remote Control already works: the session runs on the user's
+  machine, and photos attached in the Claude app are saved under `~/.claude/uploads/`, so the
+  agent can copy them into attachments. Cloud sessions commit on their own branch instead.
+  → promoted: README.md
+- A GitHub issue form plus an Action is the cheapest real capture route. The Action needs a
+  full clone (`fetch-depth: 0`) to check ids; downloads images from the signed `<img src>` in
+  `body_html` (plain `user-attachments` URLs need a browser session in private
+  repositories); gets issue text only through `env` (script injection); runs only on a label
+  or for OWNER/MEMBER; opens a PR when `mainBranch` is protected; and a `GITHUB_TOKEN` push
+  doesn't start other workflows.
+- Issue attachments are readable as soon as they're posted and may outlive the issue, so
+  redaction happens on the phone, before attaching.
+- `safanoria new` can't attach a file (copy into `attachments/<id>/` and link it) and doesn't
+  print the chosen id in a machine-readable form (`--format json`, as `resume` has).
+- Core compiles for Android unchanged (JVM sources as `androidMain`, AGP KMP library plugin);
+  okio, kaml, json-schema-validator and their dependencies resolve through `-jvm` artifacts.
+  Git-dependent parts (`Git`, `Branches`, `BranchView`, `GitTreeFileSystem`, `Resume`, `Hooks`)
+  can't run there; `NewTicket.prepare` returns files instead of writing them, so an app could
+  commit them through the Git Data API. The spike build is in commit 54f44c8, for whoever
+  plans an app (see `gui-viewer`).
+  → ticket only
+- AGP 9.1 requires Gradle ≥ 9.3.1; this repository's wrapper is 9.3.0.
+  → ticket only
+- Without a clone, nothing can check that an id was never used on any branch (§3) short of
+  walking history through the API; keep id choice wherever a clone is.
+  → ticket only
+- `safanoria validate` reads any Plan item that starts with a backticked word as a child item
+  (`` - [ ] `core` on Android `` → `ref-unknown`), while SPEC §7.5 says a child item starts
+  with a ticket id in backticks.
 
 ## Work Log
 
@@ -155,3 +208,6 @@ user's OK (an API spike would write to a repository).
   - `requests`: the person filing from the phone is the maintainer, not a user request. When
     the capture is a user's report, optional form fields (user id, channel, verbatim quote) map
     to `requests` and User Requests; the user id is the project's id (§10), never a name.
+- **2026-10-02** · step 5 · Questions answered, README gets a "From a phone" paragraph, `spike/`
+  deleted. Four learnings wait for follow-up tickets (`issue-to-ticket`, `new-attach`,
+  `plan-child-detection`), whose ids the user confirms before they are created on `main`.
