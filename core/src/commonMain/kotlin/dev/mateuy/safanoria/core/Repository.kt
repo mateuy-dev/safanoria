@@ -34,6 +34,9 @@ public class Repository(public val root: Path, public val fileSystem: FileSystem
 
     public fun ticket(id: String): Ticket? = tickets.firstOrNull { it.fileId == id }
 
+    /** The tickets with their relations derived (children, blocks, progress). */
+    public val graph: TicketGraph by lazy { TicketGraph(tickets) }
+
     public val git: Git by lazy { Git(root) }
 
     public companion object {

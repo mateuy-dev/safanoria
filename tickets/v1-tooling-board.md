@@ -34,7 +34,7 @@ Both views are built in `core` (the GUI shows the same), from one `TicketGraph` 
 the reverse relations; the CLI formats them. Output is deterministic (no timestamps, stable
 order), so a committed board only changes when tickets do.
 
-- [ ] `TicketGraph` in `core`: children of a parent, the parent of a child, tickets each one
+- [x] `TicketGraph` in `core`: children of a parent, the parent of a child, tickets each one
       blocks, open blockers (`blockedBy` not `done`), a parent's progress (Plan items checked /
       total, children and own steps, as §8.1 defines "done"). Order: status (in-progress,
       review, ready, backlog, done, wontfix), then priority (urgent first), then id.
@@ -58,3 +58,8 @@ order), so a committed board only changes when tickets do.
 - **2026-10-02** · plan · `validate` flagged two Plan items starting with `` `list` `` and
   `` `board` ``: §7.5 reads a backticked first word as a child id. Reworded ("The `list`
   command…").
+- **2026-10-02** · step 1 · `TicketGraph(tickets)`, also `Repository.graph`: `parent`,
+  `children` (Plan order, unlisted children last by id), `blocks`, `openBlockers` (ids; a
+  missing ticket counts as open, `validate` reports it), `progress` (null for an empty Plan;
+  given for any ticket, formatters show it for parents). Unknown status or priority sorts last.
+  3 tests, JVM and linuxX64.
