@@ -2,9 +2,9 @@
 id: resume-ticket-session
 type: feature
 title: Make it easy to continue work on a ticket, also after a restart
-status: backlog
+status: in-progress
 priority: high
-size: S
+size: M
 created: 2026-10-02
 updated: 2026-10-02
 related: [worktree-no-prompt]
@@ -56,7 +56,48 @@ Ideas to look at (nothing decided yet):
 
 ## Acceptance Criteria
 
+- [ ] `safanoria resume [<id>]` says where to continue: for each ticket, its branch, its
+      worktree (or that it has none), uncommitted files there, the next unchecked Plan item and
+      the last Work Log entry. `--format json` gives the same for agents.
+- [ ] Without an id it shows every `in-progress` ticket that has no `in-progress` child. With
+      the id of a parent it shows the parent's `in-progress` children, or the parent itself when
+      it has none. So "I was working on the parent" is enough.
+- [ ] It gives the same answer from the main checkout and from any worktree.
+- [ ] The skill has a Continue step: on "continue" / "continue <id>" (or a session that finds
+      itself on `mainBranch` while asked to work on a ticket), it finds the place with
+      `safanoria resume` (git commands without the CLI), switches into the worktree, asks when
+      there is more than one candidate, and goes on from the ticket file.
+- [ ] Before changing files for a ticket, the skill checks the current branch is `<id>`.
+- [ ] README explains how to continue after a restart, including where Claude Code saves a
+      session that moved into a worktree.
+- [ ] Tests for the core logic and the command pass.
+
 ## Plan
+
+Decision: continuing must not depend on the Claude Code session. The ticket file is the context
+(SPEC intro), and git already knows each ticket's branch and worktree. So we find the place
+from tickets and git, and a fresh session in any checkout can continue. Resuming the old
+conversation (`claude --resume` from the folder where it started) stays possible, but it's
+optional.
+
+Rejected: logging "started child `<id>`, worktree `…`" in the parent's Work Log so the parent
+points to the child. `resume` derives this from `parent`, `status` and `git worktree list`, so a
+log entry would only repeat it and could go stale (worktree moved or removed).
+
+- [ ] Core: `Resume` over `Branches` and `git worktree list`: candidates (rules in the
+      Acceptance Criteria), each with branch, worktree path, uncommitted file count, next Plan
+      item and last Work Log entry; tests with a parent, an in-progress child in a worktree, and
+      a ticket without a worktree
+- [ ] CLI: `safanoria resume [<id>] [--format text|json]` in `Main.kt`; text gives the
+      commands to get there (`cd <worktree>` or `git switch <id>`); tests
+- [ ] Skill: Continue section and the branch check in Work; SPEC §11: work on a ticket happens on
+      branch `<id>`, and continuing finds it from the tickets and git, not from the session
+- [ ] README: "Continuing work" section (restart, child worktrees, where Claude Code keeps the
+      session)
+- [ ] Out of scope: backlog ticket on `main` for showing the current ticket in the Claude Code
+      status line; add it to `related`
+- [ ] Check by hand: a new session in the main checkout, "continue resume-ticket-session", lands
+      in this worktree
 
 ## Work Log
 
@@ -67,4 +108,8 @@ Ideas to look at (nothing decided yet):
 - **2026-10-02** · note · Scope widened at the user's request: look for different ways to make
   continuing work easy, also when the session switched into a child ticket's worktree without
   the user knowing.
+- **2026-10-02** · status · Started. Branch `resume-ticket-session` from `main`, worktree
+  `../safanoria--resume-ticket-session`.
+- **2026-10-02** · plan · Plan written: a `safanoria resume` command that finds where work is
+  from the ticket files and git, and a Continue step in the skill that uses it. Size S → M.
 
