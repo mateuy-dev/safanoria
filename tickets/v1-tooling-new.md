@@ -2,11 +2,11 @@
 id: v1-tooling-new
 type: feature
 title: "`safanoria new`: create a ticket from a title"
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-01
-updated: 2026-10-01
+updated: 2026-10-02
 parent: v1-tooling
 blockedBy: [v1-tooling-cli-core]
 ---
@@ -28,4 +28,32 @@ Objective.
 
 ## Plan
 
+The logic is in `core` (`NewTicket`): it returns the files to write and the edits to the
+parent, so the GUI can reuse it; the CLI writes them. Nothing is written when a check fails.
+
+- [ ] Id suggestion (`Ids.suggest`): like the curated ids in real tickets (VacAppKMP:
+      "Wire ApplyMovementAsSale Route" → `apply-movement-as-sale`), not a slug of the whole
+      title: split camelCase, fold accents (Catalan/Spanish titles), drop filler words
+      (en/es/ca: the, of, for, de, la, per, amb…), keep up to 4 words, within 40 chars.
+      With a parent: `<parent>-<words>`, trimmed by words to 40. Tests with real-like titles.
+- [ ] `NewTicket.prepare` in `core`: template = `<dir>/_TEMPLATE.md` or the built-in one
+      (`templates/ticket.md`, embedded like the schemas); fills id, title, type, priority,
+      size, `status: backlog`, created/updated = today, optional `parent` and Objective text,
+      with `TicketEditor` (new ops: replace a section's content, append a Plan item). Refuses:
+      invalid id, existing ticket, unknown parent, parent that has a parent or is `research`
+      (§8.1). Parent edit: `- [ ] \`<id>\`: <title>` after its last Plan item, `updated` = today.
+- [ ] CLI `safanoria new "<title>" [--id] [--parent] [--type] [--priority] [--size]
+      [--objective] [--dry-run]`: `--dry-run` prints the id and files without writing (how an
+      agent proposes the id before confirming it, §11); warns, without failing, when a branch
+      has the id; validates the written files and reports problems. Today from
+      `kotlinx-datetime` in the local time zone. Tests on the JVM and native.
+- [ ] Skill and README: Create uses `safanoria new --dry-run` to propose and `safanoria new`
+      to create, when the CLI is installed; README usage.
+
 ## Work Log
+
+- **2026-10-02** · status · Started. Branch `v1-tooling-new` from `v1-tooling`, worktree
+  `../safanoria--v1-tooling-new`.
+- **2026-10-02** · plan · Logic in `core`, CLI writes. Id suggestion modelled on VacAppKMP's
+  curated ids (short, filler words dropped), not full-title slugs. `--dry-run` supports the
+  propose-then-confirm step of §11.
