@@ -22,6 +22,17 @@ IntelliJ), start `safanoria.yaml` with:
 Ticket frontmatter is inside markdown, which editors don't check against a schema; use
 `safanoria validate` for tickets (below).
 
+The `safanoria` CLI does the mechanical parts, so agents and people spend their time on the
+content. `safanoria --help` lists the commands; each is described below.
+
+| Command | Does |
+|---|---|
+| `init`, `update` | Set up a project; install or update the skill, SPEC.md and templates |
+| `new` | Create a ticket from a title: id, template, parent's Plan |
+| `list`, `board` | One line per ticket; a markdown board by status |
+| `validate`, `hook` | Check every SPEC rule; before each commit |
+| `release` | Stamp `resolvedIn` on the tickets a release ships |
+
 ## Installing the CLI
 
 ```sh
@@ -29,6 +40,7 @@ curl -fsSL https://raw.githubusercontent.com/mateuy-dev/safanoria/main/install.s
 irm https://raw.githubusercontent.com/mateuy-dev/safanoria/main/install.ps1 | iex           # Windows x64 (PowerShell)
 ```
 
+Releases start at `v0.1.0`; until it is published, use `make install` from a checkout.
 The scripts download the latest release (`SAFANORIA_VERSION=0.1.0` for another), check its
 checksum, and put `safanoria` in `~/.local/bin` (`SAFANORIA_BIN_DIR` to change it). The Linux
 binary needs `libunistring.so.5` (Ubuntu 24.04+, Debian 13+: package `libunistring5`). From a
@@ -61,9 +73,8 @@ safanoria new "Map pin" --parent herd-locations          # child: herd-locations
 
 `new` fills the template for the type (`<dir>/_TEMPLATE.<type>.md`, else `<dir>/_TEMPLATE.md`,
 else the built-in one, which for bugs has Steps to reproduce, Expected and Actual; `--objective`
-keeps those subsections) with the id, title, type,
-priority, size, `area` (required when there are several components), `status: backlog` and
-today's date. It refuses an id that exists (ids are never reused), an unknown parent, and a
+keeps those subsections) with the id, title, type, priority, size, `area` (required when there
+are several components), `status: backlog` and today's date. It refuses an id that exists (ids are never reused), an unknown parent, and a
 parent that can't have children; a branch with the same name is a warning. The suggested id is
 short (filler words dropped, at most four words): confirm or change it, it's the branch name.
 
@@ -81,19 +92,19 @@ safanoria board -o docs/BOARD.md                # links relative to the file
 `list` and `board` show tickets in the same order: status (in-progress, review, ready, backlog,
 done, wontfix), then priority, then id. In `board`, children appear under their parent with
 the parent's `done/total` Plan items (children and own steps). The board has no dates, so a
-committed one only changes when tickets do. This repository's board, shortened:
+committed one only changes when tickets do. For example:
 
 ```markdown
 ## In progress (1)
 
-- [v1-tooling](tickets/v1-tooling.md) Tooling and open points to make Safanoria v1 usable across projects (high) · 8/14
-  - [x] [v1-tooling-new](tickets/v1-tooling-new.md) `safanoria new`: create a ticket from a title
-  - [ ] [v1-tooling-board](tickets/v1-tooling-board.md) `safanoria list` and `safanoria board` (in-progress)
-  - [ ] [v1-tooling-install](tickets/v1-tooling-install.md) Install the CLI, and set up or update Safanoria in a project with one command (backlog, high) · blocked by [v1-tooling-spec-decisions](tickets/v1-tooling-spec-decisions.md)
+- [herd-locations](tickets/herd-locations.md) Show where each herd is (high) · 2/4
+  - [x] [herd-locations-model](tickets/herd-locations-model.md) Store herd locations
+  - [ ] [herd-locations-map](tickets/herd-locations-map.md) Herds on a map (in-progress)
+  - [ ] [herd-locations-sync](tickets/herd-locations-sync.md) Sync locations to the server (backlog) · blocked by [herd-locations-map](tickets/herd-locations-map.md)
 
 ## Backlog (1)
 
-- [gui-viewer](tickets/gui-viewer.md) Compose Desktop app to view tickets
+- [delete-birth-crash](tickets/delete-birth-crash.md) Deleting a birth crashes (bug, urgent)
 ```
 
 ## Releasing
@@ -203,13 +214,13 @@ python3 tools/bench.py cli/build/bin/linuxX64/releaseExecutable/safanoria.kexe  
   the JSON Schema validator; they are built on Linux only.
 - Tests also read other local repositories' tickets when `SAFANORIA_EXTRA_REPOS` lists their
   roots (`:`-separated). Those tickets are only read, never copied here.
-- `schema/*.json` are embedded into `core` at build time; edit the schemas, not the generated code.
+- `schema/*.json`, `templates/`, `skill/SKILL.md` and `SPEC.md` are embedded into `core` at
+  build time (edit them, not the generated code), so `init` and `update` install exactly this
+  checkout's copies.
 - Versions (SPEC §13): `gradle.properties` `version` is the Safanoria version being developed,
   plain `MAJOR.MINOR.PATCH`; it is also this repository's `safanoria` component version. Builds
   report it with `-dev`; release builds (`-Prelease`, from the `vX.Y.Z` tag) report it as is.
   The spec version (`safanoria: 1`) changes only on breaking spec changes.
-- `skill/SKILL.md`, `SPEC.md` and `templates/` are embedded too: `init` and `update` install
-  exactly this checkout's copies.
 
 ### Releasing Safanoria
 
@@ -220,8 +231,9 @@ python3 tools/bench.py cli/build/bin/linuxX64/releaseExecutable/safanoria.kexe  
    `SHA256SUMS` as a GitHub release, which the install scripts download.
 3. Set `version` to the next one (e.g. `0.3.0`) for development.
 
-Changing `.github/workflows/release.yml` or the install scripts on any branch runs the workflow
-without publishing: it builds the binaries and runs both install scripts against them.
+Changing `.github/workflows/release.yml`, the install scripts or `action.yml` on any branch runs
+the workflow without publishing: it builds the binaries and runs both install scripts and the
+Action against them.
 
 ## License
 

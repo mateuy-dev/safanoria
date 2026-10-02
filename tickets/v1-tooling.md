@@ -2,7 +2,7 @@
 id: v1-tooling
 type: feature
 title: Tooling and open points to make Safanoria v1 usable across projects
-status: in-progress
+status: review
 priority: high
 size: L
 created: 2026-10-01
@@ -76,7 +76,7 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
       repository (`external: true`).
 - [x] `v1-tooling-install`: install/update of skill, spec and template into a project.
 - [x] `v1-tooling-hooks`: pre-commit hook and GitHub Actions example running `validate`.
-- [ ] README: replace the manual setup steps and the "Planned" list with the CLI; run
+- [x] README: replace the manual setup steps and the "Planned" list with the CLI; run
       `validate` on this repository. (The `safanoria` component's `version` source was done in
       `v1-tooling-spec-decisions`; the setup steps and the CLI items of "Planned" in
       `v1-tooling-install`. Left: a final read of the README against what shipped.)
@@ -144,3 +144,11 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
 - **2026-10-02** · v1-tooling-hooks · Done and merged: `safanoria hook install|uninstall` (lets
   commits through without the CLI, never touches another tool's hook) and the composite Action
   `uses: mateuy-dev/safanoria@vX.Y.Z`, tested on the three OSes. Hook installed in this clone.
+- **2026-10-02** · step 13 · README read against what shipped: a command overview near the top
+  (matches `safanoria --help`); install says releases start at `v0.1.0` (`make install` until
+  then); the board example is now a fixed illustration (this repository's own went stale with
+  every merge, and with every child done showed no statuses or blockers); the embedded-files
+  notes merged; `action.yml` added to what runs the release workflow's test mode. `validate`:
+  this repository's 12 tickets are valid.
+- **2026-10-02** · status · review. Every child done, every criterion met. Next, outside this
+  ticket: merge `v1-tooling` into `main`, stamp (`safanoria release safanoria`), tag `v0.1.0`.
