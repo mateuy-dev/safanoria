@@ -84,7 +84,7 @@ Rejected: logging "started child `<id>`, worktree `…`" in the parent's Work Lo
 points to the child. `resume` derives this from `parent`, `status` and `git worktree list`, so a
 log entry would only repeat it and could go stale (worktree moved or removed).
 
-- [ ] Core: `Resume` over `Branches` and `git worktree list`: candidates (rules in the
+- [x] Core: `Resume` over `Branches` and `git worktree list`: candidates (rules in the
       Acceptance Criteria), each with branch, worktree path, uncommitted file count, next Plan
       item and last Work Log entry; tests with a parent, an in-progress child in a worktree, and
       a ticket without a worktree
