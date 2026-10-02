@@ -2,7 +2,7 @@
 id: resume-ticket-session
 type: feature
 title: Make it easy to continue work on a ticket, also after a restart
-status: review
+status: done
 priority: high
 size: M
 created: 2026-10-02
@@ -135,4 +135,5 @@ log entry would only repeat it and could go stale (worktree moved or removed).
 - **2026-10-02** · status · Review. `./gradlew allTests` passes (JVM and linuxX64), and this
   branch's build validates every ticket. The learning about the hook running the installed CLI
   is in README's Development section.
+- **2026-10-02** · status · Done. The user confirmed it is merged into `main` (`8078d12`).
 
