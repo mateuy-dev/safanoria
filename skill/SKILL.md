@@ -3,8 +3,8 @@ name: safanoria
 description: >
   Create, plan and work on Safanoria tickets: markdown files in the project's ticket directory
   (see safanoria.yaml). Use when the user asks to create a ticket, log a user request, plan or refine
-  a ticket, start / fix / work on / continue a ticket (by id or title), or finish one; or when working
-  on a branch whose name is a ticket id.
+  a ticket, start / fix / work on / continue a ticket (by id or title), resume work after a restart
+  (`/safanoria resume …`), or finish one; or when working on a branch whose name is a ticket id.
 ---
 
 The format is defined in `SPEC.md` next to this file. Read it before writing a ticket and follow
@@ -75,7 +75,36 @@ Only when the user says so.
    - **Fix directly**: implement, still writing the Plan checklist and Work Log as you go.
    - **No instruction**: plan and wait.
 
+## Resume
+
+When the user runs `/safanoria resume [<id, title or words>]` or asks to resume or continue work
+on a ticket. Continue from the ticket and git, not from what this session remembers: after a
+restart, or when work moved into a child's worktree, the session doesn't know where it is.
+
+1. Find the place: `safanoria resume <what the user gave> --format json`. It matches an id, or
+   words against the titles of tickets in progress or review; with nothing, every ticket in
+   progress. A parent leads to its children in progress, which the user may not know were
+   started. Without the CLI: the ticket branches (`git branch`), where each is checked out
+   (`git worktree list`), and each ticket's `status` and `parent` on its own branch
+   (`git show <id>:<dir>/<id>.md`).
+2. No match: say so and show `safanoria list --status in-progress,review`. More than one: show
+   them (id, title, next Plan item) and ask which one.
+3. Go there. `here: true`: you are there. Else a worktree: switch the session into it
+   (Claude Code: `EnterWorktree` with `path`, after `ExitWorktree` with `keep` if already in
+   another one). No worktree but a branch: run `command` (it creates the worktree, or switches
+   the branch when worktrees aren't configured; don't switch the user's checkout if it has
+   uncommitted changes, ask). No branch: the ticket isn't started; say so.
+4. Read the ticket: Plan, Work Log, Learnings. Check `git status` there: uncommitted changes
+   are work in progress from before; look at them before going on.
+5. Tell the user in two or three lines where you are and what's next, then continue (Work) from
+   the next unchecked Plan item. If the ticket is waiting for approval of its plan, or in
+   review, ask instead.
+
 ## Work
+
+Before changing files, check that the current branch is `<id>` (`git branch --show-current`).
+If it isn't, go there first (Resume step 3): otherwise the changes land on another branch,
+often `mainBranch`.
 
 For each Plan item, in order:
 

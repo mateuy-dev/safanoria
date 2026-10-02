@@ -354,8 +354,11 @@ These rules apply to agents and to tools that automate work.
    - *Plan*: read the code, write Acceptance Criteria and Plan, log `plan`, and wait for approval.
    - *Fix directly*: implement, but still write the Plan checklist and Work Log as you go.
    - No instruction: plan and wait.
-4. **Work.** For each Plan item: implement, check it, add a Work Log entry if anything is worth
-   recording, and commit code and ticket together with the message `<id>: <short description>`.
+4. **Work** happens on branch `<id>` (in its worktree, if configured). To continue work, after
+   a restart or in a new session, find that place from the tickets and git (the ticket's
+   branch, the worktree it is checked out in, and for a parent its children in progress), not
+   from memory of an earlier session. For each Plan item: implement, check it, add a Work Log
+   entry if anything is worth recording, and commit code and ticket together with the message `<id>: <short description>`.
    Changes to the plan are written into the Plan and logged with the reason. Out-of-scope work
    becomes a new `backlog` ticket in `related`, created on `mainBranch` (§14.2). Learnings are added when discovered.
 5. **Finish.** Resolve every learning, run the project's tests, set `status: review`.

@@ -90,7 +90,7 @@ log entry would only repeat it and could go stale (worktree moved or removed).
       a ticket without a worktree
 - [x] CLI: `safanoria resume [<id>] [--format text|json]` in `Main.kt`; text gives the
       commands to get there (`cd <worktree>` or `git switch <id>`); tests
-- [ ] Skill: Resume section and the branch check in Work; SPEC §11: work on a ticket happens on
+- [x] Skill: Resume section and the branch check in Work; SPEC §11: work on a ticket happens on
       branch `<id>`, and continuing finds it from the tickets and git, not from the session
 - [ ] README: "Continuing work" section (restart, child worktrees, where Claude Code keeps the
       session)
