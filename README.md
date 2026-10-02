@@ -120,6 +120,7 @@ targeted edits, git) and is shared with future apps; `cli/` is the `safanoria` c
 as a native binary for Linux (x64), Windows (x64) and macOS (arm64).
 
 ```sh
+make install                                        # build for this OS, copy to ~/.local/bin/safanoria (PREFIX=… to change)
 ./gradlew allTests                                  # JVM tests + native tests for this OS
 ./gradlew :cli:linkReleaseExecutableLinuxX64        # or …MingwX64, …MacosArm64 (on that OS)
 cli/build/bin/linuxX64/releaseExecutable/safanoria.kexe version
