@@ -31,9 +31,9 @@ Two parts:
       with `_TEMPLATE.md`, the per-type templates (`_TEMPLATE.bug.md`, `_TEMPLATE.research.md`)
       and `README.md`, and installs the skill. Installed copies end with
       `<!-- safanoria X.Y.Z -->` (SPEC §13)
-- [ ] `safanoria update`: replaces the installed skill, spec and template with the current
+- [x] `safanoria update`: replaces the installed skill, spec and template with the current
       version, and says which version was installed before and after
-- [ ] Does not overwrite a project's `_TEMPLATE.md` or `CLAUDE.md` without asking
+- [x] Does not overwrite a project's `_TEMPLATE.md` or `CLAUDE.md` without asking
 - [ ] VacAppKMP's manual copy replaced using it
 
 ## Plan
@@ -57,7 +57,7 @@ schemas), so the installed files are exactly the binary's Safanoria version. Log
       terminal it needs the options. Writes `safanoria.yaml`, the ticket directory with the
       three templates and `README.md`, the skill, and the CLAUDE.md paragraph (creates CLAUDE.md,
       or asks before appending to an existing one). Validates what it wrote. Tests.
-- [ ] `safanoria update [--yes] [--dry-run]`: replaces the skill and spec, prints `skill and
+- [x] `safanoria update [--yes] [--dry-run]`: replaces the skill and spec, prints `skill and
       spec: <before> → <after>` (`installed by hand` when there is no marker); creates missing
       templates; for a template that differs from the built-in one, asks (`--yes` replaces,
       without a terminal it is kept and reported). Tests.
@@ -120,3 +120,8 @@ From `v1-tooling-native-spike` (workflow at commit 657ea65, `.github/workflows/n
   changed only with `--yes` or a yes; without a terminal it is kept and the line says how to
   change it. Usage errors thrown from `run()` carry the command's context, so they show `init`'s
   usage, not the root's. 4 tests, JVM and linuxX64.
+- **2026-10-02** · step 3 · `safanoria update [--yes] [--dry-run]`: same `Install.plan` and
+  `applyChanges` as `init`, then `skill and spec: <before> → <after>` (`installed by hand`
+  without a marker, `not installed` without the skill) or `already <version>`. 4 tests on a
+  hand-installed project like VacAppKMP: skill replaced, own template kept unless agreed,
+  per-type templates created, README and CLAUDE.md left alone.
