@@ -1,5 +1,6 @@
 # Validates this repository's tickets with the CLI built from this commit. Runs on ticket
-# changes too, which cli.yml skips.
+# changes too, which cli.yml skips. Not the Action (action.yml) other projects use: these
+# tickets must pass the validator of this same commit, which a released binary is not.
 name: tickets
 
 on:

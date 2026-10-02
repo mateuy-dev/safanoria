@@ -2,7 +2,7 @@
 id: v1-tooling-hooks
 type: feature
 title: Pre-commit hook and CI example running validate
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-10-01
@@ -19,10 +19,10 @@ the install script from `v1-tooling-install`.
 
 ## Acceptance Criteria
 
-- [ ] A pre-commit hook that validates staged tickets, installable with one command or snippet
-- [ ] A GitHub Actions example workflow that installs the binary and runs `validate`, documented
+- [x] A pre-commit hook that validates staged tickets, installable with one command or snippet
+- [x] A GitHub Actions example workflow that installs the binary and runs `validate`, documented
       in README.md
-- [ ] This repository uses both (CI: see Plan; its own `tickets.yml` keeps building the CLI
+- [x] This repository uses both (CI: see Plan; its own `tickets.yml` keeps building the CLI
       from the commit it validates)
 
 ## Plan
@@ -34,14 +34,14 @@ the install script from `v1-tooling-install`.
       checks). A `pre-commit` that isn't Safanoria's is never overwritten: it prints the line to
       add instead. `uninstall` removes only Safanoria's. `init` ends by suggesting it. Logic
       (script, location, existing hook's kind) in `core`. Tests on a temporary git repository.
-- [ ] A GitHub Action, `action.yml` at the root (composite): installs the binary with
+- [x] A GitHub Action, `action.yml` at the root (composite): installs the binary with
       `install.sh` / `install.ps1` (input `version`, default latest), puts it on PATH, runs
       `safanoria validate` (input `args`). Projects add `uses: mateuy-dev/safanoria@v0.1.0`
       after `actions/checkout`. Tested by the release workflow's test mode with `uses: ./`
       against the built binaries, on the three OSes. This repository's `tickets.yml` keeps
       building the CLI from the commit: its tickets must pass the validator of that same commit,
       which a released binary is not.
-- [ ] README: hook (command, and the one-line snippet for projects managing hooks otherwise)
+- [x] README: hook (command, and the one-line snippet for projects managing hooks otherwise)
       and the Action example. This repository: hook installed in this clone; Development says
       to run `safanoria hook install`.
 
@@ -63,3 +63,16 @@ the install script from `v1-tooling-install`.
   no `git init` and this repository's hooks are never touched; executable bit checked with
   `test -x` off Windows. Core 1 test, CLI 2, JVM and linuxX64; compiles for mingwX64 and
   macosArm64.
+- **2026-10-02** · step 2 · `action.yml` (composite): inputs `version` (default latest),
+  `args` (default `validate`), `base-url` (tests); installs to `$RUNNER_TEMP/safanoria-bin` with
+  `install.sh`, or `install.ps1` on Windows, adds it to `GITHUB_PATH`, runs `safanoria <args>`.
+  The release workflow's test mode now runs it (`uses: ./`, against the built binaries, on this
+  repository's tickets) on the three OSes, and also triggers on changes to `action.yml`.
+  `tickets.yml` says why it doesn't use the Action.
+- **2026-10-02** · step 3 · README "Before each commit" (hook) and "In CI" (the Action, pinned
+  to a version); the codes table under its own heading; Development: `safanoria hook install`.
+  This clone: `make install` (the installed CLI was a build from before `release`), then
+  `safanoria hook install`; the hook is in the common `.git/hooks`, so every worktree has it.
+- **2026-10-02** · status · review. The release workflow's test run passed on the three OSes,
+  including the Action on this repository's tickets; `allTests` green; this commit went through
+  the new hook.
