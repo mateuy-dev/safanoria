@@ -1,14 +1,14 @@
 name: release
 
 # A vX.Y.Z tag publishes the three binaries as a GitHub release; install.sh / install.ps1
-# download them. Changing this file or the install scripts on any branch (or a manual run)
+# download them. Changing this file, the install scripts or action.yml on any branch (or a manual run)
 # builds them as artifacts without publishing, to test it (workflow_dispatch only works once this
 # file is on the default branch; path filters don't apply to tags, so tags always publish).
 on:
   push:
     tags: ["v*"]
     branches: ["**"]
-    paths: [.github/workflows/release.yml, install.sh, install.ps1]
+    paths: [.github/workflows/release.yml, install.sh, install.ps1, action.yml]
   workflow_dispatch:
 
 permissions:
@@ -113,6 +113,13 @@ jobs:
           $env:SAFANORIA_BIN_DIR = "$PWD\bin"
           ./install.ps1
           & "$PWD\bin\safanoria.exe" version
+      # The Action (action.yml), as projects use it, on this repository's tickets.
+      - name: Release URL for the Action
+        run: echo "REL_URL=file://$( [ "$RUNNER_OS" = Windows ] && echo "/$(cygpath -m "$PWD")" || echo "$PWD" )/rel" >> "$GITHUB_ENV"
+      - uses: ./
+        with:
+          base-url: ${{ env.REL_URL }}
+          args: validate
 
   publish:
     needs: build
