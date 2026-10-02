@@ -33,7 +33,7 @@ Only-given-files mode (pre-commit): all tickets are loaded and checked, and a pr
 when its file is given **or** it is caused by a given file (e.g. a staged child set to `done`
 while the parent's Plan item is unchecked is reported on the parent).
 
-- [ ] Per-ticket rules: id valid and equal to the filename; parse and schema diagnostics;
+- [x] Per-ticket rules: id valid and equal to the filename; parse and schema diagnostics;
       §7 sections missing, out of order (standard sections only: extra sections like
       VacAppKMP's `## Original document` may go anywhere) or empty for the status (§7.1);
       unchecked Plan items and pending Learnings at `review`/`done`; `requests` vs quotes count;
@@ -91,3 +91,13 @@ From `v1-tooling-cli-core` (what `core` already provides):
 - **2026-10-02** · plan · Rules in `core`, CLI thin. Only-given-files mode also reports problems
   caused by a given file in another file. Extra sections (VacAppKMP's 45 tickets with
   `## Original document`) are not an order error. `schema/check.py` removed here.
+- **2026-10-02** · step 1 · `Validator` (core) with the single-ticket rules: `id-mismatch`,
+  parse and `schema-*` diagnostics, `resolved-in-not-allowed` (replaces the schema's opaque
+  `type` error at `/resolvedIn`), `area-unknown-component`, `area-required`,
+  `resolved-in-unknown-component`, `resolved-in-not-in-area`, `channel-unknown`,
+  `requests-quotes-mismatch`, `section-missing` (at the next section's heading),
+  `section-order` and `section-duplicate` (standard sections only), `section-empty`,
+  `plan-unchecked`, `learning-pending`. Decision: §7.1 has no `wontfix` row; it requires
+  Objective and Work Log (§6.1: "the Work Log says why"), not Acceptance Criteria or Plan.
+  `Body.hasContent` ignores lines that are only an HTML comment. This repository: 0 problems;
+  VacAppKMP: 0 problems.

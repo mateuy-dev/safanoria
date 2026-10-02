@@ -73,6 +73,10 @@ public class Body internal constructor(
 
     public fun section(name: String): Section? = sections.firstOrNull { it.name == name }
 
+    /** Whether a section has content: a non-blank line that isn't only an HTML comment. */
+    public fun hasContent(section: Section): Boolean =
+        content(section).any { (_, l) -> l.isNotBlank() && !HTML_COMMENT.matches(l.trim()) }
+
     /** Non-blank content lines of a section, as (file line, text). */
     private fun content(section: Section): List<Pair<Int, String>> =
         (section.firstLine..section.lastLine).map { it to text(it) }
@@ -193,6 +197,7 @@ public class Body internal constructor(
 
     private companion object {
         val FENCE = Regex("^(`{3,}|~{3,})")
+        val HTML_COMMENT = Regex("^<!--.*-->$")
         val CHECK_ITEM = Regex("^- \\[([ xX])] ?(.*)$")
         val CHILD_ITEM = Regex("^`([a-z][a-z0-9-]*)`")
         // The ref may contain a space (`step 2`), not a `·`.
