@@ -88,7 +88,7 @@ log entry would only repeat it and could go stale (worktree moved or removed).
       Acceptance Criteria), each with branch, worktree path, uncommitted file count, next Plan
       item and last Work Log entry; tests with a parent, an in-progress child in a worktree, and
       a ticket without a worktree
-- [ ] CLI: `safanoria resume [<id>] [--format text|json]` in `Main.kt`; text gives the
+- [x] CLI: `safanoria resume [<id>] [--format text|json]` in `Main.kt`; text gives the
       commands to get there (`cd <worktree>` or `git switch <id>`); tests
 - [ ] Skill: Resume section and the branch check in Work; SPEC §11: work on a ticket happens on
       branch `<id>`, and continuing finds it from the tickets and git, not from the session
@@ -114,4 +114,8 @@ log entry would only repeat it and could go stale (worktree moved or removed).
   from the ticket files and git, and a Continue step in the skill that uses it. Size S → M.
 - **2026-10-02** · plan · The skill step is triggered by `/safanoria resume <id, title or
   words>`, not by "continue": the user found a bare "continue" too vague to trigger a skill.
+- **2026-10-02** · decision · Matching words against titles is done by `safanoria resume`
+  itself, not only by the skill, so people get it too. Words match the id and title of
+  `in-progress` and `review` tickets; an exact id is taken whatever its status. With no match it
+  exits 1. The worktree is shown as an absolute path, the same one `cd` gets.
 
