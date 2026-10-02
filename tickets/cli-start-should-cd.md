@@ -2,11 +2,11 @@
 id: cli-start-should-cd
 type: feature
 title: CLI start should cd to the created worktree
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-10-03
 ---
 
 ## Objective
@@ -19,3 +19,4 @@ A child process can't change its parent shell's working directory, so this needs
 
 ## Work Log
 
+- **2026-10-03** · status · started
