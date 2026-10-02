@@ -57,7 +57,7 @@ class GitFixture(name: String, base: Path = repoRoot / "core" / "build" / "test-
     fun merge(branch: String, at: Path = root) = git("merge", "-q", "--no-ff", "--no-edit", branch, at = at)
 
     companion object {
-        const val CONFIG: String = "safanoria: 1\ncomponents:\n  app:\n    version: { file: version.txt }\n"
+        const val CONFIG: String = "safanoria: 1\ncomponents:\n  app:\n    external: true\n"
 
         /** A minimal valid ticket. */
         fun ticket(id: String, status: String = "backlog", parent: String? = null, related: List<String> = emptyList(), extra: String = ""): String = buildString {

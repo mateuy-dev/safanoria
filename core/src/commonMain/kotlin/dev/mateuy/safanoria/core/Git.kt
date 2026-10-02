@@ -17,8 +17,11 @@ public class GitException(message: String) : Exception(message)
 /** A checked-out working tree: [branch] is the short branch name, null when detached. */
 public data class Worktree(val path: Path, val branch: String?)
 
-/** An entry of a tree object: [type] is `blob`, `tree` or `commit` (submodule); [id] its object id. */
-public data class TreeEntry(val mode: String, val type: String, val id: String, val name: String)
+/**
+ * An entry of a tree object: [type] is `blob`, `tree` or `commit` (submodule); [id] its object
+ * id; [size] in bytes for blobs.
+ */
+public data class TreeEntry(val mode: String, val type: String, val id: String, val size: Long?, val name: String)
 
 /** The git calls Safanoria needs, run in [root]. */
 public class Git(private val root: Path) {
@@ -74,12 +77,12 @@ public class Git(private val root: Path) {
      * or null when [ref] doesn't have that directory.
      */
     public fun tree(ref: String, dir: String): List<TreeEntry>? {
-        val result = git("-c", "core.quotePath=false", "ls-tree", "$ref:$dir", stderr = false)
+        val result = git("-c", "core.quotePath=false", "ls-tree", "-l", "$ref:$dir", stderr = false)
         if (result.exitCode != 0) return null
         return result.output.lines().filter { it.isNotBlank() }.map { line ->
             val (meta, name) = line.split('\t', limit = 2)
-            val (mode, type, id) = meta.split(' ')
-            TreeEntry(mode, type, id, name)
+            val (mode, type, id, size) = meta.trim().split(Regex(" +"))
+            TreeEntry(mode, type, id, size.toLongOrNull(), name)
         }
     }
 

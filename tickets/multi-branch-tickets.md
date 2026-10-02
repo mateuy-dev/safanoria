@@ -66,7 +66,7 @@ Out of scope:
       parent's branch); don't edit an out-of-scope ticket from the branch that found it.
 - [x] core `Git`: branches (local, remote-tracking), worktrees (`worktree list --porcelain`),
       merged-into checks, `ls-tree` of the ticket dir, blob reads, merge-base.
-- [ ] core `GitTreeFileSystem`: a read-only Okio `FileSystem` over one commit's tree, blobs read
+- [x] core `GitTreeFileSystem`: a read-only Okio `FileSystem` over one commit's tree, blobs read
       once and cached across branches, so `Repository` (config, tickets, templates, validator,
       `NewTicket`) works on any branch unchanged.
 - [ ] core `Branches`: every branch's tickets (working-tree files for checked-out branches), the
