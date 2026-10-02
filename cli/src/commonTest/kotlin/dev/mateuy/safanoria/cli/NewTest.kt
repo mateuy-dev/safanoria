@@ -46,6 +46,15 @@ class NewTest {
     }
 
     @Test
+    fun veryLowPriority() {
+        val r = run("new", "Dark app icon", "--priority", "very-low", "--date", "2026-10-02")
+        assertEquals(0, r.statusCode, r.output)
+        val f = Frontmatter.parse(null, read(work / "tickets" / "dark-app-icon.md")).first!!
+        assertEquals("very-low", f.priority!!.text)
+        assertEquals(emptyList(), Validator(Repository(work)).validate().map { it.toString() })
+    }
+
+    @Test
     fun childAndDryRun() {
         val before = read(work / "tickets" / "herd-locations.md")
         val dry = run("new", "Map pin", "--parent", "herd-locations", "--dry-run", "--date", "2026-10-02")
