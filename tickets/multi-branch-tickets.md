@@ -60,7 +60,7 @@ Out of scope:
 
 ## Plan
 
-- [ ] SPEC: new section "Tickets across branches" (resolution rule, see Design); §3 uniqueness
+- [x] SPEC: new section "Tickets across branches" (resolution rule, see Design); §3 uniqueness
       across branches; §11 Create: on which branch, with the fallback; §12 cross-branch checks.
 - [ ] Skill: creation rules (`new --on <mainBranch>` for out-of-scope tickets, children on the
       parent's branch); don't edit an out-of-scope ticket from the branch that found it.
@@ -167,3 +167,6 @@ together" (§11.4).
 - **2026-10-02** · status · Created from the design discussion on how the CLI sees tickets on several branches.
 - **2026-10-02** · status · started
 - **2026-10-02** · plan · Plan rewritten against the shipped CLI (`v1-tooling` is done); decisions in Design → Implementation.
+- **2026-10-02** · decision · The new section is §14, not inserted before §11: §11–§13 are cited
+  in code, docs and copies installed in other projects. The spec version stays 1: §14 only adds
+  rules, and validation gets more lenient (fewer `ref-unknown`) plus one warning.
