@@ -6,3 +6,6 @@ import okio.FileSystem
 public expect val SystemFileSystem: FileSystem
 
 internal expect fun environment(name: String): String?
+
+/** An environment variable, or null. */
+public fun environmentVariable(name: String): String? = environment(name)

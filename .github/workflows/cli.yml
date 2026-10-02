@@ -55,7 +55,7 @@ jobs:
           b=cli/build/bin/${{ matrix.dir }}/releaseExecutable/${{ matrix.binary }}
           $b version
           for f in tickets/*.md; do $b dump "$f" > /dev/null; done
-          $b dump tickets/v1-tooling.md
+          $b validate
 
       - uses: actions/setup-python@v5
         with:

@@ -1,0 +1,3 @@
+tickets/map-one.md:2 id-duplicate
+tickets/map-two.md:2 id-duplicate
+tickets/map-two.md:2 id-mismatch

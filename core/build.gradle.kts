@@ -33,23 +33,6 @@ val generateEmbedded = tasks.register("generateEmbedded") {
     }
 }
 
-// Tests read this repository's schema/examples and tickets, and optionally other local
-// repositories' tickets (SAFANORIA_EXTRA_REPOS, paths separated by the OS path separator).
-val testEnvironment = buildMap {
-    put("SAFANORIA_REPO_ROOT", rootDir.absolutePath)
-    System.getenv("SAFANORIA_EXTRA_REPOS")?.let { put("SAFANORIA_EXTRA_REPOS", it) }
-}
-// Environment variables aren't task inputs by default: without inputs.property, changing
-// SAFANORIA_EXTRA_REPOS would reuse a cached test result.
-tasks.withType<Test>().configureEach {
-    testEnvironment.forEach { (k, v) -> environment(k, v) }
-    inputs.property("testEnvironment", testEnvironment)
-}
-tasks.withType<org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest>().configureEach {
-    testEnvironment.forEach { (k, v) -> environment(k, v) }
-    inputs.property("testEnvironment", testEnvironment)
-}
-
 kotlin {
     explicitApi()
     jvmToolchain(21)

@@ -105,5 +105,7 @@ class FrontmatterTest {
         assertEquals("yaml-syntax", d.single().code)
         assertNotNull(d.single().line)
         assertTrue(d.single().line!! in 3..4, d.single().toString())
+        // Line numbers inside kaml's message are file lines too.
+        assertTrue(d.single().message.contains("at line 3, column"), d.single().message)
     }
 }

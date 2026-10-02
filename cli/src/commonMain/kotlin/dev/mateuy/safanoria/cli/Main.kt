@@ -46,4 +46,7 @@ abstract class RepositoryCommand(name: String) : CliktCommand(name = name) {
     protected val repository: Repository get() = cli.repository
 }
 
-fun main(args: Array<String>) = Safanoria().subcommands(Version(), Dump()).main(args)
+/** The command tree; tests run it with Clikt's `test()`. */
+fun cli(): CliktCommand = Safanoria().subcommands(Validate(), Version(), Dump())
+
+fun main(args: Array<String>) = cli().main(args)

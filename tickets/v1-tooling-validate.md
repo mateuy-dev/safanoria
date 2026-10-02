@@ -2,11 +2,11 @@
 id: v1-tooling-validate
 type: feature
 title: "`safanoria validate`: every SPEC §12 check"
-status: backlog
+status: review
 priority: high
 size: M
 created: 2026-10-01
-updated: 2026-10-01
+updated: 2026-10-02
 parent: v1-tooling
 blockedBy: [v1-tooling-schema, v1-tooling-cli-core]
 ---
@@ -18,13 +18,43 @@ written by hand or by agents stay inside the format.
 
 ## Acceptance Criteria
 
-- [ ] One test fixture per §12 rule, each reported with file and line
-- [ ] Exit code 0 when valid, non-zero on errors
-- [ ] `--format json` for machine-readable output (CI, editors)
-- [ ] Can validate only given files (for pre-commit), still checking cross-file references
+- [x] One test fixture per §12 rule, each reported with file and line
+- [x] Exit code 0 when valid, non-zero on errors
+- [x] `--format json` for machine-readable output (CI, editors)
+- [x] Can validate only given files (for pre-commit), still checking cross-file references
       against all tickets
 
 ## Plan
+
+Rules live in `core` (`Validator`), so `gui-viewer` shows the same problems; the CLI only
+selects files and formats output. Every problem is a `Diagnostic` with a stable kebab-case
+code (`section-missing`, `ref-unknown`…), listed in the README.
+Only-given-files mode (pre-commit): all tickets are loaded and checked, and a problem is reported
+when its file is given **or** it is caused by a given file (e.g. a staged child set to `done`
+while the parent's Plan item is unchecked is reported on the parent).
+
+- [x] Per-ticket rules: id valid and equal to the filename; parse and schema diagnostics;
+      §7 sections missing, out of order (standard sections only: extra sections like
+      VacAppKMP's `## Original document` may go anywhere) or empty for the status (§7.1);
+      unchecked Plan items and pending Learnings at `review`/`done`; `requests` vs quotes count;
+      `channel` ∈ `channels`; `area` and `resolvedIn` keys ∈ components, `resolvedIn` keys ∈
+      `area`, `area` required with more than one component. Schema errors whose meaning a rule
+      states better (e.g. `resolvedIn` on a non-`done` ticket) get the rule's message.
+- [x] Cross-ticket rules: duplicate id; unknown ids in `parent`, `blockedBy`, `related`, Plan
+      child items and Learnings `new ticket`; `blockedBy` cycles; parents with a parent;
+      `research` with children; each child exactly once in its parent's Plan, and no Plan item
+      naming a ticket that isn't a child; child item checked iff child `done`/`wontfix`; a child's
+      `resolvedIn` later than its parent's (per component, semver order).
+- [x] Fixtures: `core/src/commonTest/fixtures/validate/<rule>/`, one mini repository per §12
+      rule with an `expected.txt` (`<file>:<line> <code>`), run on JVM and native. This
+      repository must validate clean; extra repositories (VacAppKMP) are reported, not asserted.
+- [x] CLI `safanoria validate [FILES…]`, `--staged` (git staged tickets and config), `--format
+      text|json`; paths relative to the working directory; summary line; exit 0 valid, 1 errors,
+      2 usage or no repository. Tests of the command on the JVM.
+- [x] Dogfood: CI validates this repository's tickets with the Linux binary on every push
+      (a `tickets.yml` job replacing `schema.yml`); remove `schema/check.py` (the Kotlin examples
+      test covers it); fix any problem it finds in our own tickets.
+- [x] README: `validate` usage, the codes table, pre-commit one-liner until `v1-tooling-hooks`.
 
 ## Design
 
@@ -54,4 +84,68 @@ From `v1-tooling-cli-core` (what `core` already provides):
 - When `validate` checks this repository's tickets in CI, remove `schema/check.py` and its
   workflow (the Kotlin `SchemaExamplesTest` covers the examples), and update the README.
 
+## Learnings
+
+- Kotlin/Native compiler caches (debug builds) of `clikt` and `clikt-mordant` both define
+  `Context.selfAndAncestors`: a debug binary using Clikt (e.g. a test binary) fails to link. The
+  `kotlin.native.cacheKind` property is gone since Kotlin 2.3.20; use the per-binary
+  `disableNativeCache(DisableCacheInKotlinVersion, reason)` DSL (opt-in `KotlinNativeCacheApi`).
+  → promoted: cli/build.gradle.kts (comment)
+- kaml's syntax error messages quote line numbers of the parsed text, so a frontmatter block's
+  errors are off by its offset in the file unless rewritten.
+  → promoted: core/src/commonMain/…/YamlNodes.kt (comment)
+
 ## Work Log
+
+- **2026-10-02** · status · Started. Branch `v1-tooling-validate` from `v1-tooling`, worktree
+  `../safanoria--v1-tooling-validate`.
+- **2026-10-02** · plan · Rules in `core`, CLI thin. Only-given-files mode also reports problems
+  caused by a given file in another file. Extra sections (VacAppKMP's 45 tickets with
+  `## Original document`) are not an order error. `schema/check.py` removed here.
+- **2026-10-02** · step 1 · `Validator` (core) with the single-ticket rules: `id-mismatch`,
+  parse and `schema-*` diagnostics, `resolved-in-not-allowed` (replaces the schema's opaque
+  `type` error at `/resolvedIn`), `area-unknown-component`, `area-required`,
+  `resolved-in-unknown-component`, `resolved-in-not-in-area`, `channel-unknown`,
+  `requests-quotes-mismatch`, `section-missing` (at the next section's heading),
+  `section-order` and `section-duplicate` (standard sections only), `section-empty`,
+  `plan-unchecked`, `learning-pending`. Decision: §7.1 has no `wontfix` row; it requires
+  Objective and Work Log (§6.1: "the Work Log says why"), not Acceptance Criteria or Plan.
+  `Body.hasContent` ignores lines that are only an HTML comment. This repository: 0 problems;
+  VacAppKMP: 0 problems.
+- **2026-10-02** · step 2 · `CrossTicketRules`: `id-duplicate`, `ref-unknown` (parent,
+  blockedBy, related, Plan child items, Learning new ticket), `blocked-by-cycle` (each cycle once,
+  on every member, at its blockedBy entry), `parent-nested`, `research-parent`,
+  `parent-plan-missing-child`, `parent-plan-duplicate-child`, `plan-item-not-child`,
+  `child-check-mismatch`, `child-resolved-later` (per component, numeric semver). Each finding
+  names the other tickets causing it, for only-given-files mode. Identity is the filename id;
+  references to a ticket whose frontmatter id differs are reported once, as `id-mismatch`.
+  This repository and VacAppKMP: 0 problems.
+- **2026-10-02** · step 3 · 35 fixtures (2 valid repositories incl. extra sections, 32 rule
+  cases, 1 only-given-files case), generated by `tools/make_validate_fixtures.py`, which finds
+  expected lines by marker text instead of counting. The test requires the exact set of
+  `<file>:<line> <code>` per case: 35/35 on JVM and linuxX64. Found and fixed: kaml's
+  `yaml-syntax` messages quoted lines of the frontmatter block ("at line 5"), off by one from
+  the file; they are now rewritten to file lines. kaml reports a syntax error where it notices it
+  (an unclosed `[` → the next line), kept as is.
+- **2026-10-02** · step 4 · `safanoria validate [FILES…]`, `--staged` (staged tickets and
+  `safanoria.yaml`; deleted files skipped; nothing staged → ok), `--format text|json`. Text:
+  `file:line:col: error[code]: message` with paths relative to the working directory, summary on
+  stderr when there are problems. JSON: `{valid, checked, diagnostics[]}`. Exit 0 / 1 / 2.
+  `cli()` builds the command tree, so tests run exactly what `main` runs (6 tests, JVM and
+  linuxX64). Tried on a staged broken ticket in this worktree, then unstaged and deleted it.
+  Also: enum errors now say `'blocked' is not one of: backlog, …`, values read from the schema.
+  Found and worked around: with native tests in `cli`, the debug test binary failed to link,
+  `clikt` and `clikt-mordant` compiler caches both defining `Context.selfAndAncestors`. Release
+  builds use no caches. `cli`'s binaries now call `disableNativeCache(2_4_20, reason)` (the
+  `kotlin.native.cacheKind` property was removed in 2.3.20); tied to the Kotlin version, so an
+  upgrade forces a re-check. Tried `clikt-core` instead: different base class, too invasive.
+  Test environment setup moved to the root build, shared by both modules.
+- **2026-10-02** · step 5 · `tickets.yml` (ubuntu-24.04, every push and PR, also ticket-only
+  changes) builds the Linux binary and runs `safanoria validate`; `cli.yml` also runs it on each
+  OS. Removed `schema/check.py` and `schema.yml`: `SchemaExamplesTest` covers the examples and
+  `validate` covers our tickets. Our 12 tickets: valid, nothing to fix.
+- **2026-10-02** · step 6 · README: "Validating tickets" with usage, exit codes, a one-line
+  pre-commit hook until `v1-tooling-hooks`, and the table of all 30 codes plus `schema-*`.
+  CI runs 36986117930 (`cli`, three OSes) and 36986117972 (`tickets`: "ok: 12 tickets valid"):
+  green. Learnings promoted as code comments.
+- **2026-10-02** · status · review.
