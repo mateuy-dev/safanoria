@@ -19,7 +19,8 @@ public class Validator(private val repository: Repository) {
     public fun validate(only: Collection<Path>? = null): List<Diagnostic> {
         val findings = repository.configResult.diagnostics.map { Finding(it) } +
             repository.tickets.flatMap { ticketFindings(it) } +
-            CrossTicketRules(repository.tickets).findings()
+            CrossTicketRules(repository.tickets).findings() +
+            AttachmentRules(repository).findings()
         val selected = only?.map { canonical(it) }?.toSet()
         return findings
             .filter { f -> selected == null || f.diagnostic.file?.let(::canonical) in selected || f.causes.any { canonical(it) in selected } }

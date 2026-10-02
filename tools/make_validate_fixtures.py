@@ -60,9 +60,10 @@ DONE = dict(status="done", ac="- [x] It works", plan="- [x] Do it", log=LOG)
 cases = {}
 
 
-def case(name, tickets, expect, config=CONFIG1, only=None):
-    """expect: [(file, marker text, code)]; file 'safanoria.yaml' or a ticket id."""
-    cases[name] = (tickets, expect, config, only)
+def case(name, tickets, expect, config=CONFIG1, only=None, files=None):
+    """expect: [(file, marker text, code)]; file 'safanoria.yaml' or a ticket id.
+    files: other files, {path under tickets/: text}, e.g. attachments."""
+    cases[name] = (tickets, expect, config, only, files or {})
 
 
 # --- valid repositories ------------------------------------------------------------------------
@@ -182,6 +183,19 @@ case("parse-errors", {
 }, [("broken-yaml", "size: S", "yaml-syntax"),  # kaml reports where it notices: the line after the open '['
     ("broken-log", "- 2026-10-01 started", "work-log-entry")])
 
+# --- attachments (§7.8) ------------------------------------------------------------------------
+case("attachment-missing", {
+    "crash-on-save": ticket("crash-on-save", objective="\n".join([
+        "Crash: ![found](attachments/crash-on-save/crash.png) and [log](attachments/crash-on-save/missing.log).",
+        "Other ticket's file: ![gone](./attachments/other-ticket/gone.png \"title\")",
+        "Not checked: [web](https://example.com/a.png), [code](../README.md), `[in code](attachments/x/y.png)`",
+        "```",
+        "![in a fence](attachments/crash-on-save/fenced.png)",
+        "```",
+    ])),
+}, [("crash-on-save", "missing.log", "attachment-missing"), ("crash-on-save", "gone.png", "attachment-missing")],
+   files={"attachments/crash-on-save/crash.png": "png"})
+
 # --- only-given-files mode ---------------------------------------------------------------------
 case("only-given-files", {
     "parent-one": ticket("parent-one", status="in-progress", ac="- [ ] A", plan="- [ ] `child-one`: x", log=LOG),
@@ -197,12 +211,15 @@ def line_of(text, marker, nth=1):
     return hits[nth - 1]
 
 
-for name, (tickets, expect, config, only) in cases.items():
+for name, (tickets, expect, config, only, files) in cases.items():
     root = out / name
     (root / "tickets").mkdir(parents=True)
     (root / "safanoria.yaml").write_text(config)
     for tid, text in tickets.items():
         (root / "tickets" / f"{tid}.md").write_text(text)
+    for path, text in files.items():
+        (root / "tickets" / path).parent.mkdir(parents=True, exist_ok=True)
+        (root / "tickets" / path).write_text(text)
     lines = []
     for file, marker, code in expect:
         if file == "safanoria.yaml":

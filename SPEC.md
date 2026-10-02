@@ -15,7 +15,7 @@ viewers, editors). The key words MUST, MUST NOT, SHOULD and MAY are used as in R
   tickets/                    ← ticket directory (configurable)
     movement-animal-count.md  ← a ticket
     herd-locations.md
-    attachments/<id>/...      ← optional files referenced from a ticket
+    attachments/<id>/...      ← optional files referenced from a ticket (§7.8)
     README.md                 ← ignored (not a ticket)
     _TEMPLATE.md              ← ignored (not a ticket)
 ```
@@ -244,6 +244,22 @@ Format: `- **<YYYY-MM-DD>** · <ref> · <text>`, where `<ref>` is one of `plan`,
 a child id, `status`, `review`, `release`, or another single word. Entries SHOULD record
 decisions and deviations from the Plan with their reasons, not restate the diff.
 
+### 7.8 Attachments
+
+Files a ticket needs (screenshots, logs, sample data) go in `<dir>/attachments/<id>/`, where
+`<id>` is the ticket that owns them, and are referenced from it with relative links, which
+render on GitHub and in apps:
+
+```markdown
+![Crash on save](attachments/movement-animal-count/crash.png)
+```
+
+- File names SHOULD be lowercase, without spaces.
+- Each file SHOULD be under 1 MB: the repository keeps every version forever. Larger files
+  (videos, dumps) go elsewhere and are linked by URL.
+- §10 applies: crop or redact personal data from screenshots and logs.
+- A ticket SHOULD link only to its own attachments.
+
 ## 8. Relations
 
 Every relation is written on one side only. Tools derive the reverse direction.
@@ -336,6 +352,9 @@ A validator MUST report:
 - Unchecked Plan items or pending Learnings at `review`/`done`.
 - `requests` and User Requests quotes not matching in count; `channel` not in `channels`.
 - A child's `resolvedIn` later than its parent's.
+- A link to a file under `attachments/` that does not exist.
+
+A validator SHOULD warn about attachment files over 1 MB.
 
 ## 13. Versioning of this spec
 

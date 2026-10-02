@@ -107,6 +107,8 @@ exec safanoria validate --staged
 | `parent-nested`, `research-parent` | Two levels of parents; research ticket with children (§8.1, §6.2) |
 | `parent-plan-missing-child`, `parent-plan-duplicate-child`, `plan-item-not-child`, `child-check-mismatch` | Parent Plan and children out of sync (§7.5, §8.1) |
 | `child-resolved-later` | A child released after its parent (§9) |
+| `attachment-missing` | A link to a file under `attachments/` that isn't there (§7.8) |
+| `attachment-large` (warning) | An attachment over 1 MB (§7.8); warnings don't change the exit code |
 
 ## Planned
 

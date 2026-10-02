@@ -43,7 +43,7 @@ stays at version 1 (§13). Rejected alternatives go to Design as each step lands
       marker, so `update` (v1-tooling-install) knows what was installed. This repository:
       `safanoria` component gets `version: { file: gradle.properties, property: version }`.
       SPEC §2 example and §13, README.
-- [ ] Attachments: `<dir>/attachments/<id>/<file>`, owned by ticket `<id>`, referenced with
+- [x] Attachments: `<dir>/attachments/<id>/<file>`, owned by ticket `<id>`, referenced with
       relative links from it (`![crash](attachments/<id>/crash.png)`), which render on GitHub
       and in apps. Each file SHOULD be under 1 MB (repository history is permanent); larger
       files (videos, dumps) go elsewhere, linked by URL. §10 applies: no personal data in
@@ -74,6 +74,23 @@ skill, templates and CLI (SPEC §13). Rejected:
 - **`-SNAPSHOT` in `gradle.properties`**: the file is this repository's version source, which
   `release` reads as `MAJOR.MINOR.PATCH`; the `-dev` suffix is added by the build instead.
 
+### Attachments
+
+Decided: `<dir>/attachments/<id>/`, relative links from the owning ticket, 1 MB per file as a
+SHOULD with a warning (SPEC §7.8). Rejected:
+
+- **Git LFS**: every clone, CI job and agent sandbox needs it set up, and a missing LFS gives
+  pointer files instead of an error. A project MAY still put `attachments/` under LFS itself.
+- **External storage only** (links to a drive or the issue tracker): screenshots get lost or
+  become private; the ticket must be readable from the repository alone.
+- **Next to the ticket** (`<id>.assets/` or `<id>/`): clutters the ticket directory, which
+  people browse.
+- **A configurable size limit**: no project has needed one yet (VacAppKMP has no
+  attachments); a fixed SHOULD with a warning can become configurable later without breaking
+  anything.
+- **Checking every relative link** (e.g. to source files): those break on renames that have
+  nothing to do with tickets; only links into `attachments/` are the ticket's responsibility.
+
 ## Work Log
 
 - **2026-10-02** · status · Started. Branch `v1-tooling-spec-decisions` from `v1-tooling`,
@@ -88,3 +105,10 @@ skill, templates and CLI (SPEC §13). Rejected:
   `-Prelease`. `safanoria.yaml`: the `safanoria` component reads that file instead of
   `external: true` (part of the parent's last Plan item, done here since it follows from the
   decision). README Development. Rejected alternatives in Design.
+- **2026-10-02** · step 2 · SPEC §7.8 Attachments (new section), §1 and §12. `AttachmentRules`
+  in `core`: `attachment-missing` (error) for links resolving under `<dir>/attachments/` to no
+  file, skipping fenced blocks and inline code (this ticket's own Plan has such an example);
+  `attachment-large` (warning) on the file itself, with its owning ticket as cause, so
+  `validate <ticket>` reports it. Fixture `attachment-missing` (generator now writes extra
+  files); the large case is a FakeFileSystem test, to keep a 1 MB file out of this
+  repository. This repository and VacAppKMP still validate clean.
