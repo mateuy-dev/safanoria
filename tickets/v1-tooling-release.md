@@ -27,9 +27,9 @@ command with the version given).
 - [x] Stamps every `done` ticket with the component in `area` (or no `area` and a single
       component, §5) and no `resolvedIn.<c>`, adding the `release · <c> <v>` Work Log entry and
       setting `updated`; nothing else in the files changes
-- [ ] Refuses to run off `mainBranch` (overridable), and on a malformed version
+- [x] Refuses to run off `mainBranch` (overridable), and on a malformed version
 - [x] Reads the version from `{ file, property }` and `{ file, regex }` sources
-- [ ] `--dry-run` lists what would be stamped
+- [x] `--dry-run` lists what would be stamped
 - [ ] The external-component flow is decided and written into SPEC §9
 
 ## Plan
@@ -48,7 +48,7 @@ SHOULD be part of the release commit, which the project's release process makes.
       `updated`). `updated` is set because §5 says "on every change" (the criterion said
       "nothing else"; changed). Given a version and a source, a mismatch is a warning, not a
       refusal (release scripts may bump the file after stamping).
-- [ ] CLI `safanoria release <component> [<version>] [--dry-run] [--ticket <id>]...
+- [x] CLI `safanoria release <component> [<version>] [--dry-run] [--ticket <id>]...
       [--any-branch]`: refuses off `mainBranch` unless `--any-branch`; prints each stamped
       ticket; nothing to stamp is not an error (exit 0); refusals exit 1. Validates the written
       files. Tests on a copy of the `valid` fixture, JVM and native.
@@ -84,3 +84,11 @@ SHOULD be part of the release commit, which the project's release process makes.
   Same version again is allowed (more tickets done since). A given version doesn't need a
   readable source. 5 tests on a VacAppKMP-shaped fake repository (`app` and `ktor` with
   sources, `rails` external); stamped files validate clean.
+- **2026-10-02** · step 3 · `safanoria release <component> [<version>] [--ticket <id>]...
+  [--dry-run] [--any-branch]` (hidden `--date` for tests). Arguments are checked before the
+  branch, so a typo is reported as such. Deviation: `--dry-run` runs on any branch, with a
+  warning off `mainBranch`, since it writes nothing and previewing is its point. A detached
+  HEAD (tag checkouts in CI) is "off the main branch": `--any-branch` there. Prints the
+  version's origin (`from gradle.properties`) so a wrong source is visible. 3 tests on a copy
+  of the `valid` fixture, JVM and linuxX64; the off-main test skips itself on `main`, where CI
+  also runs.
