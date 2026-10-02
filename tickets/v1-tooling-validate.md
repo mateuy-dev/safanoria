@@ -48,7 +48,7 @@ while the parent's Plan item is unchecked is reported on the parent).
 - [x] Fixtures: `core/src/commonTest/fixtures/validate/<rule>/`, one mini repository per §12
       rule with an `expected.txt` (`<file>:<line> <code>`), run on JVM and native. This
       repository must validate clean; extra repositories (VacAppKMP) are reported, not asserted.
-- [ ] CLI `safanoria validate [FILES…]`, `--staged` (git staged tickets and config), `--format
+- [x] CLI `safanoria validate [FILES…]`, `--staged` (git staged tickets and config), `--format
       text|json`; paths relative to the working directory; summary line; exit 0 valid, 1 errors,
       2 usage or no repository. Tests of the command on the JVM.
 - [ ] Dogfood: CI validates this repository's tickets with the Linux binary on every push
@@ -116,3 +116,16 @@ From `v1-tooling-cli-core` (what `core` already provides):
   `yaml-syntax` messages quoted lines of the frontmatter block ("at line 5"), off by one from
   the file; they are now rewritten to file lines. kaml reports a syntax error where it notices it
   (an unclosed `[` → the next line), kept as is.
+- **2026-10-02** · step 4 · `safanoria validate [FILES…]`, `--staged` (staged tickets and
+  `safanoria.yaml`; deleted files skipped; nothing staged → ok), `--format text|json`. Text:
+  `file:line:col: error[code]: message` with paths relative to the working directory, summary on
+  stderr when there are problems. JSON: `{valid, checked, diagnostics[]}`. Exit 0 / 1 / 2.
+  `cli()` builds the command tree, so tests run exactly what `main` runs (6 tests, JVM and
+  linuxX64). Tried on a staged broken ticket in this worktree, then unstaged and deleted it.
+  Also: enum errors now say `'blocked' is not one of: backlog, …`, values read from the schema.
+  Found and worked around: with native tests in `cli`, the debug test binary failed to link,
+  `clikt` and `clikt-mordant` compiler caches both defining `Context.selfAndAncestors`. Release
+  builds use no caches. `cli`'s binaries now call `disableNativeCache(2_4_20, reason)` (the
+  `kotlin.native.cacheKind` property was removed in 2.3.20); tied to the Kotlin version, so an
+  upgrade forces a re-check. Tried `clikt-core` instead: different base class, too invasive.
+  Test environment setup moved to the root build, shared by both modules.

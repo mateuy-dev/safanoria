@@ -11,7 +11,25 @@ plugins {
 // Kotlin/Native sysroot doesn't have it. Point the linker at the system library through a
 // symlink; the binary then needs libunistring.so.5 at runtime (Ubuntu 24.04+).
 // Linux binaries are therefore built on Linux. See tickets/v1-tooling-native-spike.md.
+// Tests read this repository's files (schema/examples, tickets, fixtures), and optionally other
+// local repositories' tickets (SAFANORIA_EXTRA_REPOS, paths separated by ':' or ';').
+val testEnvironment = buildMap {
+    put("SAFANORIA_REPO_ROOT", rootDir.absolutePath)
+    System.getenv("SAFANORIA_EXTRA_REPOS")?.let { put("SAFANORIA_EXTRA_REPOS", it) }
+}
+
 subprojects {
+    // Environment variables aren't task inputs by default: without inputs.property, changing
+    // SAFANORIA_EXTRA_REPOS would reuse a cached test result.
+    tasks.withType<Test>().configureEach {
+        testEnvironment.forEach { (k, v) -> environment(k, v) }
+        inputs.property("testEnvironment", testEnvironment)
+    }
+    tasks.withType<org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest>().configureEach {
+        testEnvironment.forEach { (k, v) -> environment(k, v) }
+        inputs.property("testEnvironment", testEnvironment)
+    }
+
     plugins.withId("org.jetbrains.kotlin.multiplatform") {
         val libDir = layout.buildDirectory.dir("native-libs")
         val linkUnistring = tasks.register("linkUnistring") {

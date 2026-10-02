@@ -21,24 +21,38 @@ internal data class SchemaError(val pointer: String, val keyword: String, val me
 internal object SchemaValidator {
     private val ticket by lazy { JsonSchema.fromDefinition(Embedded.TICKET_SCHEMA) }
     private val config by lazy { JsonSchema.fromDefinition(Embedded.CONFIG_SCHEMA) }
+    private val ticketJson by lazy { kotlinx.serialization.json.Json.parseToJsonElement(Embedded.TICKET_SCHEMA) }
+    private val configJson by lazy { kotlinx.serialization.json.Json.parseToJsonElement(Embedded.CONFIG_SCHEMA) }
 
-    fun ticketErrors(block: YamlBlock): List<SchemaError> = errors(ticket, block)
-    fun configErrors(block: YamlBlock): List<SchemaError> = errors(config, block)
+    fun ticketErrors(block: YamlBlock): List<SchemaError> = errors(ticket, ticketJson, block)
+    fun configErrors(block: YamlBlock): List<SchemaError> = errors(config, configJson, block)
 
     fun toDiagnostic(block: YamlBlock, e: SchemaError): Diagnostic {
         val where = e.pointer.ifEmpty { "frontmatter" }
         return Diagnostic(block.file, e.line, e.column, "schema-${e.keyword}", "$where: ${e.message}")
     }
 
-    private fun errors(schema: JsonSchema, block: YamlBlock): List<SchemaError> {
+    private fun errors(schema: JsonSchema, schemaJson: JsonElement, block: YamlBlock): List<SchemaError> {
         val found = mutableListOf<ValidationError>()
         schema.validate(toJson(block, block.root), found::add)
         return found.map { e ->
             val pointer = e.objectPath.toString()
             val node = nodeAt(block.root, pointer)
-            val keyword = e.schemaPath.toString().substringAfterLast('/')
-            SchemaError(pointer, keyword, e.message, block.lineOf(node), block.columnOf(node))
+            val schemaPath = e.schemaPath.toString()
+            val keyword = schemaPath.substringAfterLast('/')
+            val message = if (keyword == "enum") enumMessage(schemaJson, schemaPath, node) ?: e.message else e.message
+            SchemaError(pointer, keyword, message, block.lineOf(node), block.columnOf(node))
         }
+    }
+
+    /** "'blocked' is not one of: backlog, ready, …", with the values from the schema itself. */
+    private fun enumMessage(schemaJson: JsonElement, schemaPath: String, node: YamlNode): String? {
+        var at: JsonElement? = schemaJson
+        for (segment in schemaPath.split('/').drop(1)) {
+            at = (at as? JsonObject)?.get(segment.replace("~1", "/").replace("~0", "~")) ?: return null
+        }
+        val allowed = (at as? JsonArray)?.map { (it as? JsonPrimitive)?.content ?: it.toString() } ?: return null
+        return "'${node.text() ?: "…"}' is not one of: ${allowed.joinToString()}"
     }
 
     /**
