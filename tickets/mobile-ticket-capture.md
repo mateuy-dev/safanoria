@@ -2,7 +2,7 @@
 id: mobile-ticket-capture
 type: research
 title: Android app
-status: in-progress
+status: wontfix
 priority: medium
 size: S
 created: 2026-10-02
@@ -211,3 +211,6 @@ user's OK (an API spike would write to a repository).
 - **2026-10-02** · step 5 · Questions answered, README gets a "From a phone" paragraph, `spike/`
   deleted. Four learnings wait for follow-up tickets (`issue-to-ticket`, `new-attach`,
   `plan-child-detection`), whose ids the user confirms before they are created on `main`.
+- **2026-10-02** · status · wontfix: closed by the user for now, without creating the follow-up
+  tickets. The answers above stand; the four learnings without `→` are the follow-ups to
+  create if it is reopened.
