@@ -36,13 +36,13 @@ parent, so the GUI can reuse it; the CLI writes them. Nothing is written when a 
       title: split camelCase, fold accents (Catalan/Spanish titles), drop filler words
       (en/es/ca: the, of, for, de, la, per, amb…), keep up to 4 words, within 40 chars.
       With a parent: `<parent>-<words>`, trimmed by words to 40. Tests with real-like titles.
-- [ ] `NewTicket.prepare` in `core`: template = `<dir>/_TEMPLATE.md` or the built-in one
+- [x] `NewTicket.prepare` in `core`: template = `<dir>/_TEMPLATE.md` or the built-in one
       (`templates/ticket.md`, embedded like the schemas); fills id, title, type, priority,
       size, `status: backlog`, created/updated = today, optional `parent` and Objective text,
       with `TicketEditor` (new ops: replace a section's content, append a Plan item). Refuses:
       invalid id, existing ticket, unknown parent, parent that has a parent or is `research`
       (§8.1). Parent edit: `- [ ] \`<id>\`: <title>` after its last Plan item, `updated` = today.
-- [ ] CLI `safanoria new "<title>" [--id] [--parent] [--type] [--priority] [--size]
+- [ ] CLI `safanoria new "<title>" [--id] [--parent] [--type] [--priority] [--size] [--area]
       [--objective] [--dry-run]`: `--dry-run` prints the id and files without writing (how an
       agent proposes the id before confirming it, §11); warns, without failing, when a branch
       has the id; validates the written files and reports problems. Today from
@@ -64,3 +64,11 @@ parent, so the GUI can reuse it; the CLI writes them. Nothing is written when a 
   herd-locations`), and Catalan `l·l` stays one word (`col·lecció` → `colleccio`). Titles with
   only filler words keep them; a leading number is dropped (ids start with a letter). 5 tests,
   JVM and linuxX64.
+- **2026-10-02** · step 2 · `NewTicket.prepare(repository, request, today)` → `Ready(id,
+  idSuggested, files)` or `Refused(reason)`; writes nothing. Built-in template embedded from
+  `templates/ticket.md` (`Embedded.TICKET_TEMPLATE`); a project's `_TEMPLATE.md` wins, its extra
+  sections and comments kept. New editor ops: `replaceSectionContent`, `appendPlanItem` (after
+  the last item and its continuation lines; empty Plan gets blank lines around it). Added to the
+  plan: `area` (required by §5 when there are several components; values checked), else every
+  ticket `new` writes in such a project would fail `validate`. 6 tests: written files pass
+  `validate` (given-files mode, so the fixture's own unrelated problem doesn't count).
