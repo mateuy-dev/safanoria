@@ -6,7 +6,7 @@ status: in-progress
 priority: high
 size: L
 created: 2026-10-01
-updated: 2026-10-01
+updated: 2026-10-02
 related: [gui-viewer]
 ---
 
@@ -65,7 +65,7 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
 - [x] `v1-tooling-native-spike`: prove the Kotlin/Native libraries and git calls before
       `cli-core` builds on them.
 - [x] `v1-tooling-schema`: JSON Schema for the frontmatter and `safanoria.yaml`.
-- [ ] `v1-tooling-cli-core`: KMP `core` + `cli` modules, config loading, ticket parser with line
+- [x] `v1-tooling-cli-core`: KMP `core` + `cli` modules, config loading, ticket parser with line
       numbers, targeted-edit writer.
 - [ ] `v1-tooling-validate`: all SPEC §12 checks.
 - [ ] `v1-tooling-new`: `new` command.
@@ -118,3 +118,6 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
   Findings in the Design sections of `cli-core`, `validate` and `install`.
 - **2026-10-01** · v1-tooling-schema · Done and merged: both schemas, 56 examples,
   `schema/check.py` in CI; SPEC §4 now says dates and versions are strings.
+- **2026-10-02** · v1-tooling-cli-core · Done and merged: Gradle build with `core` and `cli`,
+  config, frontmatter and body parsing with lines, schema checks, targeted editor, git,
+  `Repository`; CI tests on Linux, Windows and macOS. 16–26 ms to load this repository.

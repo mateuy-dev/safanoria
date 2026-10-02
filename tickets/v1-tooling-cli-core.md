@@ -2,7 +2,7 @@
 id: v1-tooling-cli-core
 type: feature
 title: KMP core module, CLI skeleton, ticket parser and targeted-edit writer
-status: review
+status: done
 priority: high
 size: M
 created: 2026-10-01
@@ -200,3 +200,4 @@ From `v1-tooling-native-spike` (proven on Linux, Windows and macOS):
   once `validate` checks tickets in CI. Learnings promoted as code comments. `allTests` green
   locally and on the three CI OSes.
 - **2026-10-02** · status · review.
+- **2026-10-02** · status · done. Merged into `v1-tooling`.
