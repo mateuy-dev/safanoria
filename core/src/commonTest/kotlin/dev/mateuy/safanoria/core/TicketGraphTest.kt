@@ -40,6 +40,7 @@ class TicketGraphTest {
             ticket("closed-one", "wontfix"),
             ticket("finished", "done"),
             ticket("later-low", "backlog", "low"),
+            ticket("later-very-low", "backlog", "very-low"),
             ticket("later-none", "backlog", null),
             ticket("later-urgent", "backlog", "urgent"),
             ticket("b-ready", "ready"),
@@ -49,7 +50,7 @@ class TicketGraphTest {
             ticket("broken", "nonsense"),
         ))
         assertEquals(
-            listOf("working", "reviewing", "a-ready", "b-ready", "later-urgent", "later-low", "later-none", "finished", "closed-one", "broken"),
+            listOf("working", "reviewing", "a-ready", "b-ready", "later-urgent", "later-low", "later-very-low", "later-none", "finished", "closed-one", "broken"),
             ids(graph.tickets),
         )
     }

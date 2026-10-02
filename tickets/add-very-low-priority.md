@@ -31,7 +31,7 @@ Add a "very low" priority below `low`. The `priority` enum (SPEC §5) is `low | 
   `in-progress`), so `enumOf`/`text` map it to `VERY_LOW` with no special case. Spec version
   stays 1: no valid ticket becomes invalid and no field changes meaning (§13); Safanoria is
   still pre-1.0 (0.2.0-dev).
-- [ ] Core: `Priority { VERY_LOW, LOW, MEDIUM, HIGH, URGENT }`. `TicketGraph` sorts by
+- [x] Core: `Priority { VERY_LOW, LOW, MEDIUM, HIGH, URGENT }`. `TicketGraph` sorts by
   `-ordinal` with null as `1`, so putting it first keeps the order right without changing the
   comparator. Extend `TicketGraphTest` with a `very-low` ticket, and a frontmatter parse test.
 - [ ] CLI: `new --priority` takes its choices from `Priority.entries`, so it gets `very-low`
