@@ -31,7 +31,7 @@ when work starts. Project-specific work (VacApp release stamping in `AdminMain`,
 - [ ] A project can run validation automatically before commits and in CI
 - [ ] The open points (Safanoria versioning, external stamping, attachments, per-type templates)
       are decided and written into SPEC.md
-- [ ] This repository's own tickets pass `validate`, and its `safanoria.yaml` no longer needs
+- [x] This repository's own tickets pass `validate`, and its `safanoria.yaml` no longer needs
       `external: true` for the `safanoria` component
 
 Out of scope:
@@ -70,15 +70,15 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
 - [x] `v1-tooling-validate`: all SPEC §12 checks.
 - [x] `v1-tooling-new`: `new` command.
 - [x] `v1-tooling-board`: `list` and `board` commands.
-- [ ] `v1-tooling-spec-decisions`: decide and specify Safanoria's versioning, attachments and
+- [x] `v1-tooling-spec-decisions`: decide and specify Safanoria's versioning, attachments and
       per-type templates.
 - [ ] `v1-tooling-release`: `release` stamping, including components released from another
       repository (`external: true`).
 - [ ] `v1-tooling-install`: install/update of skill, spec and template into a project.
 - [ ] `v1-tooling-hooks`: pre-commit hook and GitHub Actions example running `validate`.
-- [ ] README: replace the manual setup steps and the "Planned" list with the CLI; give the
-      `safanoria` component a `version` source per the versioning decision; run `validate` on
-      this repository.
+- [ ] README: replace the manual setup steps and the "Planned" list with the CLI; run
+      `validate` on this repository. (The `safanoria` component's `version` source was done in
+      `v1-tooling-spec-decisions`.)
 
 ## Learnings
 
@@ -127,3 +127,8 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
   parent Plan item, `--dry-run`); usage errors exit 2 in every command; skill Create uses it.
 - **2026-10-02** · v1-tooling-board · Done and merged: `safanoria list` and `safanoria
   board`, on `TicketGraph` in `core`.
+- **2026-10-02** · v1-tooling-spec-decisions · Done and merged: Safanoria version vs spec
+  version (SPEC §13; `gradle.properties` is this repository's version source, so `external:
+  true` is gone and that criterion is checked), attachments (§7.8, two `validate` rules),
+  per-type templates (§6.2, built-in `bug` and `research`). Also a `Makefile` with `make
+  install`. Open-points criterion stays open until `release` decides external stamping.

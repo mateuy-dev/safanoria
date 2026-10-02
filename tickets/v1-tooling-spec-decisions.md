@@ -2,7 +2,7 @@
 id: v1-tooling-spec-decisions
 type: feature
 title: Decide Safanoria versioning, attachments and per-type templates
-status: review
+status: done
 priority: medium
 size: S
 created: 2026-10-01
@@ -139,3 +139,5 @@ built-in default. Rejected:
   `_TEMPLATE.md` wins over the built-in bug template (see Design).
 - **2026-10-02** · status · review. `allTests` green; this repository and VacAppKMP validate
   clean. Spec version stays 1: every addition is optional (§13).
+- **2026-10-02** · status · done. Merged into `v1-tooling`. Per-type templates and the version
+  marker added to `v1-tooling-install`'s `init` criterion (see Design).

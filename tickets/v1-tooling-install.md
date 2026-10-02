@@ -6,7 +6,7 @@ status: backlog
 priority: high
 size: M
 created: 2026-10-01
-updated: 2026-10-01
+updated: 2026-10-02
 parent: v1-tooling
 blockedBy: [v1-tooling-cli-core, v1-tooling-spec-decisions]
 ---
@@ -28,7 +28,9 @@ Two parts:
 - [ ] CI builds and publishes the three binaries on each Safanoria release; an install script
       puts the right one on the PATH
 - [ ] `safanoria init`: creates `safanoria.yaml` (asking for components), the ticket directory
-      with `_TEMPLATE.md` and `README.md`, and installs the skill
+      with `_TEMPLATE.md`, the per-type templates (`_TEMPLATE.bug.md`, `_TEMPLATE.research.md`)
+      and `README.md`, and installs the skill. Installed copies end with
+      `<!-- safanoria X.Y.Z -->` (SPEC §13)
 - [ ] `safanoria update`: replaces the installed skill, spec and template with the current
       version, and says which version was installed before and after
 - [ ] Does not overwrite a project's `_TEMPLATE.md` or `CLAUDE.md` without asking
@@ -52,3 +54,7 @@ From `v1-tooling-native-spike` (workflow at commit 657ea65, `.github/workflows/n
 
 - **2026-10-01** · plan · Blocked also by `cli-core` (`init`/`update` are CLI commands). Added
   binary distribution, since the CLI is a Kotlin/Native binary per OS; size S → M.
+- **2026-10-02** · plan · From `v1-tooling-spec-decisions`: `init` also installs the per-type
+  templates (a project's `_TEMPLATE.md` wins over the built-in ones, so without them a project
+  never gets the bug template), and installed copies carry the version marker. A `Makefile`
+  (`make install`) builds and installs from a checkout meanwhile.
