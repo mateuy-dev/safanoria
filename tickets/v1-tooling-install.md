@@ -27,7 +27,7 @@ Two parts:
 
 - [ ] CI builds and publishes the three binaries on each Safanoria release; an install script
       puts the right one on the PATH
-- [ ] `safanoria init`: creates `safanoria.yaml` (asking for components), the ticket directory
+- [x] `safanoria init`: creates `safanoria.yaml` (asking for components), the ticket directory
       with `_TEMPLATE.md`, the per-type templates (`_TEMPLATE.bug.md`, `_TEMPLATE.research.md`)
       and `README.md`, and installs the skill. Installed copies end with
       `<!-- safanoria X.Y.Z -->` (SPEC §13)

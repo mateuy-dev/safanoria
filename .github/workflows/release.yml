@@ -1,0 +1,98 @@
+name: release
+
+# A vX.Y.Z tag publishes the three binaries as a GitHub release; install.sh / install.ps1
+# download them. Changing this file or the install scripts on any branch (or a manual run)
+# builds them as artifacts without publishing, to test it.
+on:
+  push:
+    tags: ["v*"]
+    branches: ["**"]
+    paths: [.github/workflows/release.yml, install.sh, install.ps1]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: LinuxX64
+            dir: linuxX64
+            binary: safanoria.kexe
+            asset: safanoria-linux-x64
+          - os: windows-2022
+            target: MingwX64
+            dir: mingwX64
+            binary: safanoria.exe
+            asset: safanoria-windows-x64.exe
+          - os: macos-14
+            target: MacosArm64
+            dir: macosArm64
+            binary: safanoria.kexe
+            asset: safanoria-macos-arm64
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.konan
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties', '**/*.gradle.kts') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      # The tag must be the version being released (SPEC §13): gradle.properties `version`.
+      - name: Check version
+        run: |
+          version=$(sed -n 's/^version=//p' gradle.properties)
+          echo "version $version"
+          if [ "${GITHUB_REF_TYPE}" = tag ] && [ "${GITHUB_REF_NAME}" != "v$version" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} is not v$version (gradle.properties)"; exit 1
+          fi
+
+      # Only tag builds report the plain version; manual runs stay -dev.
+      - name: Build
+        run: ./gradlew --no-daemon :cli:linkReleaseExecutable${{ matrix.target }} ${{ github.ref_type == 'tag' && '-Prelease' || '' }}
+
+      - name: Name and smoke-test
+        run: |
+          mkdir -p dist
+          cp cli/build/bin/${{ matrix.dir }}/releaseExecutable/${{ matrix.binary }} dist/${{ matrix.asset }}
+          dist/${{ matrix.asset }} version
+          dist/${{ matrix.asset }} validate
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: dist/${{ matrix.asset }}
+
+  publish:
+    needs: build
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum safanoria-* > SHA256SUMS && cat SHA256SUMS
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" dist/* --repo "${GITHUB_REPOSITORY}" \
+            --title "Safanoria ${GITHUB_REF_NAME#v}" --generate-notes
