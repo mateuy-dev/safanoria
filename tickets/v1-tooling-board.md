@@ -24,7 +24,7 @@ Read-only views over the tickets:
 ## Acceptance Criteria
 
 - [x] `list` with filters by status, type, area and parent
-- [ ] `board` groups by status, nests children under parents with `done/total`, and marks
+- [x] `board` groups by status, nests children under parents with `done/total`, and marks
       tickets blocked by a ticket that is not `done`
 - [x] Reverse relations are derived (SPEC §8): children of a parent, tickets a ticket blocks
 
@@ -42,7 +42,7 @@ order), so a committed board only changes when tickets do.
       parent, children progress and blocked), filters `--status` (comma list), `--type`,
       `--area`, `--parent`, `--blocked`; `--format json` with every field plus the derived
       relations (`children`, `blocks`, `openBlockers`, `progress`), for agents.
-- [ ] The `board` command: markdown, a section per status with counts; tickets without a parent at the top
+- [x] The `board` command: markdown, a section per status with counts; tickets without a parent at the top
       level, each parent followed by its children as a checklist (checked when `done`/`wontfix`)
       with `done/total`; blocked tickets marked `blocked by <ids>`; `done` and `wontfix`
       compact (id and title). Ids link to the ticket files, relative to where the board is
@@ -70,3 +70,12 @@ order), so a committed board only changes when tickets do.
   field (empty lists and nulls, not omitted, so agents need no defaults) plus `file`,
   `children`, `blocks`, `openBlockers`, `progress`. 3 tests on the `valid` fixture, JVM and
   linuxX64.
+- **2026-10-02** · step 3 · `safanoria board [-o FILE]`; rendering in `core` (`Board.markdown`)
+  for apps. Children are shown only under their parent (a child of a missing parent stands on
+  its own), so section counts are of top-level tickets. Facets after the title only when not
+  the usual (type other than feature, priority high/urgent, a child's status unless done), then
+  `done/total` and `blocked by` (linked; a missing blocker in backticks). Closed sections list
+  id and title only. Tickets with an unreadable status get their own last section. Links use
+  `/` on every OS. Missing output directory: exit 2. Tests: golden file
+  (`cli/src/commonTest/fixtures/board/valid.md`, CRLF-normalised for Windows checkouts),
+  `--output` links, core edge cases; JVM and linuxX64.
