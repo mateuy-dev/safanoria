@@ -6,8 +6,10 @@ status: done
 priority: high
 size: S
 created: 2026-10-01
-updated: 2026-10-01
+updated: 2026-10-02
 parent: v1-tooling
+resolvedIn:
+  safanoria: 0.1.0
 ---
 
 ## Objective
@@ -92,3 +94,4 @@ in `validate`.
   `safanoria.yaml` uses it. Learnings promoted. `schema/check.py`: 69 files, 0 failures.
 - **2026-10-01** · status · review.
 - **2026-10-01** · status · done. Merged into `v1-tooling`.
+- **2026-10-02** · release · safanoria 0.1.0

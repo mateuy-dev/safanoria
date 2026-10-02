@@ -8,6 +8,8 @@ size: S
 created: 2026-10-01
 updated: 2026-10-02
 parent: v1-tooling
+resolvedIn:
+  safanoria: 0.1.0
 ---
 
 ## Objective
@@ -141,3 +143,4 @@ built-in default. Rejected:
   clean. Spec version stays 1: every addition is optional (§13).
 - **2026-10-02** · status · done. Merged into `v1-tooling`. Per-type templates and the version
   marker added to `v1-tooling-install`'s `init` criterion (see Design).
+- **2026-10-02** · release · safanoria 0.1.0

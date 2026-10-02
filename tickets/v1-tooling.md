@@ -2,12 +2,14 @@
 id: v1-tooling
 type: feature
 title: Tooling and open points to make Safanoria v1 usable across projects
-status: review
+status: done
 priority: high
 size: L
 created: 2026-10-01
 updated: 2026-10-02
 related: [gui-viewer]
+resolvedIn:
+  safanoria: 0.1.0
 ---
 
 ## Objective
@@ -152,3 +154,5 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
   this repository's 12 tickets are valid.
 - **2026-10-02** · status · review. Every child done, every criterion met. Next, outside this
   ticket: merge `v1-tooling` into `main`, stamp (`safanoria release safanoria`), tag `v0.1.0`.
+- **2026-10-02** · status · done. Merged into `main`; released as Safanoria 0.1.0.
+- **2026-10-02** · release · safanoria 0.1.0

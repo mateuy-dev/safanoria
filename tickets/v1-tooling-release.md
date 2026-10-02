@@ -9,6 +9,8 @@ created: 2026-10-01
 updated: 2026-10-02
 parent: v1-tooling
 blockedBy: [v1-tooling-cli-core]
+resolvedIn:
+  safanoria: 0.1.0
 ---
 
 ## Objective
@@ -118,3 +120,4 @@ External components (SPEC §9): stamped in the ticket repository with the versio
   `safanoria release` from the release process. Rejected alternatives in Design.
 - **2026-10-02** · status · review. `allTests` green; this repository validates clean.
 - **2026-10-02** · status · done. Merged into `v1-tooling`.
+- **2026-10-02** · release · safanoria 0.1.0

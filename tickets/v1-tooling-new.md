@@ -9,6 +9,8 @@ created: 2026-10-01
 updated: 2026-10-02
 parent: v1-tooling
 blockedBy: [v1-tooling-cli-core]
+resolvedIn:
+  safanoria: 0.1.0
 ---
 
 ## Objective
@@ -95,3 +97,4 @@ parent, so the GUI can reuse it; the CLI writes them. Nothing is written when a 
   Finish also runs `safanoria validate`. README "Creating tickets"; `new` out of Planned.
 - **2026-10-02** · status · review. `allTests` green; this repository validates clean.
 - **2026-10-02** · status · done. Merged into `v1-tooling`.
+- **2026-10-02** · release · safanoria 0.1.0

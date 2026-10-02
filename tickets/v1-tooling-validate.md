@@ -9,6 +9,8 @@ created: 2026-10-01
 updated: 2026-10-02
 parent: v1-tooling
 blockedBy: [v1-tooling-schema, v1-tooling-cli-core]
+resolvedIn:
+  safanoria: 0.1.0
 ---
 
 ## Objective
@@ -150,3 +152,4 @@ From `v1-tooling-cli-core` (what `core` already provides):
   green. Learnings promoted as code comments.
 - **2026-10-02** · status · review.
 - **2026-10-02** · status · done. Merged into `v1-tooling`.
+- **2026-10-02** · release · safanoria 0.1.0

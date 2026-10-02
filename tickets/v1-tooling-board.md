@@ -9,6 +9,8 @@ created: 2026-10-01
 updated: 2026-10-02
 parent: v1-tooling
 blockedBy: [v1-tooling-cli-core]
+resolvedIn:
+  safanoria: 0.1.0
 ---
 
 ## Objective
@@ -88,3 +90,4 @@ order), so a committed board only changes when tickets do.
   (`Path.toString`). Now `/` on every OS, as the board's links. Fixed on `v1-tooling` after
   the merge.
 - **2026-10-02** · status · done. Merged into `v1-tooling`.
+- **2026-10-02** · release · safanoria 0.1.0

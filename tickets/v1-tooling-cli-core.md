@@ -9,6 +9,8 @@ created: 2026-10-01
 updated: 2026-10-02
 parent: v1-tooling
 blockedBy: [v1-tooling-native-spike]
+resolvedIn:
+  safanoria: 0.1.0
 ---
 
 ## Objective
@@ -201,3 +203,4 @@ From `v1-tooling-native-spike` (proven on Linux, Windows and macOS):
   locally and on the three CI OSes.
 - **2026-10-02** · status · review.
 - **2026-10-02** · status · done. Merged into `v1-tooling`.
+- **2026-10-02** · release · safanoria 0.1.0
