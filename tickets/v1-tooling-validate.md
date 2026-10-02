@@ -2,11 +2,11 @@
 id: v1-tooling-validate
 type: feature
 title: "`safanoria validate`: every SPEC §12 check"
-status: backlog
+status: in-progress
 priority: high
 size: M
 created: 2026-10-01
-updated: 2026-10-01
+updated: 2026-10-02
 parent: v1-tooling
 blockedBy: [v1-tooling-schema, v1-tooling-cli-core]
 ---
@@ -25,6 +25,36 @@ written by hand or by agents stay inside the format.
       against all tickets
 
 ## Plan
+
+Rules live in `core` (`Validator`), so `gui-viewer` shows the same problems; the CLI only
+selects files and formats output. Every problem is a `Diagnostic` with a stable kebab-case
+code (`section-missing`, `ref-unknown`…), listed in the README.
+Only-given-files mode (pre-commit): all tickets are loaded and checked, and a problem is reported
+when its file is given **or** it is caused by a given file (e.g. a staged child set to `done`
+while the parent's Plan item is unchecked is reported on the parent).
+
+- [ ] Per-ticket rules: id valid and equal to the filename; parse and schema diagnostics;
+      §7 sections missing, out of order (standard sections only: extra sections like
+      VacAppKMP's `## Original document` may go anywhere) or empty for the status (§7.1);
+      unchecked Plan items and pending Learnings at `review`/`done`; `requests` vs quotes count;
+      `channel` ∈ `channels`; `area` and `resolvedIn` keys ∈ components, `resolvedIn` keys ∈
+      `area`, `area` required with more than one component. Schema errors whose meaning a rule
+      states better (e.g. `resolvedIn` on a non-`done` ticket) get the rule's message.
+- [ ] Cross-ticket rules: duplicate id; unknown ids in `parent`, `blockedBy`, `related`, Plan
+      child items and Learnings `new ticket`; `blockedBy` cycles; parents with a parent;
+      `research` with children; each child exactly once in its parent's Plan, and no Plan item
+      naming a ticket that isn't a child; child item checked iff child `done`/`wontfix`; a child's
+      `resolvedIn` later than its parent's (per component, semver order).
+- [ ] Fixtures: `core/src/commonTest/fixtures/validate/<rule>/`, one mini repository per §12
+      rule with an `expected.txt` (`<file>:<line> <code>`), run on JVM and native. This
+      repository must validate clean; extra repositories (VacAppKMP) are reported, not asserted.
+- [ ] CLI `safanoria validate [FILES…]`, `--staged` (git staged tickets and config), `--format
+      text|json`; paths relative to the working directory; summary line; exit 0 valid, 1 errors,
+      2 usage or no repository. Tests of the command on the JVM.
+- [ ] Dogfood: CI validates this repository's tickets with the Linux binary on every push
+      (a `tickets.yml` job replacing `schema.yml`); remove `schema/check.py` (the Kotlin examples
+      test covers it); fix any problem it finds in our own tickets.
+- [ ] README: `validate` usage, the codes table, pre-commit one-liner until `v1-tooling-hooks`.
 
 ## Design
 
@@ -55,3 +85,9 @@ From `v1-tooling-cli-core` (what `core` already provides):
   workflow (the Kotlin `SchemaExamplesTest` covers the examples), and update the README.
 
 ## Work Log
+
+- **2026-10-02** · status · Started. Branch `v1-tooling-validate` from `v1-tooling`, worktree
+  `../safanoria--v1-tooling-validate`.
+- **2026-10-02** · plan · Rules in `core`, CLI thin. Only-given-files mode also reports problems
+  caused by a given file in another file. Extra sections (VacAppKMP's 45 tickets with
+  `## Original document`) are not an order error. `schema/check.py` removed here.
