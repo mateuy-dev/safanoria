@@ -92,7 +92,7 @@ log entry would only repeat it and could go stale (worktree moved or removed).
       commands to get there (`cd <worktree>` or `git switch <id>`); tests
 - [x] Skill: Resume section and the branch check in Work; SPEC §11: work on a ticket happens on
       branch `<id>`, and continuing finds it from the tickets and git, not from the session
-- [ ] README: "Continuing work" section (restart, child worktrees, where Claude Code keeps the
+- [x] README: "Continuing work" section (restart, child worktrees, where Claude Code keeps the
       session)
 - [ ] Out of scope: backlog ticket on `main` for showing the current ticket in the Claude Code
       status line; add it to `related`

@@ -30,6 +30,7 @@ content. `safanoria --help` lists the commands; each is described below.
 | `init`, `update` | Set up a project; install or update the skill, SPEC.md and templates |
 | `new` | Create a ticket from a title: id, template, parent's Plan |
 | `list`, `board` | One line per ticket; a markdown board by status |
+| `resume` | Where to continue work on a ticket: branch, worktree, next Plan item |
 | `validate`, `hook` | Check every SPEC rule; before each commit |
 | `release` | Stamp `resolvedIn` on the tickets a release ships |
 
@@ -138,6 +139,46 @@ committed one only changes when tickets do. For example:
 
 - [delete-birth-crash](tickets/delete-birth-crash.md) Deleting a birth crashes (bug, urgent)
 ```
+
+## Continuing work
+
+After a restart, or in a new session, ask the agent:
+
+```
+/safanoria resume                      # every ticket in progress; it asks which one
+/safanoria resume herd-locations       # a ticket id
+/safanoria resume map pins             # words from the title
+```
+
+The agent finds where the work is, switches into that worktree, reads the ticket and goes on
+from the next unchecked Plan item. Naming a parent is enough: while working on it, the agent may
+have started a child in its own worktree, and `resume` leads there.
+
+It doesn't need the earlier conversation: the ticket and git have what it needs. You can still
+reopen that conversation with `claude --resume`, but run it from the folder where the session
+started (often the main checkout). Claude Code keeps a session under that folder even after it
+moved into a ticket's worktree, so `--resume` from the worktree doesn't list it.
+
+The agent uses `safanoria resume`, which you can run too:
+
+```sh
+safanoria resume                       # every ticket in progress (a parent: its children in progress)
+safanoria resume herd-locations        # that ticket; a parent leads to its children in progress
+safanoria resume map pins              # words matched against in-progress and review tickets' ids and titles
+safanoria resume --format json         # for agents: also `here` and the `command` to get there
+```
+
+```
+herd-locations-map  in-progress  Herds on a map  (parent herd-locations)
+  branch    herd-locations-map
+  worktree  /home/me/VacAppKMP--herd-locations-map  (2 uncommitted files)
+  next      [ ] Pins coloured by herd
+  last log  2026-10-02 · plan · Plan written: …
+  go there  cd /home/me/VacAppKMP--herd-locations-map
+```
+
+It only reads. `go there` is `cd <worktree>`, or `git worktree add …` / `git switch <id>` when
+the branch isn't checked out anywhere. It exits 1 when nothing matches.
 
 ## Releasing
 
