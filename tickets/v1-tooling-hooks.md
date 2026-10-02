@@ -2,7 +2,7 @@
 id: v1-tooling-hooks
 type: feature
 title: Pre-commit hook and CI example running validate
-status: review
+status: done
 priority: medium
 size: S
 created: 2026-10-01
@@ -76,3 +76,4 @@ the install script from `v1-tooling-install`.
 - **2026-10-02** · status · review. The release workflow's test run passed on the three OSes,
   including the Action on this repository's tickets; `allTests` green; this commit went through
   the new hook.
+- **2026-10-02** · status · done. Merged into `v1-tooling`.

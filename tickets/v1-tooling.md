@@ -28,7 +28,7 @@ when work starts. Project-specific work (VacApp release stamping in `AdminMain`,
 - [x] A ticket can be created, listed and released (stamped) from the command line
 - [x] A board view shows tickets by status, with parents, children and blocked tickets
 - [x] The skill and spec can be installed in, and updated for, a project with one command
-- [ ] A project can run validation automatically before commits and in CI
+- [x] A project can run validation automatically before commits and in CI
 - [x] The open points (Safanoria versioning, external stamping, attachments, per-type templates)
       are decided and written into SPEC.md
 - [x] This repository's own tickets pass `validate`, and its `safanoria.yaml` no longer needs
@@ -75,7 +75,7 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
 - [x] `v1-tooling-release`: `release` stamping, including components released from another
       repository (`external: true`).
 - [x] `v1-tooling-install`: install/update of skill, spec and template into a project.
-- [ ] `v1-tooling-hooks`: pre-commit hook and GitHub Actions example running `validate`.
+- [x] `v1-tooling-hooks`: pre-commit hook and GitHub Actions example running `validate`.
 - [ ] README: replace the manual setup steps and the "Planned" list with the CLI; run
       `validate` on this repository. (The `safanoria` component's `version` source was done in
       `v1-tooling-spec-decisions`; the setup steps and the CLI items of "Planned" in
@@ -141,3 +141,6 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
   release workflow and install scripts (tested on the three OSes; publishing waits for the
   first tag), README setup replaced. VacAppKMP's hand copy replaced by `update` (its commit
   `04408caa`).
+- **2026-10-02** · v1-tooling-hooks · Done and merged: `safanoria hook install|uninstall` (lets
+  commits through without the CLI, never touches another tool's hook) and the composite Action
+  `uses: mateuy-dev/safanoria@vX.Y.Z`, tested on the three OSes. Hook installed in this clone.
