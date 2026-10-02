@@ -53,8 +53,9 @@ class ResumeCommand : AcrossBranchesCommand(name = "resume") {
         fun row(label: String, value: String) = append("  ${label.padEnd(9)} $value\n")
         row("branch", p.branch ?: "none")
         row("worktree", p.worktree?.let { "$it${uncommitted(p)}" } ?: "none")
-        row("next", p.next?.let { "[ ] ${it.text}" } ?: "nothing unchecked in Plan")
-        p.lastLog?.let { row("last log", "${it.date} · ${it.ref} · ${it.text.lineSequence().first()}") }
+        // First lines only, "…" when there is more: enough to recognise the step.
+        row("next", p.next?.let { "[ ] ${it.text}${if (it.lastLine > it.line) " …" else ""}" } ?: "nothing unchecked in Plan")
+        p.lastLog?.let { row("last log", "${it.date} · ${it.ref} · ${it.text.lineSequence().first()}${if ('\n' in it.text) " …" else ""}") }
         row("go there", goThere(p))
     }
 

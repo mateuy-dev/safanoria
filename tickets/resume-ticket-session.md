@@ -7,7 +7,7 @@ priority: high
 size: M
 created: 2026-10-02
 updated: 2026-10-02
-related: [worktree-no-prompt]
+related: [worktree-no-prompt, ticket-status-line]
 ---
 
 ## Objective
@@ -94,7 +94,7 @@ log entry would only repeat it and could go stale (worktree moved or removed).
       branch `<id>`, and continuing finds it from the tickets and git, not from the session
 - [x] README: "Continuing work" section (restart, child worktrees, where Claude Code keeps the
       session)
-- [ ] Out of scope: backlog ticket on `main` for showing the current ticket in the Claude Code
+- [x] Out of scope: backlog ticket on `main` for showing the current ticket in the Claude Code
       status line; add it to `related`
 - [ ] Check by hand: a new session in the main checkout, `/safanoria resume resume-ticket`,
       lands in this worktree
