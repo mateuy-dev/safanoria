@@ -125,16 +125,12 @@ internal class CrossTicketRules(private val tickets: List<Ticket>) {
     private fun childVersions(parent: Ticket, kid: Ticket) {
         val parentVersions = parent.frontmatter?.resolvedIn ?: return
         for ((component, version) in kid.frontmatter?.resolvedIn ?: return) {
-            val childV = version.value?.let(::semver) ?: continue
-            val parentV = parentVersions[component]?.value?.let(::semver) ?: continue
-            if (compareSemver(childV, parentV) > 0) {
+            val childV = version.value?.let(Version::parse) ?: continue
+            val parentV = parentVersions[component]?.value?.let(Version::parse) ?: continue
+            if (childV > parentV) {
                 report(kid, version.line, "child-resolved-later",
                     "resolvedIn.$component ${version.value} is later than parent '${parent.fileId}' (${parentVersions[component]?.value}) (§9)", listOf(parent), version.column)
             }
         }
     }
-
-    private fun semver(v: String): List<Int>? = v.split('.').takeIf { it.size == 3 }?.map { it.toIntOrNull() ?: return null }
-
-    private fun compareSemver(a: List<Int>, b: List<Int>): Int = a.zip(b).firstOrNull { it.first != it.second }?.let { it.first.compareTo(it.second) } ?: 0
 }

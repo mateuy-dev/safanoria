@@ -49,7 +49,8 @@ learningTargets: [CLAUDE.md, docs/, .claude/skills/, code comment]   # optional 
   and the allowed keys of `resolvedIn`.
 - `version` tells tools where the component's current version is read from. Supported forms:
   `{ file, property }` for `key=value` files, `{ file, regex }` with one capture group.
-  `external: true` means the version is supplied when stamping (§9).
+  `external: true` means the component is released from another repository, and the version is
+  supplied when stamping (§9).
 - `channels` defaults to `[email, phone, in-person, other]`.
 - Unknown keys MUST be preserved by tools and MAY be ignored.
 - [`schema/safanoria.schema.json`](schema/safanoria.schema.json) is the JSON Schema for this file.
@@ -318,6 +319,16 @@ resolvedIn:
   with the parent. A child's version MUST NOT be later than its parent's.
 - A parent's own `resolvedIn` is stamped normally; the feature as a whole shipped at the highest
   version among the parent and its children.
+- Versions only go up: stamping `<c>` at a version lower than one already in a ticket's
+  `resolvedIn.<c>` MUST be refused.
+
+**External components** (`external: true`, released from another repository) are stamped the
+same way, in the ticket repository on its `mainBranch`, with the version given (there is no
+source to read). Either a person runs it after the other repository releases, or that
+repository's release job checks out the ticket repository, stamps, and commits (or opens a pull
+request). Here `done` means merged in the other repository, which the ticket repository cannot
+see, so a ticket marked `done` after that release was cut would be stamped too: stamping MAY
+then be limited to the tickets named by whoever releases.
 
 ## 10. Privacy
 

@@ -18,7 +18,8 @@ are in `safanoria.yaml` at the repository root.
 - The ticket is the context. Decisions, rejected alternatives and deviations go into the ticket,
   not only into the chat.
 - Set `updated` to today on every change. Keep frontmatter field order. Preserve unknown fields and sections.
-- **Never set `resolvedIn`.** Release stamping does that.
+- **Never set `resolvedIn`.** Release stamping does that (`safanoria release <component>`, run
+  by the project's release process, not while working on a ticket).
 - **No personal data**: `requests[].user` is the project's user id; never names, emails or phones.
   Quotes are verbatim, in the original language.
 - User Requests and Work Log are append-only.
