@@ -6,7 +6,7 @@ status: in-progress
 priority: medium
 size: S
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-10-03
 related: [cli-all-actions]
 ---
 
@@ -26,3 +26,4 @@ Scripts and agents must keep working: the non-interactive behaviour stays the de
 ## Work Log
 
 - **2026-10-02** · status · started
+- **2026-10-03** · decision · Prompts, not a full-screen TUI: commands ask for missing values and offer choices. A TUI is a separate app to build and maintain, and prompts cover the goal (no flags to remember).
