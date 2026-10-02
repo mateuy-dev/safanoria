@@ -42,7 +42,7 @@ parent, so the GUI can reuse it; the CLI writes them. Nothing is written when a 
       with `TicketEditor` (new ops: replace a section's content, append a Plan item). Refuses:
       invalid id, existing ticket, unknown parent, parent that has a parent or is `research`
       (§8.1). Parent edit: `- [ ] \`<id>\`: <title>` after its last Plan item, `updated` = today.
-- [ ] CLI `safanoria new "<title>" [--id] [--parent] [--type] [--priority] [--size] [--area]
+- [x] CLI `safanoria new "<title>" [--id] [--parent] [--type] [--priority] [--size] [--area]
       [--objective] [--dry-run]`: `--dry-run` prints the id and files without writing (how an
       agent proposes the id before confirming it, §11); warns, without failing, when a branch
       has the id; validates the written files and reports problems. Today from
@@ -72,3 +72,12 @@ parent, so the GUI can reuse it; the CLI writes them. Nothing is written when a 
   plan: `area` (required by §5 when there are several components; values checked), else every
   ticket `new` writes in such a project would fail `validate`. 6 tests: written files pass
   `validate` (given-files mode, so the fixture's own unrelated problem doesn't count).
+- **2026-10-02** · step 3 · `safanoria new "<title>"` with `--id --parent --type --priority
+  --size --area --objective --dry-run` (hidden `--date` for tests). Prints what it creates or
+  updates and whether the id was suggested; warns on stderr when a branch has the id; validates
+  the written files. Today: `kotlin.time.Clock` + `kotlinx-datetime` 0.8.0 `todayIn` (local
+  zone); `latest.release` resolved to `0.8.0-0.6.x-compat`, so the version is pinned. 4 tests
+  (JVM, linuxX64) on a copy of the `valid` fixture under `cli/build/`. Deviation: Clikt exits 1
+  on its own usage errors; `main` now maps every `UsageError` to 2, as documented. Clikt's
+  `test()` bypasses `main`, so that is checked on the binary (bad choice, missing argument,
+  missing file, unknown command: all 2). `displayPath` shared by both commands.
