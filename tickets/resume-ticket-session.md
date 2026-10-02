@@ -118,4 +118,10 @@ log entry would only repeat it and could go stale (worktree moved or removed).
   itself, not only by the skill, so people get it too. Words match the id and title of
   `in-progress` and `review` tickets; an exact id is taken whatever its status. With no match it
   exits 1. The worktree is shown as an absolute path, the same one `cd` gets.
+- **2026-10-02** · note · Created `ticket-status-line` on `main` with this branch's CLI
+  (`new --on main`). The pre-commit hook then failed: it runs the installed `safanoria` (0.1.0,
+  older than `multi-branch-tickets`), which doesn't know ids on other branches. Validated with
+  the built CLI and committed `69ae345` with `--no-verify`. `ValidatorRepositoryTest` failed the
+  same way, because it validated this repository without other branches; it now reads them like
+  `safanoria validate` does.
 
