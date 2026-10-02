@@ -2,7 +2,7 @@
 id: v1-tooling-install
 type: feature
 title: Install the CLI, and set up or update Safanoria in a project with one command
-status: backlog
+status: in-progress
 priority: high
 size: M
 created: 2026-10-01
@@ -38,6 +38,43 @@ Two parts:
 
 ## Plan
 
+The binary carries everything it installs (skill, SPEC.md, templates, embedded like the
+schemas), so the installed files are exactly the binary's Safanoria version. Logic in `core`
+(`Install` returns the files to write), the CLI asks and writes. Files fall in two kinds:
+
+- **Managed** (`.claude/skills/safanoria/SKILL.md` and `SPEC.md`): Safanoria's, end with
+  `<!-- safanoria X.Y.Z -->`, always replaced by `update`.
+- **Project-owned once created** (`<dir>/_TEMPLATE*.md`, `<dir>/README.md`, `CLAUDE.md`,
+  `safanoria.yaml`): created when missing; never changed without asking. Templates carry no
+  marker (it would be copied into every ticket).
+
+- [ ] Embed `skill/SKILL.md` and `SPEC.md`. `Install` in `core`: the managed files with the
+      marker, the version found in an installed copy's marker (none: installed by hand), the
+      project files to create, and for templates whether they differ from the built-in ones.
+- [ ] `safanoria init [--dir] [--component NAME=FILE:PROPERTY]... [--external NAME]...
+      [--dry-run]`: refuses when `safanoria.yaml` exists (use `update`). Without components it
+      asks for them (names, then each one's version file and property, or external); without a
+      terminal it needs the options. Writes `safanoria.yaml`, the ticket directory with the
+      three templates and `README.md`, the skill, and the CLAUDE.md paragraph (creates CLAUDE.md,
+      or asks before appending to an existing one). Validates what it wrote. Tests.
+- [ ] `safanoria update [--yes] [--dry-run]`: replaces the skill and spec, prints `skill and
+      spec: <before> → <after>` (`installed by hand` when there is no marker); creates missing
+      templates; for a template that differs from the built-in one, asks (`--yes` replaces,
+      without a terminal it is kept and reported). Tests.
+- [ ] Release workflow `.github/workflows/release.yml`, on a `vX.Y.Z` tag: fails unless the
+      tag equals `gradle.properties` `version`; builds the three binaries with `-Prelease`;
+      publishes a GitHub release with `safanoria-linux-x64`, `safanoria-macos-arm64`,
+      `safanoria-windows-x64.exe` and `SHA256SUMS`. Manual runs (`workflow_dispatch`) build and
+      upload artifacts without publishing, to test it before the first tag.
+- [ ] `install.sh` (Linux, macOS) and `install.ps1` (Windows): download the latest release (or
+      `SAFANORIA_VERSION`) for this OS, check the checksum, put it in `~/.local/bin` (or
+      `SAFANORIA_BIN_DIR`) and say if that isn't on PATH; on Linux, warn when
+      `libunistring.so.5` is missing. A base-URL override lets the test install from local files.
+      README: install, `init`/`update` replace the manual "Adding Safanoria to a project" steps;
+      how to release Safanoria (tag, then bump `version`).
+- [ ] VacAppKMP: `safanoria update` on its `safanoria` branch replaces the hand copy and adds
+      the per-type templates. I show the diff; it is committed there only with your go-ahead.
+
 ## Design
 
 From `v1-tooling-native-spike` (workflow at commit 657ea65, `.github/workflows/native-spike.yml`):
@@ -58,3 +95,10 @@ From `v1-tooling-native-spike` (workflow at commit 657ea65, `.github/workflows/n
   templates (a project's `_TEMPLATE.md` wins over the built-in ones, so without them a project
   never gets the bug template), and installed copies carry the version marker. A `Makefile`
   (`make install`) builds and installs from a checkout meanwhile.
+- **2026-10-02** · status · Started. Branch `v1-tooling-install` from `v1-tooling`, worktree
+  `../safanoria--v1-tooling-install`.
+- **2026-10-02** · plan · Everything installed is embedded in the binary, so one version covers
+  both. Managed files (skill, spec) are replaced; project-owned ones (templates, README,
+  CLAUDE.md, config) are created or changed only after asking. Templates get no version marker,
+  since it would be copied into every ticket. VacAppKMP's copy today: SKILL.md and SPEC.md
+  both differ from this repository.
