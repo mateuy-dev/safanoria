@@ -2,7 +2,7 @@
 id: v1-tooling-validate
 type: feature
 title: "`safanoria validate`: every SPEC §12 check"
-status: in-progress
+status: review
 priority: high
 size: M
 created: 2026-10-01
@@ -18,10 +18,10 @@ written by hand or by agents stay inside the format.
 
 ## Acceptance Criteria
 
-- [ ] One test fixture per §12 rule, each reported with file and line
-- [ ] Exit code 0 when valid, non-zero on errors
-- [ ] `--format json` for machine-readable output (CI, editors)
-- [ ] Can validate only given files (for pre-commit), still checking cross-file references
+- [x] One test fixture per §12 rule, each reported with file and line
+- [x] Exit code 0 when valid, non-zero on errors
+- [x] `--format json` for machine-readable output (CI, editors)
+- [x] Can validate only given files (for pre-commit), still checking cross-file references
       against all tickets
 
 ## Plan
@@ -54,7 +54,7 @@ while the parent's Plan item is unchecked is reported on the parent).
 - [x] Dogfood: CI validates this repository's tickets with the Linux binary on every push
       (a `tickets.yml` job replacing `schema.yml`); remove `schema/check.py` (the Kotlin examples
       test covers it); fix any problem it finds in our own tickets.
-- [ ] README: `validate` usage, the codes table, pre-commit one-liner until `v1-tooling-hooks`.
+- [x] README: `validate` usage, the codes table, pre-commit one-liner until `v1-tooling-hooks`.
 
 ## Design
 
@@ -83,6 +83,17 @@ From `v1-tooling-cli-core` (what `core` already provides):
   18 ms here, 32 ms for VacAppKMP's 47 tickets, 144 ms for 504 synthetic ones (Linux).
 - When `validate` checks this repository's tickets in CI, remove `schema/check.py` and its
   workflow (the Kotlin `SchemaExamplesTest` covers the examples), and update the README.
+
+## Learnings
+
+- Kotlin/Native compiler caches (debug builds) of `clikt` and `clikt-mordant` both define
+  `Context.selfAndAncestors`: a debug binary using Clikt (e.g. a test binary) fails to link. The
+  `kotlin.native.cacheKind` property is gone since Kotlin 2.3.20; use the per-binary
+  `disableNativeCache(DisableCacheInKotlinVersion, reason)` DSL (opt-in `KotlinNativeCacheApi`).
+  → promoted: cli/build.gradle.kts (comment)
+- kaml's syntax error messages quote line numbers of the parsed text, so a frontmatter block's
+  errors are off by its offset in the file unless rewritten.
+  → promoted: core/src/commonMain/…/YamlNodes.kt (comment)
 
 ## Work Log
 
@@ -133,3 +144,8 @@ From `v1-tooling-cli-core` (what `core` already provides):
   changes) builds the Linux binary and runs `safanoria validate`; `cli.yml` also runs it on each
   OS. Removed `schema/check.py` and `schema.yml`: `SchemaExamplesTest` covers the examples and
   `validate` covers our tickets. Our 12 tickets: valid, nothing to fix.
+- **2026-10-02** · step 6 · README: "Validating tickets" with usage, exit codes, a one-line
+  pre-commit hook until `v1-tooling-hooks`, and the table of all 30 codes plus `schema-*`.
+  CI runs 36986117930 (`cli`, three OSes) and 36986117972 (`tickets`: "ok: 12 tickets valid"):
+  green. Learnings promoted as code comments.
+- **2026-10-02** · status · review.
