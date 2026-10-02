@@ -51,7 +51,7 @@ while the parent's Plan item is unchecked is reported on the parent).
 - [x] CLI `safanoria validate [FILES…]`, `--staged` (git staged tickets and config), `--format
       text|json`; paths relative to the working directory; summary line; exit 0 valid, 1 errors,
       2 usage or no repository. Tests of the command on the JVM.
-- [ ] Dogfood: CI validates this repository's tickets with the Linux binary on every push
+- [x] Dogfood: CI validates this repository's tickets with the Linux binary on every push
       (a `tickets.yml` job replacing `schema.yml`); remove `schema/check.py` (the Kotlin examples
       test covers it); fix any problem it finds in our own tickets.
 - [ ] README: `validate` usage, the codes table, pre-commit one-liner until `v1-tooling-hooks`.
@@ -129,3 +129,7 @@ From `v1-tooling-cli-core` (what `core` already provides):
   `kotlin.native.cacheKind` property was removed in 2.3.20); tied to the Kotlin version, so an
   upgrade forces a re-check. Tried `clikt-core` instead: different base class, too invasive.
   Test environment setup moved to the root build, shared by both modules.
+- **2026-10-02** · step 5 · `tickets.yml` (ubuntu-24.04, every push and PR, also ticket-only
+  changes) builds the Linux binary and runs `safanoria validate`; `cli.yml` also runs it on each
+  OS. Removed `schema/check.py` and `schema.yml`: `SchemaExamplesTest` covers the examples and
+  `validate` covers our tickets. Our 12 tickets: valid, nothing to fix.

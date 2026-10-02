@@ -8,7 +8,7 @@ for humans and AI agents.
   and `SPEC.md` into the project's `.claude/skills/safanoria/`.
 - [`templates/ticket.md`](templates/ticket.md): blank ticket; copy to `<dir>/_TEMPLATE.md`.
 - [`schema/`](schema/): JSON Schemas for ticket frontmatter and `safanoria.yaml`, with valid and
-  invalid examples. `python3 schema/check.py` checks them (needs PyYAML and `jsonschema`).
+  invalid examples (checked by `core`'s tests). The CLI embeds them.
 
 For completion and checks in editors with the YAML language server (VS Code YAML extension,
 IntelliJ), start `safanoria.yaml` with:

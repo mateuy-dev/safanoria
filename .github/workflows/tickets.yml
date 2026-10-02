@@ -1,0 +1,29 @@
+# Validates this repository's tickets with the CLI built from this commit. Runs on ticket
+# changes too, which cli.yml skips.
+name: tickets
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.konan
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties', '**/*.gradle.kts') }}
+          restore-keys: ${{ runner.os }}-gradle-
+      - name: Build CLI
+        run: ./gradlew --no-daemon :cli:linkReleaseExecutableLinuxX64
+      - name: Validate tickets
+        run: cli/build/bin/linuxX64/releaseExecutable/safanoria.kexe validate
