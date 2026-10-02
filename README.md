@@ -126,13 +126,39 @@ safanoria validate --format json    # {valid, checked, diagnostics: [{file, line
 ```
 
 Exit code 0: valid; 1: problems; 2: usage error or not in a Safanoria repository. Problems
-print as `file:line:col: error[code]: message`. Until the hooks ticket ships an installer, a
-pre-commit hook is one line in `.git/hooks/pre-commit` (made executable):
+print as `file:line:col: error[code]: message`.
+
+### Before each commit
 
 ```sh
-#!/bin/sh
-exec safanoria validate --staged
+safanoria hook install      # once per clone: git hooks aren't committed
+safanoria hook uninstall
 ```
+
+The hook runs `safanoria validate --staged`. Where `safanoria` isn't installed it warns and lets
+the commit through, so a teammate without the CLI isn't blocked (CI checks anyway). A
+`pre-commit` hook from another tool is never overwritten; add the line
+`safanoria validate --staged` to it, or to your hook manager, instead.
+
+### In CI (GitHub Actions)
+
+```yaml
+# .github/workflows/tickets.yml
+name: tickets
+on: [push, pull_request]
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mateuy-dev/safanoria@v0.1.0      # installs the CLI, runs `safanoria validate`
+```
+
+Pin the version (`@v0.1.0`, or `with: version: 0.1.0`): a new Safanoria release then can't fail
+your CI until you move to it. `with: args: …` runs another command, e.g. `list --blocked`.
+Elsewhere, install with `install.sh` and run `safanoria validate`.
+
+### Problem codes
 
 | Code | Problem (SPEC section) |
 |---|---|
@@ -165,6 +191,7 @@ as a native binary for Linux (x64), Windows (x64) and macOS (arm64).
 
 ```sh
 make install                                        # build for this OS, copy to ~/.local/bin/safanoria (PREFIX=… to change)
+safanoria hook install                              # validate this repository's tickets before each commit
 ./gradlew allTests                                  # JVM tests + native tests for this OS
 ./gradlew :cli:linkReleaseExecutableLinuxX64        # or …MingwX64, …MacosArm64 (on that OS)
 cli/build/bin/linuxX64/releaseExecutable/safanoria.kexe version

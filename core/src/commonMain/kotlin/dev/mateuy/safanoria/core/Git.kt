@@ -1,6 +1,7 @@
 package dev.mateuy.safanoria.core
 
 import okio.Path
+import okio.Path.Companion.toPath
 
 public class ProcessResult(public val exitCode: Int, public val output: String)
 
@@ -30,6 +31,15 @@ public class Git(private val root: Path) {
 
     /** The current branch, or `HEAD` when detached. */
     public fun currentBranch(): String = gitOrThrow("rev-parse", "--abbrev-ref", "HEAD").trim()
+
+    /**
+     * The directory git runs hooks from: `core.hooksPath` if set, else the common `.git/hooks`
+     * (shared by all worktrees). Absolute.
+     */
+    public fun hooksDir(): Path {
+        val path = gitOrThrow("rev-parse", "--path-format=absolute", "--git-path", "hooks").trim()
+        return path.toPath()
+    }
 
     /** Paths of staged files, relative to the repository root. */
     public fun stagedFiles(): List<String> =
