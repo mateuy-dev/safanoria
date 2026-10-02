@@ -73,7 +73,7 @@ Out of scope:
       resolution rule, and where each real copy came from (for the "only on" marker).
 - [x] CLI `board` and `list` use it, with `--remote` and `--checkout`; both show the marker.
 - [x] CLI `validate`: ids from every branch for references; `id-created-twice` warning.
-- [ ] CLI `new --on <branch>`: prepare against that branch's tree and commit there (see
+- [x] CLI `new --on <branch>`: prepare against that branch's tree and commit there (see
       Implementation); `new` checks ids against every branch.
 - [ ] Tests with a fixture repository (real `git init` in a temp dir): unstarted, started,
       started and checked out with uncommitted edits, merged-and-kept branch, child merged into
@@ -162,6 +162,15 @@ together" (§11.4).
   - Without `--on`, `new` writes to the working tree as today. On a non-`mainBranch` branch
     without `--parent`, it prints a hint to use `--on <mainBranch>`.
 
+## Learnings
+
+- Okio `Path.relativeTo` returns `.` for the same path, not an empty path: filter it out before
+  joining segments into git paths.
+  → promoted: core/src/commonMain/kotlin/dev/mateuy/safanoria/core/Branches.kt (comment in `layout`)
+- `git ls-tree` paths depend on the working directory unless `--full-tree` is given, even with a
+  `<rev>:<dir>` argument.
+  → promoted: core/src/commonMain/kotlin/dev/mateuy/safanoria/core/Git.kt (comment in `tree`)
+
 ## Work Log
 
 - **2026-10-02** · status · Created from the design discussion on how the CLI sees tickets on several branches.
@@ -185,3 +194,14 @@ together" (§11.4).
   - Merge-bases are listed once per directory.
 
   `validate` also gets `--checkout`, the old behaviour.
+- **2026-10-02** · decision · `new --on` validates the new files against the target branch
+  before anything is written or committed: an overlay over that branch's files. A commit on
+  another branch is harder to take back than a file. The plumbing commit runs no hooks; this
+  check replaces the pre-commit hook.
+- **2026-10-02** · bug · Two path bugs surfaced through the subdirectory test:
+  - `ls-tree` run from a subdirectory lists only that part of the tree, even for `<rev>:<dir>`.
+    Fixed with `--full-tree`.
+  - Okio's `relativeTo` gives `.` for the same path, which turned tree paths into `./tickets/…`.
+    `Branches` only worked by luck: git reads `rev:./path` relative to the working directory.
+
+  Both are covered now: `aProjectBelowTheGitTopLevel` and `aProjectInASubdirectory`.

@@ -79,7 +79,8 @@ public class Git(private val root: Path) {
      * or null when [ref] doesn't have that directory.
      */
     public fun tree(ref: String, dir: String): List<TreeEntry>? {
-        val result = git("-c", "core.quotePath=false", "ls-tree", "-l", "$ref:$dir", stderr = false)
+        // --full-tree: without it, ls-tree run from a subdirectory (a project below the git top level) lists only that part.
+        val result = git("-c", "core.quotePath=false", "ls-tree", "--full-tree", "-l", "$ref:$dir", stderr = false)
         if (result.exitCode != 0) return null
         return result.output.lines().filter { it.isNotBlank() }.map { line ->
             val (meta, name) = line.split('\t', limit = 2)
@@ -97,6 +98,33 @@ public class Git(private val root: Path) {
 
     /** Whether commit [ref] has [path] (relative to the root). */
     public fun hasPath(ref: String, path: String): Boolean = git("cat-file", "-e", "$ref:$path").exitCode == 0
+
+    /** The common git directory (shared by all worktrees). Absolute. */
+    public fun commonDir(): Path = gitOrThrow("rev-parse", "--path-format=absolute", "--git-common-dir").trim().toPath()
+
+    /** Stores [file] as a blob, exactly as it is (no line-ending filters), and returns its id. */
+    public fun hashObject(file: Path): String = gitOrThrow("hash-object", "-w", "--no-filters", file.toString()).trim()
+
+    /**
+     * Stores a tree with [entries] and returns its id. `mktree` reads stdin, which [runCommand]
+     * can't feed, so the entries go through [scratch], a file redirected in (`<` works in `sh` and `cmd`).
+     */
+    public fun mktree(entries: List<TreeEntry>, scratch: Path, fileSystem: okio.FileSystem): String {
+        fileSystem.write(scratch) { entries.forEach { writeUtf8("${it.mode} ${it.type} ${it.id}\t${it.name}\n") } }
+        val result = runCommand("git -C ${quote(root.toString())} mktree < ${quote(scratch.toString())} 2>&1")
+        fileSystem.delete(scratch)
+        if (result.exitCode != 0) throw GitException("git mktree failed (${result.exitCode}): ${result.output.trim()}")
+        return result.output.trim()
+    }
+
+    /** Creates a commit of [tree] on top of [parent] and returns its id; the author is the user's git identity. */
+    public fun commitTree(tree: String, parent: String, message: String): String =
+        gitOrThrow("commit-tree", tree, "-p", parent, "-m", message).trim()
+
+    /** Moves branch [branch] from [old] to [new]; fails if it moved meanwhile. */
+    public fun updateBranch(branch: String, new: String, old: String) {
+        gitOrThrow("update-ref", "-m", "safanoria new", "refs/heads/$branch", new, old)
+    }
 
     /** The best common ancestor of [a] and [b], or null when they share no history. */
     public fun mergeBase(a: String, b: String): String? =

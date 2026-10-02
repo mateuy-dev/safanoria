@@ -21,10 +21,13 @@ class GitRepo(name: String) {
         SystemFileSystem.createDirectories(dir)
         root = SystemFileSystem.canonicalize(dir)
         git("init", "-q", "-b", "main")
+        // In the repository's config, not -c: the commands under test commit too (new --on).
+        git("config", "user.name", "test")
+        git("config", "user.email", "test@example.com")
+        git("config", "commit.gpgsign", "false")
     }
 
-    fun git(vararg args: String, at: Path = root): String =
-        Git(at).run("-c", "user.name=test", "-c", "user.email=test@example.com", "-c", "commit.gpgsign=false", *args)
+    fun git(vararg args: String, at: Path = root): String = Git(at).run(*args)
 
     fun write(relative: String, text: String, at: Path = root) {
         val path = at / relative

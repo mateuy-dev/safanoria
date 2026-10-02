@@ -9,6 +9,9 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.split
 import com.github.ajalt.clikt.parameters.types.choice
+import dev.mateuy.safanoria.core.BranchView
+import dev.mateuy.safanoria.core.Branches
+import dev.mateuy.safanoria.core.Diagnostic
 import dev.mateuy.safanoria.core.GitException
 import dev.mateuy.safanoria.core.NewTicket
 import dev.mateuy.safanoria.core.NewTicketRequest
@@ -21,6 +24,7 @@ import dev.mateuy.safanoria.core.Validator
 import dev.mateuy.safanoria.core.text
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
+import okio.Path
 import okio.Path.Companion.toPath
 import kotlin.time.Clock
 
@@ -38,6 +42,7 @@ class New : RepositoryCommand(name = "new") {
     private val size by option("--size").choice(*Size.entries.map { it.text }.toTypedArray()).default("S")
     private val area by option("--area", help = "Components, comma-separated (required with several components)").split(",")
     private val objective by option("--objective", help = "Text for the Objective section")
+    private val on by option("--on", help = "Create it on this branch and commit it there, without touching this checkout, e.g. --on main for work found on another branch (SPEC §14.2)")
     private val dryRun by option("--dry-run", help = "Show what would be created, write nothing").flag()
     private val date by option("--date", hidden = true, help = "Today's date (tests)")
 
@@ -54,24 +59,51 @@ class New : RepositoryCommand(name = "new") {
             area = area ?: emptyList(),
             objective = objective,
         )
-        val ready = when (val result = NewTicket.prepare(repo, request, today)) {
-            is NewTicketResult.Refused -> throw PrintMessage("Not created: ${result.reason}", 1, true)
+        val view = on?.let { BranchView.open(repo, it) ?: throw PrintMessage("No local branch '$it'.", 2, true) }
+        val target = view?.repository ?: repo
+        val taken = Branches.read(repo, remote = true)?.ids.orEmpty()
+        val ready = when (val result = NewTicket.prepare(target, request, today, taken)) {
+            is NewTicketResult.Refused -> throw PrintMessage("Not created: ${result.reason}${on?.let { " (on $it)" } ?: ""}", 1, true)
             is NewTicketResult.Ready -> result
         }
 
         val verb = if (dryRun) "would " else ""
+        // A branch that isn't checked out has no files to point at: show the path in the branch.
+        fun shown(path: Path) = if (view != null && view.worktree == null) "${path.relativeTo(target.root).segments.joinToString("/")} on ${view.branch}" else displayPath(path)
         for (f in ready.files) {
-            echo(if (f.isNew) "${verb}create ${displayPath(f.path)}" else "${verb}update ${displayPath(f.path)} (Plan: - [ ] `${ready.id}`: ${title.trim()})")
+            echo(if (f.isNew) "${verb}create ${shown(f.path)}" else "${verb}update ${shown(f.path)} (Plan: - [ ] `${ready.id}`: ${title.trim()})")
         }
         if (ready.idSuggested) echo("id ${ready.id}: suggested from the title; use --id to choose another")
         branchWarning(repo, ready.id)
+        if (view == null && parent == null) mainBranchHint(repo)
         if (dryRun) return
 
+        if (view != null) {
+            // Checked before committing: a commit on another branch is harder to take back than a file.
+            val problems = Validator(view.withFiles(ready.files)).validate(ready.files.map { it.path })
+            report(problems)
+            val commit = try { view.commit(ready.files, "${ready.id}: create") } catch (e: GitException) {
+                throw PrintMessage("Not created: ${e.message}", 1, true)
+            }
+            echo("committed ${commit.take(7)} on ${view.branch}: ${ready.id}: create")
+            return
+        }
         ready.files.forEach { f -> repo.fileSystem.write(f.path) { writeUtf8(f.text) } }
-        val problems = Validator(Repository(repo.root, repo.fileSystem)).validate(ready.files.map { it.path })
-        if (problems.isNotEmpty()) {
-            problems.forEach { echo(it.copy(file = it.file?.let { p -> displayPath(p).toPath() }).toString(), err = true) }
-            throw ProgramResult(1)
+        report(Validator(Repository(repo.root, repo.fileSystem)).validate(ready.files.map { it.path }))
+    }
+
+    private fun report(problems: List<Diagnostic>) {
+        if (problems.isEmpty()) return
+        problems.forEach { echo(it.copy(file = it.file?.let { p -> displayPath(p).toPath() }).toString(), err = true) }
+        throw ProgramResult(1)
+    }
+
+    /** SPEC §14.2: a top-level ticket belongs on mainBranch; say how when the user is elsewhere. */
+    private fun mainBranchHint(repo: Repository) {
+        val current = try { repo.git.currentBranch() } catch (e: GitException) { return }
+        val main = repo.config.mainBranch
+        if (current != main && current != "HEAD") {
+            echo("note: this is branch '$current'; a top-level ticket belongs on $main (SPEC §14.2): use --on $main unless it's part of this branch's work", err = true)
         }
     }
 

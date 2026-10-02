@@ -139,10 +139,7 @@ public class Branches private constructor(
             } catch (e: GitException) {
                 return null
             }
-            // The worktree this checkout is in: the deepest one containing the root.
-            val tops = worktrees.map { it to canonical(fs, it.path) }
-            val (here, top) = tops.filter { (_, path) -> isInside(root, path) }.maxByOrNull { (_, path) -> path.segments.size } ?: return null
-            val sub = root.relativeTo(top).segments
+            val (here, top, sub, checkedOut) = layout(repository, worktrees) ?: return null
 
             // Branch name → ref: local first, then remote-tracking (origin before other remotes).
             val byName = linkedMapOf<String, String>()
@@ -154,7 +151,6 @@ public class Branches private constructor(
 
             val mainRef = byName.getValue(mainBranch)
             val mergedIntoMain = try { git.mergedInto(mainRef) } catch (e: GitException) { return null }
-            val checkedOut = tops.filter { (w, _) -> w.branch != null && w != here }.associate { (w, path) -> w.branch!! to path }
             val blobs = BlobCache(git)
             fun committed(ref: String) = Repository(root, GitTreeFileSystem(git, ref, top, blobs))
             val sources = linkedMapOf<String, Source>()
@@ -162,7 +158,7 @@ public class Branches private constructor(
             sources[current] = Source(current, repository, lazy { committed(current) })
             for ((name, ref) in byName) {
                 if (name in sources) continue
-                val worktree = checkedOut[name]?.takeIf { ref == name }?.let { path -> sub.fold(path) { p, s -> p / s } }?.takeIf { fs.exists(it) }
+                val worktree = checkedOut[name]?.takeIf { ref == name }?.takeIf { fs.exists(it) }
                 // A branch merged into mainBranch can't hold a real copy (rule 2) nor a ticket main lacks,
                 // so it isn't read: old kept branches would cost a blob read per stale copy. Unless it's
                 // checked out: a branch just started is "merged" but may have uncommitted edits.
@@ -170,6 +166,22 @@ public class Branches private constructor(
                 sources[name] = if (worktree != null) Source(ref, Repository(worktree, fs), lazy { committed(ref) }) else Source(ref, committed(ref))
             }
             return Branches(repository, git, sources, mainBranch, sub.joinToString("/")).apply { merged[mainRef] = mergedIntoMain }
+        }
+
+        /**
+         * Where things are: [here] is the worktree this checkout is in (the deepest one containing
+         * the root), [top] its path, [sub] the repository root inside it, and [others] the
+         * repository root in every other worktree by branch.
+         */
+        internal data class Layout(val here: Worktree, val top: Path, val sub: List<String>, val others: Map<String, Path>)
+
+        internal fun layout(repository: Repository, worktrees: List<Worktree>): Layout? {
+            val fs = repository.fileSystem
+            val tops = worktrees.map { it to canonical(fs, it.path) }
+            val (here, top) = tops.filter { (_, path) -> isInside(repository.root, path) }.maxByOrNull { (_, path) -> path.segments.size } ?: return null
+            val sub = repository.root.relativeTo(top).segments.filter { it != "." } // relativeTo gives "." for the same path
+            val others = tops.filter { (w, _) -> w.branch != null && w != here }.associate { (w, path) -> w.branch!! to sub.fold(path) { p, s -> p / s } }
+            return Layout(here, top, sub, others)
         }
 
         private fun canonical(fs: FileSystem, path: Path): Path = if (fs.exists(path)) fs.canonicalize(path) else path

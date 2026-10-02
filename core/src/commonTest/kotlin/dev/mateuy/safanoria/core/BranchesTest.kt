@@ -117,6 +117,26 @@ class BranchesTest {
     }
 
     @Test
+    fun aProjectBelowTheGitTopLevel() {
+        val f = GitFixture("branches-subdir")
+        f.write("app/$CONFIG_FILE", GitFixture.CONFIG)
+        f.write("app/tickets/one.md", t("one"))
+        f.write("tickets/decoy.md", t("decoy")) // same layout one level up: must not be read
+        f.commit("init")
+        f.checkout("one", create = true)
+        f.write("app/tickets/one.md", t("one", "in-progress")); f.commit("one")
+        f.checkout("other", create = true)
+        f.git("reset", "-q", "--hard", "main")
+        f.write("app/tickets/two.md", t("two")); f.write("app/tickets/one.md", t("one", "ready")); f.commit("two")
+        f.checkout("main")
+
+        val branches = assertNotNull(Branches.read(Repository(f.root / "app")))
+        assertEquals(mapOf("one" to "in-progress@one", "two" to "backlog@other!"), branches.summary())
+        assertEquals(f.root / "app" / "tickets" / "two.md", branches.tickets.last().path)
+        assertEquals(emptyList(), branches.createdTwice())
+    }
+
+    @Test
     fun nothingToReadAcross() {
         val fs = FakeFileSystem()
         fs.createDirectories("/repo".toPath())
