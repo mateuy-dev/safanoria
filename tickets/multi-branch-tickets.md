@@ -2,7 +2,7 @@
 id: multi-branch-tickets
 type: feature
 title: Read and create tickets across git branches
-status: review
+status: done
 priority: high
 size: M
 created: 2026-10-02
@@ -208,3 +208,4 @@ together" (§11.4).
 - **2026-10-02** · status · review. core and cli tests pass on the JVM and linuxX64. On this
   repository, `list` from the main checkout shows this ticket as `in-progress`, read from its
   worktree; `validate` takes 45 ms.
+- **2026-10-02** · status · done: merged into main.
