@@ -2,7 +2,8 @@ name: release
 
 # A vX.Y.Z tag publishes the three binaries as a GitHub release; install.sh / install.ps1
 # download them. Changing this file or the install scripts on any branch (or a manual run)
-# builds them as artifacts without publishing, to test it.
+# builds them as artifacts without publishing, to test it (workflow_dispatch only works once this
+# file is on the default branch; path filters don't apply to tags, so tags always publish).
 on:
   push:
     tags: ["v*"]

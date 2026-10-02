@@ -2,7 +2,7 @@
 id: v1-tooling-install
 type: feature
 title: Install the CLI, and set up or update Safanoria in a project with one command
-status: in-progress
+status: review
 priority: high
 size: M
 created: 2026-10-01
@@ -25,7 +25,7 @@ Two parts:
 
 ## Acceptance Criteria
 
-- [ ] CI builds and publishes the three binaries on each Safanoria release; an install script
+- [x] CI builds and publishes the three binaries on each Safanoria release; an install script
       puts the right one on the PATH
 - [x] `safanoria init`: creates `safanoria.yaml` (asking for components), the ticket directory
       with `_TEMPLATE.md`, the per-type templates (`_TEMPLATE.bug.md`, `_TEMPLATE.research.md`)
@@ -34,7 +34,7 @@ Two parts:
 - [x] `safanoria update`: replaces the installed skill, spec and template with the current
       version, and says which version was installed before and after
 - [x] Does not overwrite a project's `_TEMPLATE.md` or `CLAUDE.md` without asking
-- [ ] VacAppKMP's manual copy replaced using it
+- [x] VacAppKMP's manual copy replaced using it
 
 ## Plan
 
@@ -66,13 +66,13 @@ schemas), so the installed files are exactly the binary's Safanoria version. Log
       publishes a GitHub release with `safanoria-linux-x64`, `safanoria-macos-arm64`,
       `safanoria-windows-x64.exe` and `SHA256SUMS`. Manual runs (`workflow_dispatch`) build and
       upload artifacts without publishing, to test it before the first tag.
-- [ ] `install.sh` (Linux, macOS) and `install.ps1` (Windows): download the latest release (or
+- [x] `install.sh` (Linux, macOS) and `install.ps1` (Windows): download the latest release (or
       `SAFANORIA_VERSION`) for this OS, check the checksum, put it in `~/.local/bin` (or
       `SAFANORIA_BIN_DIR`) and say if that isn't on PATH; on Linux, warn when
       `libunistring.so.5` is missing. A base-URL override lets the test install from local files.
       README: install, `init`/`update` replace the manual "Adding Safanoria to a project" steps;
       how to release Safanoria (tag, then bump `version`).
-- [ ] VacAppKMP: `safanoria update` on its `safanoria` branch replaces the hand copy and adds
+- [x] VacAppKMP: `safanoria update` on its `safanoria` branch replaces the hand copy and adds
       the per-type templates. I show the diff; it is committed there only with your go-ahead.
 
 ## Design
@@ -86,6 +86,18 @@ From `v1-tooling-native-spike` (workflow at commit 657ea65, `.github/workflows/n
   (Ubuntu 24.04+). Say so in the install docs.
 - Binary sizes: 5.4–5.8 MB. Windows binary is `safanoria.exe`, others `safanoria.kexe` (rename to
   `safanoria` when publishing).
+
+## Learnings
+
+- Kotlin's `trimMargin()` strips a leading `|` from every line, including lines that come from
+  interpolated text: generating code that embeds markdown with tables corrupts them silently.
+  → promoted: core/build.gradle.kts (comment in `generateEmbedded`)
+- GitHub's `workflow_dispatch` only runs workflows that exist on the default branch, so a new
+  workflow can't be tried by hand from a feature branch; a `push` trigger with `paths` on the
+  workflow file can, and path filters don't apply to tag pushes.
+  → promoted: .github/workflows/release.yml (header comment) and README "Releasing Safanoria"
+- PowerShell 7's `Invoke-WebRequest` only does http(s), not `file://`.
+  → promoted: install.ps1 (comment on `Fetch`)
 
 ## Work Log
 
@@ -131,3 +143,17 @@ From `v1-tooling-native-spike` (workflow at commit 657ea65, `.github/workflows/n
   this one before it is on `main`; it also runs (without publishing) on a push to any branch
   that changes it or the install scripts. Path filters don't apply to tags, so tags always
   publish.
+- **2026-10-02** · step 5 · `install.sh` (POSIX sh, curl or wget, `sha256sum` or `shasum`) and
+  `install.ps1`: latest or `SAFANORIA_VERSION`, checksum checked (accepts `name` and `*name`
+  lines), `~/.local/bin` or `SAFANORIA_BIN_DIR`, PATH hint (PowerShell adds it to the user
+  PATH), Linux `libunistring.so.5` warning. `SAFANORIA_BASE_URL` for tests: install.sh tested
+  locally (latest, a version, corrupted download refused); the workflow's `install-test` job
+  runs both scripts on the three OSes against the built binaries: green. README: install,
+  `init`/`update` replace the manual setup steps (part of the parent's README step), releasing
+  Safanoria. Not exercised until the first `v0.1.0` tag: the `publish` job.
+- **2026-10-02** · step 6 · VacAppKMP (`safanoria` branch): stopped first because it had a large
+  uncommitted migration; the user committed it (`c893ee42`). Then `safanoria update`: skill and
+  spec replaced (`installed by hand → 0.1.0-dev`), bug and research templates added; its
+  `_TEMPLATE.md` already matched the built-in one, README and CLAUDE.md unchanged. 47 tickets
+  validate. Committed there as `04408caa`, not pushed. Run `update` again after `v0.1.0`.
+- **2026-10-02** · status · review. `allTests` green; this repository validates clean.
