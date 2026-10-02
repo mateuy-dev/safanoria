@@ -48,7 +48,7 @@ schemas), so the installed files are exactly the binary's Safanoria version. Log
   `safanoria.yaml`): created when missing; never changed without asking. Templates carry no
   marker (it would be copied into every ticket).
 
-- [ ] Embed `skill/SKILL.md` and `SPEC.md`. `Install` in `core`: the managed files with the
+- [x] Embed `skill/SKILL.md` and `SPEC.md`. `Install` in `core`: the managed files with the
       marker, the version found in an installed copy's marker (none: installed by hand), the
       project files to create, and for templates whether they differ from the built-in ones.
 - [ ] `safanoria init [--dir] [--component NAME=FILE:PROPERTY]... [--external NAME]...
@@ -102,3 +102,13 @@ From `v1-tooling-native-spike` (workflow at commit 657ea65, `.github/workflows/n
   CLAUDE.md, config) are created or changed only after asking. Templates get no version marker,
   since it would be copied into every ticket. VacAppKMP's copy today: SKILL.md and SPEC.md
   both differ from this repository.
+- **2026-10-02** · step 1 · `Embedded.SKILL` and `Embedded.SPEC`. The generator used
+  `trimMargin`, which strips the leading `|` of every line: SPEC.md's tables would have been
+  embedded broken. It now joins plain lines, fails the build on `"""` or `$$` (which a raw
+  string can't hold), and a test compares every embedded file with its source byte for byte.
+  `Install` in `core`: `managedFiles()` (marked), `templates()`, `ticketReadme()`,
+  `claudeParagraph(dir)`, `config(dir, components)`, `installedVersion(text)`, and
+  `plan(fs, root, dir)` → one `FileChange` per file: CREATE, REPLACE (managed), SAME, DIFFERS
+  (project-owned: only after asking). An existing ticket README is always the project's; an
+  existing CLAUDE.md mentioning the `safanoria` skill is left alone, else the paragraph is
+  appended after asking. 5 tests, one shaped like VacAppKMP's hand install.
