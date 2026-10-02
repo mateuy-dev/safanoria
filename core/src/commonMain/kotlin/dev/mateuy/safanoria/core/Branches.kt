@@ -82,6 +82,9 @@ public class Branches private constructor(
         return if (parentTicket.frontmatter?.childrenMergeInto == "main") mainBranch else parentBranch
     }
 
+    /** The branch ticket [id] starts from and merges into (SPEC §11.2, §14). */
+    public fun targetBranch(id: String): String = target(id)
+
     /** The copy to read `parent` from: branch `<id>`, else [mainBranch], else any. */
     private fun anyCopy(id: String): Ticket? = copies[id]?.let { it[id] ?: it[mainBranch] ?: it.values.firstOrNull() }
 
