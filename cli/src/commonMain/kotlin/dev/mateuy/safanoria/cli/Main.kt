@@ -18,7 +18,12 @@ import okio.Path
 import okio.Path.Companion.toPath
 
 /** Shared by all commands: finds the repository once, from `--root` or the working directory. */
-class CliContext(private val rootOption: String?) {
+class CliContext(val rootOption: String?) {
+    /** Where `init` sets up a project: `--root` or the working directory. */
+    val projectRoot: okio.Path by lazy {
+        dev.mateuy.safanoria.core.SystemFileSystem.canonicalize((rootOption ?: ".").toPath())
+    }
+
     val repository: Repository by lazy {
         Repository.find(rootOption?.toPath())
             ?: throw PrintMessage(
@@ -57,7 +62,7 @@ abstract class RepositoryCommand(name: String) : CliktCommand(name = name) {
 }
 
 /** The command tree; tests run it with Clikt's `test()`. */
-fun cli(): CliktCommand = Safanoria().subcommands(New(), ListTickets(), BoardCommand(), ReleaseCommand(), Validate(), Version(), Dump())
+fun cli(): CliktCommand = Safanoria().subcommands(Init(), New(), ListTickets(), BoardCommand(), ReleaseCommand(), Validate(), Version(), Dump())
 
 /**
  * Like Clikt's `main`, but usage errors (bad option, missing argument) exit 2 as documented

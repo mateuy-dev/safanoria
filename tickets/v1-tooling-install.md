@@ -51,7 +51,7 @@ schemas), so the installed files are exactly the binary's Safanoria version. Log
 - [x] Embed `skill/SKILL.md` and `SPEC.md`. `Install` in `core`: the managed files with the
       marker, the version found in an installed copy's marker (none: installed by hand), the
       project files to create, and for templates whether they differ from the built-in ones.
-- [ ] `safanoria init [--dir] [--component NAME=FILE:PROPERTY]... [--external NAME]...
+- [x] `safanoria init [--dir] [--component NAME=FILE:PROPERTY]... [--external NAME]...
       [--dry-run]`: refuses when `safanoria.yaml` exists (use `update`). Without components it
       asks for them (names, then each one's version file and property, or external); without a
       terminal it needs the options. Writes `safanoria.yaml`, the ticket directory with the
@@ -112,3 +112,11 @@ From `v1-tooling-native-spike` (workflow at commit 657ea65, `.github/workflows/n
   (project-owned: only after asking). An existing ticket README is always the project's; an
   existing CLAUDE.md mentioning the `safanoria` skill is left alone, else the paragraph is
   appended after asking. 5 tests, one shaped like VacAppKMP's hand install.
+- **2026-10-02** · step 2 · `safanoria init [--dir] [--main-branch] [--component
+  NAME=FILE:PROPERTY]... [--external NAME]... [--yes] [--dry-run]`, in `--root` or the working
+  directory. Without components it asks (names, then each source, `external` allowed) through
+  Clikt's terminal (Mordant prompts), so tests drive it with `test(stdin, inputInteractive)`.
+  `applyChanges` is shared with `update`: one line per file; a project's differing file is
+  changed only with `--yes` or a yes; without a terminal it is kept and the line says how to
+  change it. Usage errors thrown from `run()` carry the command's context, so they show `init`'s
+  usage, not the root's. 4 tests, JVM and linuxX64.
