@@ -2,7 +2,7 @@
 id: v1-tooling-validate
 type: feature
 title: "`safanoria validate`: every SPEC §12 check"
-status: review
+status: done
 priority: high
 size: M
 created: 2026-10-01
@@ -149,3 +149,4 @@ From `v1-tooling-cli-core` (what `core` already provides):
   CI runs 36986117930 (`cli`, three OSes) and 36986117972 (`tickets`: "ok: 12 tickets valid"):
   green. Learnings promoted as code comments.
 - **2026-10-02** · status · review.
+- **2026-10-02** · status · done. Merged into `v1-tooling`.
