@@ -73,7 +73,7 @@ class ListTickets : RepositoryCommand(name = "list") {
         fun str(v: String?): JsonElement = v?.let(::JsonPrimitive) ?: JsonNull
         fun ids(v: List<String>) = JsonArray(v.map(::JsonPrimitive))
         put("id", t.fileId)
-        put("file", t.path.relativeTo(repository.root).toString())
+        put("file", t.path.relativeTo(repository.root).segments.joinToString("/")) // `/` on every OS, like the board's links
         put("title", str(f?.title?.value))
         put("type", str(f?.type?.text))
         put("status", str(f?.status?.text))

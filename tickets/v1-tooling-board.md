@@ -2,7 +2,7 @@
 id: v1-tooling-board
 type: feature
 title: "`safanoria list` and `safanoria board`"
-status: review
+status: done
 priority: medium
 size: S
 created: 2026-10-01
@@ -84,3 +84,7 @@ order), so a committed board only changes when tickets do.
   `BOARD.md`: a committed board must be regenerated (and checked in CI) on every ticket
   change; that belongs with `v1-tooling-hooks`. `list`/`board` out of Planned.
 - **2026-10-02** · status · review. `allTests` green; this repository validates clean.
+- **2026-10-02** · fix · CI on Windows: `list --format json` gave `file` with `\`
+  (`Path.toString`). Now `/` on every OS, as the board's links. Fixed on `v1-tooling` after
+  the merge.
+- **2026-10-02** · status · done. Merged into `v1-tooling`.

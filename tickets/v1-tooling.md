@@ -69,7 +69,7 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
       numbers, targeted-edit writer.
 - [x] `v1-tooling-validate`: all SPEC §12 checks.
 - [x] `v1-tooling-new`: `new` command.
-- [ ] `v1-tooling-board`: `list` and `board` commands.
+- [x] `v1-tooling-board`: `list` and `board` commands.
 - [ ] `v1-tooling-spec-decisions`: decide and specify Safanoria's versioning, attachments and
       per-type templates.
 - [ ] `v1-tooling-release`: `release` stamping, including components released from another
@@ -125,3 +125,5 @@ command needs the same parser and writer; once it is done, `validate`, `new`, `b
   files / `--staged` / JSON), 35 fixtures, CI validates our tickets; `schema/check.py` removed.
 - **2026-10-02** · v1-tooling-new · Done and merged: `safanoria new` (id suggestion, template,
   parent Plan item, `--dry-run`); usage errors exit 2 in every command; skill Create uses it.
+- **2026-10-02** · v1-tooling-board · Done and merged: `safanoria list` and `safanoria
+  board`, on `TicketGraph` in `core`.
