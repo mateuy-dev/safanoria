@@ -1,7 +1,7 @@
 ---
 id: resume-ticket-session
 type: feature
-title: "Resuming a ticket's session after a restart"
+title: Make it easy to continue work on a ticket, also after a restart
 status: backlog
 priority: high
 size: S
@@ -26,6 +26,24 @@ Claude Code still saves the session under the folder where it started. After a r
 We want work on a ticket to continue in the right worktree and branch after a restart, without
 the user having to remember where the session started.
 
+The user may also not know which worktree the work is in. While working on a parent ticket, the
+session can start a child ticket and create and switch into the child's worktree
+(`../safanoria--<child-id>`) on its own. The user only knows "I was working on the parent". To
+continue, they shouldn't need to know about the child, its branch or its worktree.
+
+Think about different ways to make continuing work easy, for example:
+
+- The user says "continue <ticket>" (or just "continue") in any session, in any checkout, and
+  the skill finds where the work is: the ticket's `in-progress` children, their branches and
+  worktrees, and the latest Work Log entries. Then it switches there, or says where to go.
+- A CLI command (e.g. `safanoria status` or `safanoria resume [<id>]`) that lists the tickets in
+  progress with their branch, worktree and last Work Log entry, and prints what to run to
+  continue.
+- The Work Log records where the work moved to (e.g. "started child `<id>`, worktree `…`"), so
+  the parent ticket points to the child's worktree.
+- Showing the current ticket and worktree in the Claude Code status line, so the user can see
+  where the session is.
+
 Ideas to look at (nothing decided yet):
 
 - The skill checks where it is before working on an `in-progress` ticket: if the current
@@ -46,4 +64,7 @@ Ideas to look at (nothing decided yet):
   session be resumed from the worktree or from main? Checked `~/.claude/projects/`: a session
   that moved into several ticket worktrees is saved only under the main checkout's folder, and
   the worktrees' folders have no sessions.
+- **2026-10-02** · note · Scope widened at the user's request: look for different ways to make
+  continuing work easy, also when the session switched into a child ticket's worktree without
+  the user knowing.
 
