@@ -55,7 +55,7 @@ class GitTest {
         val git = clone.repository.git
 
         assertEquals(listOf("main", "work"), git.branches())
-        assertEquals(listOf("main", "work", "origin/main", "origin/shared"), git.branches(remote = true))
+        assertEquals(listOf("origin/main", "origin/shared"), git.remoteBranches())
         assertEquals(
             listOf(Worktree(clone.root, "main"), Worktree(wt, "work")),
             git.worktrees().map { Worktree(SystemFileSystem.canonicalize(it.path), it.branch) },

@@ -413,7 +413,8 @@ else `mainBranch`. The parent's branch is resolved the same way: branch `<parent
 not merged, else the parent's target.
 
 1. If branch `<id>` exists and is not merged into the target, the real copy is the one on branch
-   `<id>`.
+   `<id>`. The same applies when it is checked out with uncommitted edits to the ticket: a branch
+   just started has no commits of its own, so git sees it as merged, but its edits are not.
 2. Otherwise it is the target's copy. A child merged into an unmerged parent branch is
    therefore read from the parent's branch. Once a branch is merged, the target wins even if the
    branch is kept, so stamping on `mainBranch` is never hidden by an old branch copy.

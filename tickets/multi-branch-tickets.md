@@ -69,7 +69,7 @@ Out of scope:
 - [x] core `GitTreeFileSystem`: a read-only Okio `FileSystem` over one commit's tree, blobs read
       once and cached across branches, so `Repository` (config, tickets, templates, validator,
       `NewTicket`) works on any branch unchanged.
-- [ ] core `Branches`: every branch's tickets (working-tree files for checked-out branches), the
+- [x] core `Branches`: every branch's tickets (working-tree files for checked-out branches), the
       resolution rule, and where each real copy came from (for the "only on" marker).
 - [ ] CLI `board` and `list` use it, with `--remote` and `--checkout`; both show the marker.
 - [ ] CLI `validate`: ids from every branch for references; `id-created-twice` warning.
@@ -170,3 +170,8 @@ together" (§11.4).
 - **2026-10-02** · decision · The new section is §14, not inserted before §11: §11–§13 are cited
   in code, docs and copies installed in other projects. The spec version stays 1: §14 only adds
   rules, and validation gets more lenient (fewer `ref-unknown`) plus one warning.
+- **2026-10-02** · deviation · Rule 1 was incomplete. Right after Start, branch `<id>` has no
+  commits of its own, so `--merged` counts it as merged and the `backlog` copy on `main` won
+  over the worktree's uncommitted `in-progress`. Rule 1 now also applies when the checked-out
+  copy differs from the branch's last commit (SPEC §14.1 updated). Found by the "checked-out"
+  test case.

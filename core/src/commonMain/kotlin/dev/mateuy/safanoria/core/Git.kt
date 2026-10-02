@@ -35,12 +35,11 @@ public class Git(private val root: Path) {
         return result.output
     }
 
-    /**
-     * Branch names: local ones (`main`), and with [remote] also remote-tracking ones
-     * (`origin/main`), without the remotes' `HEAD`.
-     */
-    public fun branches(remote: Boolean = false): List<String> =
-        refNames(gitOrThrow("for-each-ref", "--format=%(refname)", "refs/heads", *if (remote) arrayOf("refs/remotes") else emptyArray()))
+    /** Local branch names (`main`, `feature/x`). */
+    public fun branches(): List<String> = refNames(gitOrThrow("for-each-ref", "--format=%(refname)", "refs/heads"))
+
+    /** Remote-tracking branch names (`origin/main`), without the remotes' `HEAD`. */
+    public fun remoteBranches(): List<String> = refNames(gitOrThrow("for-each-ref", "--format=%(refname)", "refs/remotes"))
 
     /** The branches (local and remote-tracking) whose tip is reachable from [target]. */
     public fun mergedInto(target: String): Set<String> =
