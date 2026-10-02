@@ -26,14 +26,27 @@ are in `safanoria.yaml` at the repository root.
 
 ## Create
 
-With the `safanoria` CLI installed (`safanoria version` works), steps 1, 2 and 4 are:
-`safanoria new "<title>" [--parent <id>] [--type …] [--area …] --dry-run` to get a suggested
-id and see what it would write, confirm the id with the user, then the same command without
-`--dry-run` (add `--id <id>` if the user chose another one, `--objective "…"` to fill it).
-Then do step 3 by hand, and run `safanoria validate <file>`. Without the CLI:
+**On which branch** (SPEC §14.2): a top-level ticket goes on `mainBranch`, also when you find
+out-of-scope work while on another ticket's branch; a child goes on its parent's branch (where
+you are while planning the parent). Never switch the user's checkout to do it. If `mainBranch`
+can't be written to (protected), create it on the current branch and say so. Don't edit a ticket
+you created on `mainBranch` from the branch you are on: the file isn't there.
 
-1. Propose an id (SPEC §3). Check `<dir>/<id>.md` does not exist and
-   `git branch -a --list '*<id>'` is empty. Confirm the id with the user.
+With the `safanoria` CLI installed (`safanoria version` works), steps 1, 2 and 4 are:
+`safanoria new "<title>" [--parent <id>] [--type …] [--area …] [--on <branch>] --dry-run` to get
+a suggested id and see what it would write, confirm the id with the user, then the same command
+without `--dry-run` (add `--id <id>` if the user chose another one, `--objective "…"` to fill
+it). `--on <mainBranch>` writes and commits the ticket on that branch without touching the
+current checkout; leave it out when the ticket belongs on the current branch. For step 3 on a
+ticket created with `--on`, add the request and quote in the same way where that branch is
+checked out, or ask the user. Then run `safanoria validate <file>`. Without the CLI:
+
+1. Propose an id (SPEC §3). Check that no branch has ever had the file
+   (`git rev-list --all -1 -- '<dir>/<id>.md'` prints nothing) and that
+   `git branch -a --list '*<id>'` is empty. Confirm the id with the user. To create it on
+   `mainBranch` from another branch, write and commit it where `mainBranch` is checked out
+   (`git worktree list`; `git -C <that worktree> commit -- <file>` commits only that file); if
+   it isn't checked out anywhere, ask the user.
 2. Copy the template for the type (SPEC §6.2: `<dir>/_TEMPLATE.<type>.md`, else
    `<dir>/_TEMPLATE.md`, else `templates/<type>.md` or `templates/ticket.md` from Safanoria), set
    `status: backlog`, fill Objective (for a bug, its Steps to reproduce, Expected and Actual).
@@ -72,7 +85,8 @@ For each Plan item, in order:
 
 Along the way:
 - Plan wrong? Update Plan / Acceptance Criteria and log why.
-- Found out-of-scope work? Create a new `backlog` ticket and add it to `related`.
+- Found out-of-scope work? Create a new `backlog` ticket on `mainBranch` (see Create) and add it
+  to `related`.
 - Discovered something true beyond this ticket? Add it to Learnings right away (SPEC §7.6).
 
 ## Finish

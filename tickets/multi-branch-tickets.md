@@ -62,7 +62,7 @@ Out of scope:
 
 - [x] SPEC: new section "Tickets across branches" (resolution rule, see Design); §3 uniqueness
       across branches; §11 Create: on which branch, with the fallback; §12 cross-branch checks.
-- [ ] Skill: creation rules (`new --on <mainBranch>` for out-of-scope tickets, children on the
+- [x] Skill: creation rules (`new --on <mainBranch>` for out-of-scope tickets, children on the
       parent's branch); don't edit an out-of-scope ticket from the branch that found it.
 - [ ] core `Git`: branches (local, remote-tracking), worktrees (`worktree list --porcelain`),
       merged-into checks, `ls-tree` of the ticket dir, blob reads, merge-base.
