@@ -1,0 +1,27 @@
+# Every field of SPEC §5.
+id: herd-locations-map-input
+type: feature
+title: Pick a herd location on a map
+status: done
+priority: high
+size: M
+area: [app, ktor]
+assignee: someone-else
+created: 2026-09-28
+updated: 2026-10-02
+parent: herd-locations
+blockedBy: [map-tile-provider]
+related: [movement-animal-count]
+refs:
+  sentry: [7Y, 7T]
+requests:
+  - user: 1834
+    channel: whatsapp
+    date: 2026-09-28
+  - user: null
+    who: Breeders association technician
+    channel: in-person
+    date: 2026-09-12
+resolvedIn:
+  app: 4.3.0
+  ktor: null

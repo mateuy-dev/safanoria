@@ -1,0 +1,6 @@
+# expect: uniqueItems /channels
+safanoria: 1
+components:
+  app:
+    version: { file: gradle.properties, property: appVersionName }
+channels: [email, email]

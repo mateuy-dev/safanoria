@@ -1,0 +1,5 @@
+# expect: oneOf /components/app/version
+safanoria: 1
+components:
+  app:
+    version: { file: f, property: v, regex: '(.+)' }

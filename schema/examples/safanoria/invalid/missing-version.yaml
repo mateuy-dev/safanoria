@@ -1,0 +1,4 @@
+# expect: required /
+components:
+  app:
+    version: { file: gradle.properties, property: appVersionName }

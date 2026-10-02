@@ -1,0 +1,1 @@
+tickets/no-title.md:2 schema-required

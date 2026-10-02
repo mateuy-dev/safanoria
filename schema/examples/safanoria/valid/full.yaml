@@ -1,0 +1,17 @@
+# Every key of SPEC §2.
+safanoria: 1
+dir: tickets
+mainBranch: master
+worktree: ../VacAppKMP--{id}
+components:
+  app:
+    version: { file: composeApp/gradle.properties, property: appVersionName }
+  ktor:
+    version: { file: server/build.gradle.kts, regex: 'version = "(.+)"' }
+  rails:
+    external: true
+channels: [whatsapp, email, phone, in-app, in-person]
+userRef: VacApp user id
+refs:
+  sentry: { url: "https://example.sentry.io/issues/?query={id}" }
+learningTargets: [CLAUDE.md, docs/, .claude/skills/, code comment]

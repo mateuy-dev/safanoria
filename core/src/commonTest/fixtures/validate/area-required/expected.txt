@@ -1,0 +1,1 @@
+tickets/no-area.md:2 area-required

@@ -15,9 +15,10 @@ viewers, editors). The key words MUST, MUST NOT, SHOULD and MAY are used as in R
   tickets/                    ← ticket directory (configurable)
     movement-animal-count.md  ← a ticket
     herd-locations.md
-    attachments/<id>/...      ← optional files referenced from a ticket
+    attachments/<id>/...      ← optional files referenced from a ticket (§7.8)
     README.md                 ← ignored (not a ticket)
-    _TEMPLATE.md              ← ignored (not a ticket)
+    _TEMPLATE.md              ← ignored (not a ticket): the template for new tickets
+    _TEMPLATE.bug.md          ← ignored: optional template for one type (_TEMPLATE.<type>.md)
 ```
 
 A file in the ticket directory is a ticket if and only if its name is `<id>.md` and `<id>` is a
@@ -48,9 +49,11 @@ learningTargets: [CLAUDE.md, docs/, .claude/skills/, code comment]   # optional 
   and the allowed keys of `resolvedIn`.
 - `version` tells tools where the component's current version is read from. Supported forms:
   `{ file, property }` for `key=value` files, `{ file, regex }` with one capture group.
-  `external: true` means the version is supplied when stamping (§9).
+  `external: true` means the component is released from another repository, and the version is
+  supplied when stamping (§9).
 - `channels` defaults to `[email, phone, in-person, other]`.
 - Unknown keys MUST be preserved by tools and MAY be ignored.
+- [`schema/safanoria.schema.json`](schema/safanoria.schema.json) is the JSON Schema for this file.
 
 ## 3. Ticket id
 
@@ -77,10 +80,17 @@ worktree name.
 The file is UTF-8, uses `\n` line endings, and starts with a YAML frontmatter block between
 `---` lines, followed by the body (§7).
 
+Dates (`YYYY-MM-DD`) and versions are strings. YAML 1.1 loaders (PyYAML, js-yaml's default
+schema) turn an unquoted `2026-10-01` into a date object; tools MUST read it as a string.
+
 ## 5. Frontmatter
 
 Fields SHOULD appear in the order below. Optional fields MAY be omitted; an omitted field has
 its default value. Tools that write a ticket MUST preserve unknown fields.
+
+[`schema/ticket.schema.json`](schema/ticket.schema.json) is the JSON Schema for the frontmatter.
+It covers the rules that can be checked from one file; the rest of §12 needs the other tickets
+and `safanoria.yaml`.
 
 | Field | Required | Type | Default | Meaning |
 |---|---|---|---|---|
@@ -142,6 +152,15 @@ A request is:
 
 `research` tickets MUST NOT have children, and never get `resolvedIn`. Work that follows from
 them becomes new tickets linked with `related`.
+
+Every type has the same sections (§7). What differs goes inside them:
+
+- `bug`: Objective SHOULD have `### Steps to reproduce`, `### Expected` and `### Actual`.
+- `research`: Acceptance Criteria are the questions, one per item, checked when answered;
+  the answers are Learnings.
+
+A new ticket of type `<type>` is created from `<dir>/_TEMPLATE.<type>.md` if it exists, else
+from `<dir>/_TEMPLATE.md`, else from the template Safanoria provides for that type.
 
 ## 7. Body
 
@@ -236,6 +255,22 @@ Format: `- **<YYYY-MM-DD>** · <ref> · <text>`, where `<ref>` is one of `plan`,
 a child id, `status`, `review`, `release`, or another single word. Entries SHOULD record
 decisions and deviations from the Plan with their reasons, not restate the diff.
 
+### 7.8 Attachments
+
+Files a ticket needs (screenshots, logs, sample data) go in `<dir>/attachments/<id>/`, where
+`<id>` is the ticket that owns them, and are referenced from it with relative links, which
+render on GitHub and in apps:
+
+```markdown
+![Crash on save](attachments/movement-animal-count/crash.png)
+```
+
+- File names SHOULD be lowercase, without spaces.
+- Each file SHOULD be under 1 MB: the repository keeps every version forever. Larger files
+  (videos, dumps) go elsewhere and are linked by URL.
+- §10 applies: crop or redact personal data from screenshots and logs.
+- A ticket SHOULD link only to its own attachments.
+
 ## 8. Relations
 
 Every relation is written on one side only. Tools derive the reverse direction.
@@ -284,6 +319,16 @@ resolvedIn:
   with the parent. A child's version MUST NOT be later than its parent's.
 - A parent's own `resolvedIn` is stamped normally; the feature as a whole shipped at the highest
   version among the parent and its children.
+- Versions only go up: stamping `<c>` at a version lower than one already in a ticket's
+  `resolvedIn.<c>` MUST be refused.
+
+**External components** (`external: true`, released from another repository) are stamped the
+same way, in the ticket repository on its `mainBranch`, with the version given (there is no
+source to read). Either a person runs it after the other repository releases, or that
+repository's release job checks out the ticket repository, stamps, and commits (or opens a pull
+request). Here `done` means merged in the other repository, which the ticket repository cannot
+see, so a ticket marked `done` after that release was cut would be stamped too: stamping MAY
+then be limited to the tickets named by whoever releases.
 
 ## 10. Privacy
 
@@ -298,7 +343,7 @@ Tickets live in git, whose history is permanent and copied to every clone.
 These rules apply to agents and to tools that automate work.
 
 1. **Create.** Propose an id, check it is unused (file and branch), confirm it with the human,
-   copy the template, set `status: backlog`, fill Objective. Add requests and quotes if it comes from users.
+   copy the template for its type (§6.2), set `status: backlog`, fill Objective. Add requests and quotes if it comes from users.
 2. **Start** — only when the human says so. Create the branch `<id>` (from the parent's branch if
    `childrenMergeInto: parent`, else from `mainBranch`) and, if configured, the worktree. Set
    `status: in-progress`.
@@ -328,9 +373,19 @@ A validator MUST report:
 - Unchecked Plan items or pending Learnings at `review`/`done`.
 - `requests` and User Requests quotes not matching in count; `channel` not in `channels`.
 - A child's `resolvedIn` later than its parent's.
+- A link to a file under `attachments/` that does not exist.
+
+A validator SHOULD warn about attachment files over 1 MB.
 
 ## 13. Versioning of this spec
 
 `safanoria.yaml` declares the spec version. Additions that old tools can ignore (new optional
 fields, new sections) keep the version. Changes that make valid tickets invalid, or change a
 field's meaning, increase it.
+
+The spec version is not the **Safanoria version**. Safanoria (this spec, the agent skill, the
+ticket templates and the `safanoria` CLI) is released as one unit with one `MAJOR.MINOR.PATCH`
+version, which says which spec versions it supports. A project records only the spec version.
+Copies installed into a project (the skill, this file) SHOULD end with a
+`<!-- safanoria X.Y.Z -->` line naming the Safanoria version they came from, so tools can tell
+what is installed and update it.

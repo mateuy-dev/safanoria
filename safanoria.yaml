@@ -1,9 +1,11 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mateuy-dev/safanoria/main/schema/safanoria.schema.json
 safanoria: 1
 dir: tickets
 mainBranch: main
 components:
   safanoria:
-    external: true    # no version source yet; see tickets/v1-tooling.md
+    version: { file: gradle.properties, property: version }
 channels: [email, in-person, other]
 userRef: name of the project using Safanoria (e.g. VacAppKMP)
 learningTargets: [SPEC.md, skill/SKILL.md, README.md]
+worktree: ../safanoria--{id}

@@ -1,0 +1,5 @@
+# expect: pattern /components
+safanoria: 1
+components:
+  App:
+    external: true
