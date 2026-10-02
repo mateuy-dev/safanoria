@@ -1,0 +1,9 @@
+# The lowest priority.
+id: dark-mode-icon
+type: feature
+title: Dark variant of the app icon
+status: backlog
+priority: very-low
+size: XS
+created: 2026-10-02
+updated: 2026-10-02

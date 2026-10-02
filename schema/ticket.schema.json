@@ -10,7 +10,7 @@
     "type": { "enum": ["feature", "bug", "maintenance", "research"] },
     "title": { "type": "string", "minLength": 1, "pattern": "^[^\\n]*$", "description": "One line." },
     "status": { "enum": ["backlog", "ready", "in-progress", "review", "done", "wontfix"] },
-    "priority": { "enum": ["low", "medium", "high", "urgent"] },
+    "priority": { "enum": ["very-low", "low", "medium", "high", "urgent"] },
     "size": { "enum": ["XS", "S", "M", "L", "XL"], "description": "For research, the time box." },
     "area": {
       "type": "array",

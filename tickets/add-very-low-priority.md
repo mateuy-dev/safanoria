@@ -26,7 +26,7 @@ Add a "very low" priority below `low`. The `priority` enum (SPEC §5) is `low | 
 
 ## Plan
 
-- [ ] Spec and schema: add `very-low` to SPEC §5 and `schema/ticket.schema.json`; add
+- [x] Spec and schema: add `very-low` to SPEC §5 and `schema/ticket.schema.json`; add
   `schema/examples/ticket/valid/priority-very-low.yaml`. Spelling `very-low` (kebab case, like
   `in-progress`), so `enumOf`/`text` map it to `VERY_LOW` with no special case. Spec version
   stays 1: no valid ticket becomes invalid and no field changes meaning (§13); Safanoria is
