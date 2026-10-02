@@ -288,6 +288,9 @@ cli/build/bin/linuxX64/releaseExecutable/safanoria.kexe version
 python3 tools/bench.py cli/build/bin/linuxX64/releaseExecutable/safanoria.kexe   # startup times
 ```
 
+- The hook runs the installed `safanoria`, not this checkout's. After CLI changes are merged,
+  `make install` again: an older CLI can report errors the new one wouldn't (e.g. a related
+  ticket that exists only on `main`, before cross-branch ids).
 - Needs JDK 21. The first build downloads the Kotlin/Native toolchain into `~/.konan`.
 - Linux binaries link the system `libunistring.so.5` (Ubuntu 24.04+, `libunistring5`), needed by
   the JSON Schema validator; they are built on Linux only.

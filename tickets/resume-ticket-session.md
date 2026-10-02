@@ -2,7 +2,7 @@
 id: resume-ticket-session
 type: feature
 title: Make it easy to continue work on a ticket, also after a restart
-status: in-progress
+status: review
 priority: high
 size: M
 created: 2026-10-02
@@ -56,21 +56,21 @@ Ideas to look at (nothing decided yet):
 
 ## Acceptance Criteria
 
-- [ ] `safanoria resume [<id>]` says where to continue: for each ticket, its branch, its
+- [x] `safanoria resume [<id>]` says where to continue: for each ticket, its branch, its
       worktree (or that it has none), uncommitted files there, the next unchecked Plan item and
       the last Work Log entry. `--format json` gives the same for agents.
-- [ ] Without an id it shows every `in-progress` ticket that has no `in-progress` child. With
+- [x] Without an id it shows every `in-progress` ticket that has no `in-progress` child. With
       the id of a parent it shows the parent's `in-progress` children, or the parent itself when
       it has none. So "I was working on the parent" is enough.
-- [ ] It gives the same answer from the main checkout and from any worktree.
-- [ ] The skill has a Resume step, run with `/safanoria resume [<id, title or words>]`. Words
+- [x] It gives the same answer from the main checkout and from any worktree.
+- [x] The skill has a Resume step, run with `/safanoria resume [<id, title or words>]`. Words
       are matched against the titles of tickets in progress. It finds the place with
       `safanoria resume` (git commands without the CLI), asks when there is more than one
       candidate, switches into the worktree, and goes on from the ticket file.
-- [ ] Before changing files for a ticket, the skill checks the current branch is `<id>`.
-- [ ] README explains how to continue after a restart, including where Claude Code saves a
+- [x] Before changing files for a ticket, the skill checks the current branch is `<id>`.
+- [x] README explains how to continue after a restart, including where Claude Code saves a
       session that moved into a worktree.
-- [ ] Tests for the core logic and the command pass.
+- [x] Tests for the core logic and the command pass.
 
 ## Plan
 
@@ -96,8 +96,14 @@ log entry would only repeat it and could go stale (worktree moved or removed).
       session)
 - [x] Out of scope: backlog ticket on `main` for showing the current ticket in the Claude Code
       status line; add it to `related`
-- [ ] Check by hand: a new session in the main checkout, `/safanoria resume resume-ticket`,
-      lands in this worktree
+- [x] Check by hand: the built `safanoria resume` from the main checkout and from this worktree
+      gives the same place (`here` false from main, "you are there" here)
+
+## Learnings
+
+- The pre-commit hook runs the installed `safanoria`, which can be older than this repository's
+  code: an older CLI reported a related ticket that exists only on `main` as unknown.
+  → promoted: README.md
 
 ## Work Log
 
@@ -124,4 +130,9 @@ log entry would only repeat it and could go stale (worktree moved or removed).
   the built CLI and committed `69ae345` with `--no-verify`. `ValidatorRepositoryTest` failed the
   same way, because it validated this repository without other branches; it now reads them like
   `safanoria validate` does.
+- **2026-10-02** · plan · The user said a check from a separate session isn't needed. Instead
+  checked the built `safanoria resume` from the main checkout and from this worktree.
+- **2026-10-02** · status · Review. `./gradlew allTests` passes (JVM and linuxX64), and this
+  branch's build validates every ticket. The learning about the hook running the installed CLI
+  is in README's Development section.
 
