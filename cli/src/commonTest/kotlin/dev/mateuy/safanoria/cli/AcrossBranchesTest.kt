@@ -45,6 +45,40 @@ class AcrossBranchesTest {
     }
 
     @Test
+    fun validateKnowsIdsOnOtherBranches() {
+        val repo = GitRepo.scenario("across-validate")
+        repo.write("tickets/late.md", GitRepo.ticket("late"))
+        repo.commit("late on main")
+        repo.checkout("feature")
+        repo.write("tickets/gamma.md", GitRepo.ticket("gamma", related = listOf("late")))
+
+        val r = run(repo, "validate")
+        assertEquals(0, r.statusCode, r.output)
+        assertEquals("ok: 4 tickets valid", r.stdout.trim())
+
+        val checkout = run(repo, "validate", "--checkout")
+        assertEquals(1, checkout.statusCode, checkout.output)
+        assertTrue("error[ref-unknown]: related: no ticket 'late'" in checkout.stdout, checkout.stdout)
+    }
+
+    @Test
+    fun validateWarnsAboutAnIdCreatedTwice() {
+        val repo = GitRepo.scenario("across-twice")
+        repo.checkout("other", create = true)
+        repo.write("tickets/stray.md", GitRepo.ticket("stray", "ready").replace("Ticket stray", "Another stray"))
+        repo.commit("same id, separately")
+
+        val r = run(repo, "validate", "--staged")
+        assertEquals(0, r.statusCode, r.output) // nothing staged
+        val all = run(repo, "validate")
+        assertEquals(0, all.statusCode, all.output) // a warning only
+        assertTrue(
+            "tickets/stray.md:2: warning[id-created-twice]: branch 'feature' also created a ticket 'stray' separately" in all.stdout,
+            all.stdout,
+        )
+    }
+
+    @Test
     fun checkoutAndRemoteTogetherIsAUsageError() {
         val repo = GitRepo.scenario("across-usage")
         val r = run(repo, "list", "--checkout", "--remote")

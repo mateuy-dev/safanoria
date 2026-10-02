@@ -1,8 +1,13 @@
 package dev.mateuy.safanoria.core
 
-/** SPEC §12 rules that need several tickets: ids, references and the parent/child structure. */
-internal class CrossTicketRules(private val tickets: List<Ticket>) {
+/**
+ * SPEC §12 rules that need several tickets: ids, references and the parent/child structure.
+ * [otherIds] are ids of tickets on other branches: references to them are not unknown (§14).
+ */
+internal class CrossTicketRules(private val tickets: List<Ticket>, private val otherIds: Set<String> = emptySet()) {
     private val byId = tickets.associateBy { it.fileId }
+
+    private fun known(id: String) = id in byId || id in otherIds
     private val out = mutableListOf<Finding>()
 
     private fun report(ticket: Ticket, line: Int?, code: String, message: String, causes: Collection<Ticket> = emptyList(), column: Int? = null) {
@@ -31,18 +36,18 @@ internal class CrossTicketRules(private val tickets: List<Ticket>) {
         for (t in tickets) {
             val f = t.frontmatter ?: continue
             fun check(ref: Located<String>, field: String) {
-                if (ref.value !in byId) report(t, ref.line, "ref-unknown", "$field: no ticket '${ref.value}'", column = ref.column)
+                if (!known(ref.value)) report(t, ref.line, "ref-unknown", "$field: no ticket '${ref.value}'", column = ref.column)
             }
             f.parent?.let { check(it, "parent") }
             f.blockedBy.forEach { check(it, "blockedBy") }
             f.related.forEach { check(it, "related") }
             for (item in t.body.checklist("Plan")) {
                 val child = item.childId ?: continue
-                if (child !in byId) report(t, item.line, "ref-unknown", "Plan item names no ticket '$child'")
+                if (!known(child)) report(t, item.line, "ref-unknown", "Plan item names no ticket '$child'")
             }
             for (l in t.body.learnings) {
                 val r = l.resolution
-                if (r is Resolution.NewTicket && r.id.isNotEmpty() && r.id !in byId) {
+                if (r is Resolution.NewTicket && r.id.isNotEmpty() && !known(r.id)) {
                     report(t, l.resolutionLine, "ref-unknown", "Learning → new ticket: no ticket '${r.id}'")
                 }
             }

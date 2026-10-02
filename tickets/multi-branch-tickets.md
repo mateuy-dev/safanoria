@@ -72,7 +72,7 @@ Out of scope:
 - [x] core `Branches`: every branch's tickets (working-tree files for checked-out branches), the
       resolution rule, and where each real copy came from (for the "only on" marker).
 - [x] CLI `board` and `list` use it, with `--remote` and `--checkout`; both show the marker.
-- [ ] CLI `validate`: ids from every branch for references; `id-created-twice` warning.
+- [x] CLI `validate`: ids from every branch for references; `id-created-twice` warning.
 - [ ] CLI `new --on <branch>`: prepare against that branch's tree and commit there (see
       Implementation); `new` checks ids against every branch.
 - [ ] Tests with a fixture repository (real `git init` in a temp dir): unstarted, started,
@@ -175,3 +175,13 @@ together" (§11.4).
   over the worktree's uncommitted `in-progress`. Rule 1 now also applies when the checked-out
   copy differs from the branch's last commit (SPEC §14.1 updated). Found by the "checked-out"
   test case.
+- **2026-10-02** · decision · `validate` took 2.2 s on this repository, too slow for a
+  pre-commit hook. The 11 kept `v1-tooling*` branches hold old copies of most tickets: a blob
+  read per copy, plus a `cat-file -e` per copy for `id-created-twice`. Two changes bring it to
+  45 ms:
+  - Branches merged into `mainBranch` aren't read unless checked out. They can't hold a real
+    copy (rule 2), and their tickets are in `main`'s history, so they add no id and no
+    created-twice case `main` doesn't already show.
+  - Merge-bases are listed once per directory.
+
+  `validate` also gets `--checkout`, the old behaviour.

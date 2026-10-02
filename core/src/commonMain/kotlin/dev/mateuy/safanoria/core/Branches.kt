@@ -33,7 +33,7 @@ public class Branches private constructor(
         out
     }
 
-    private val merged = mutableMapOf<String, Set<String>>()
+    private val merged = mutableMapOf<String, Set<String>>() // by target ref
 
     /** Every id that has a ticket file on some branch (SPEC §14.3: those ids are taken). */
     public val ids: Set<String> get() = copies.keys
@@ -97,6 +97,12 @@ public class Branches private constructor(
      */
     public fun createdTwice(): List<CreatedTwice> {
         val bases = mutableMapOf<Pair<String, String>, String?>()
+        // Files of a directory at a merge-base: one ls-tree per base and directory, not a call per ticket.
+        val listings = mutableMapOf<Pair<String, String>, Set<String>>()
+        fun hasPath(base: String, path: String): Boolean {
+            val dir = path.substringBeforeLast('/', "")
+            return path.substringAfterLast('/') in listings.getOrPut(base to dir) { git.tree(base, dir)?.map { it.name }?.toSet().orEmpty() }
+        }
         val out = mutableListOf<CreatedTwice>()
         for ((id, c) in copies) {
             if (c.size < 2) continue
@@ -106,7 +112,7 @@ public class Branches private constructor(
                 if (other == anchor || copy.text == anchorCopy.text) continue
                 val refs = sources.getValue(anchor).ref to sources.getValue(other).ref
                 val base = bases.getOrPut(refs) { git.mergeBase(refs.first, refs.second) }
-                if (base == null || !git.hasPath(base, treePath(other, copy))) out += CreatedTwice(id, anchor, other)
+                if (base == null || !hasPath(base, treePath(other, copy))) out += CreatedTwice(id, anchor, other)
             }
         }
         return out.sortedWith(compareBy({ it.id }, { it.otherBranch }))
@@ -146,6 +152,8 @@ public class Branches private constructor(
             val mainBranch = repository.config.mainBranch
             if (mainBranch !in byName) return null
 
+            val mainRef = byName.getValue(mainBranch)
+            val mergedIntoMain = try { git.mergedInto(mainRef) } catch (e: GitException) { return null }
             val checkedOut = tops.filter { (w, _) -> w.branch != null && w != here }.associate { (w, path) -> w.branch!! to path }
             val blobs = BlobCache(git)
             fun committed(ref: String) = Repository(root, GitTreeFileSystem(git, ref, top, blobs))
@@ -155,9 +163,13 @@ public class Branches private constructor(
             for ((name, ref) in byName) {
                 if (name in sources) continue
                 val worktree = checkedOut[name]?.takeIf { ref == name }?.let { path -> sub.fold(path) { p, s -> p / s } }?.takeIf { fs.exists(it) }
+                // A branch merged into mainBranch can't hold a real copy (rule 2) nor a ticket main lacks,
+                // so it isn't read: old kept branches would cost a blob read per stale copy. Unless it's
+                // checked out: a branch just started is "merged" but may have uncommitted edits.
+                if (worktree == null && name != mainBranch && ref in mergedIntoMain) continue
                 sources[name] = if (worktree != null) Source(ref, Repository(worktree, fs), lazy { committed(ref) }) else Source(ref, committed(ref))
             }
-            return Branches(repository, git, sources, mainBranch, sub.joinToString("/"))
+            return Branches(repository, git, sources, mainBranch, sub.joinToString("/")).apply { merged[mainRef] = mergedIntoMain }
         }
 
         private fun canonical(fs: FileSystem, path: Path): Path = if (fs.exists(path)) fs.canonicalize(path) else path
