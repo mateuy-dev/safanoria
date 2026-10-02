@@ -53,7 +53,10 @@ class Init : CliktCommand(name = "init") {
             problems.forEach { echo(it.toString(), err = true) }
             throw ProgramResult(1)
         }
-        echo("Safanoria is set up. Next: `safanoria new \"<title>\"`, and add `safanoria release <component>` to your release process.")
+        echo(
+            "Safanoria is set up. Next: `safanoria new \"<title>\"`; `safanoria hook install` to validate tickets before " +
+                "each commit; and `safanoria release <component>` in your release process.",
+        )
     }
 
     /** A usage error shown with this command's usage, not the root's (thrown from run(), Clikt has no context for it). */

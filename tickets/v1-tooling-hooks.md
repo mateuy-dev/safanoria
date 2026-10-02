@@ -27,7 +27,7 @@ the install script from `v1-tooling-install`.
 
 ## Plan
 
-- [ ] `safanoria hook install|uninstall [--dry-run]`: writes `pre-commit` where git looks for
+- [x] `safanoria hook install|uninstall [--dry-run]`: writes `pre-commit` where git looks for
       hooks (`git rev-parse --git-path hooks`: respects `core.hooksPath` and is shared by all
       worktrees). The hook runs `safanoria validate --staged`; when `safanoria` isn't on PATH it
       warns and lets the commit through (a teammate without the CLI isn't blocked; CI still
@@ -53,3 +53,13 @@ the install script from `v1-tooling-install`.
 - **2026-10-02** · plan · A `hook` command rather than a snippet only; the hook lets commits
   through when the CLI is missing. CI as a reusable composite Action rather than a workflow to
   copy, tested in the release workflow. This repository's CI stays on the from-source build.
+- **2026-10-02** · step 1 · `safanoria hook install|uninstall [--dry-run]`. `Git.hooksDir()`:
+  `git rev-parse --path-format=absolute --git-path hooks` (git 2.31+), so `core.hooksPath` and
+  worktrees (hooks live in the common dir) are handled. `Hooks` in `core`: script, state (none,
+  Safanoria's by its marker line, another tool's), install; `makeExecutable` is a new
+  expect/actual (POSIX `chmod` 0755 on native, `File.setExecutable` on the JVM). Another tool's
+  hook is never touched: `install` prints the line to add and exits 1. `init` now mentions
+  `hook install`. Tests on a hand-made minimal `.git` (HEAD, objects, refs) under `build/`, so
+  no `git init` and this repository's hooks are never touched; executable bit checked with
+  `test -x` off Windows. Core 1 test, CLI 2, JVM and linuxX64; compiles for mingwX64 and
+  macosArm64.
