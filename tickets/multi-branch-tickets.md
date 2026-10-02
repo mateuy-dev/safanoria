@@ -64,7 +64,7 @@ Out of scope:
       across branches; §11 Create: on which branch, with the fallback; §12 cross-branch checks.
 - [x] Skill: creation rules (`new --on <mainBranch>` for out-of-scope tickets, children on the
       parent's branch); don't edit an out-of-scope ticket from the branch that found it.
-- [ ] core `Git`: branches (local, remote-tracking), worktrees (`worktree list --porcelain`),
+- [x] core `Git`: branches (local, remote-tracking), worktrees (`worktree list --porcelain`),
       merged-into checks, `ls-tree` of the ticket dir, blob reads, merge-base.
 - [ ] core `GitTreeFileSystem`: a read-only Okio `FileSystem` over one commit's tree, blobs read
       once and cached across branches, so `Repository` (config, tickets, templates, validator,
