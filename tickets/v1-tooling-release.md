@@ -24,7 +24,7 @@ command with the version given).
 
 ## Acceptance Criteria
 
-- [ ] Stamps every `done` ticket with the component in `area` (or no `area` and a single
+- [x] Stamps every `done` ticket with the component in `area` (or no `area` and a single
       component, §5) and no `resolvedIn.<c>`, adding the `release · <c> <v>` Work Log entry and
       setting `updated`; nothing else in the files changes
 - [ ] Refuses to run off `mainBranch` (overridable), and on a malformed version
@@ -41,7 +41,7 @@ SHOULD be part of the release commit, which the project's release process makes.
 - [x] Version sources in `core`: read `{ file, property }` (`key=value`, `key = value`,
       `#` comments) and `{ file, regex }` (first match, one group) relative to the root. Errors
       name the file and say what was missing. Value must be `MAJOR.MINOR.PATCH`.
-- [ ] `Release.prepare(repository, component, version?, today, only?)`: unknown component,
+- [x] `Release.prepare(repository, component, version?, today, only?)`: unknown component,
       malformed version, `external` without a version, and a version lower than one already
       stamped for that component are refused. Selects `done` tickets per §9 (not `research`,
       not `wontfix`), in id order; edits with `TicketEditor` (`setMapEntry`, `appendWorkLog`,
@@ -76,3 +76,11 @@ SHOULD be part of the release commit, which the project's release process makes.
   `match.groups[1]` throws when the regex has no group (native returns null), so the count is
   checked first. Tests also read every version source of this repository and of
   `SAFANORIA_EXTRA_REPOS` (VacAppKMP's `app` and `ktor`: both read).
+- **2026-10-02** · step 2 · `Release.prepare(repository, ReleaseRequest(component, version?,
+  only?), today)` → `Ready(component, version, versionFromSource, stamped, files, warnings)` or
+  `Refused(reason)`; all or nothing. `ktor: null` counts as not stamped (the §9 example) and is
+  replaced. With `only`, every named ticket must be eligible, else a refusal saying why (not
+  done, not in area, already stamped): a typo in a release command must not pass silently.
+  Same version again is allowed (more tickets done since). A given version doesn't need a
+  readable source. 5 tests on a VacAppKMP-shaped fake repository (`app` and `ktor` with
+  sources, `rails` external); stamped files validate clean.
