@@ -61,3 +61,23 @@ public class TicketGraph(tickets: List<Ticket>) {
         )
     }
 }
+
+/** Which tickets to show. Empty sets and null match everything; values within a field are alternatives. */
+public data class TicketFilter(
+    val statuses: Set<Status> = emptySet(),
+    val types: Set<TicketType> = emptySet(),
+    val areas: Set<String> = emptySet(),
+    /** Only children of this ticket. */
+    val parent: String? = null,
+    /** Only tickets with a `blockedBy` that is not `done`. */
+    val blocked: Boolean = false,
+) {
+    public fun matches(graph: TicketGraph, ticket: Ticket): Boolean {
+        val f = ticket.frontmatter
+        return (statuses.isEmpty() || f?.status in statuses) &&
+            (types.isEmpty() || f?.type in types) &&
+            (areas.isEmpty() || f?.area.orEmpty().any { it.value in areas }) &&
+            (parent == null || f?.parent?.value == parent) &&
+            (!blocked || graph.openBlockers(ticket).isNotEmpty())
+    }
+}

@@ -23,10 +23,10 @@ Read-only views over the tickets:
 
 ## Acceptance Criteria
 
-- [ ] `list` with filters by status, type, area and parent
+- [x] `list` with filters by status, type, area and parent
 - [ ] `board` groups by status, nests children under parents with `done/total`, and marks
       tickets blocked by a ticket that is not `done`
-- [ ] Reverse relations are derived (SPEC §8): children of a parent, tickets a ticket blocks
+- [x] Reverse relations are derived (SPEC §8): children of a parent, tickets a ticket blocks
 
 ## Plan
 
@@ -38,7 +38,7 @@ order), so a committed board only changes when tickets do.
       blocks, open blockers (`blockedBy` not `done`), a parent's progress (Plan items checked /
       total, children and own steps, as §8.1 defines "done"). Order: status (in-progress,
       review, ready, backlog, done, wontfix), then priority (urgent first), then id.
-- [ ] The `list` command: one line per ticket (`id  status  priority  type  size  title`, markers for
+- [x] The `list` command: one line per ticket (`id  status  priority  type  size  title`, markers for
       parent, children progress and blocked), filters `--status` (comma list), `--type`,
       `--area`, `--parent`, `--blocked`; `--format json` with every field plus the derived
       relations (`children`, `blocks`, `openBlockers`, `progress`), for agents.
@@ -63,3 +63,10 @@ order), so a committed board only changes when tickets do.
   missing ticket counts as open, `validate` reports it), `progress` (null for an empty Plan;
   given for any ticket, formatters show it for parents). Unknown status or priority sorts last.
   3 tests, JVM and linuxX64.
+- **2026-10-02** · step 2 · `safanoria list`; filtering in `core` (`TicketFilter`) for apps.
+  `--status` and `--type` take comma lists checked by Clikt (`choice` before `split`, so a bad
+  value gets `list`'s usage, exit 2); `--area` too. Markers after the title: `[done/total]` on
+  parents, `parent <id>`, `blocked by <ids>`. JSON: `{"tickets": [...]}`, every frontmatter
+  field (empty lists and nulls, not omitted, so agents need no defaults) plus `file`,
+  `children`, `blocks`, `openBlockers`, `progress`. 3 tests on the `valid` fixture, JVM and
+  linuxX64.
