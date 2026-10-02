@@ -28,7 +28,7 @@ command with the version given).
       component, §5) and no `resolvedIn.<c>`, adding the `release · <c> <v>` Work Log entry and
       setting `updated`; nothing else in the files changes
 - [ ] Refuses to run off `mainBranch` (overridable), and on a malformed version
-- [ ] Reads the version from `{ file, property }` and `{ file, regex }` sources
+- [x] Reads the version from `{ file, property }` and `{ file, regex }` sources
 - [ ] `--dry-run` lists what would be stamped
 - [ ] The external-component flow is decided and written into SPEC §9
 
@@ -38,7 +38,7 @@ Logic in `core` (`Release.prepare` returns the edits, writes nothing), like `new
 checks the branch, writes, and validates. `release` does not commit: SPEC §9 says stamping
 SHOULD be part of the release commit, which the project's release process makes.
 
-- [ ] Version sources in `core`: read `{ file, property }` (`key=value`, `key = value`,
+- [x] Version sources in `core`: read `{ file, property }` (`key=value`, `key = value`,
       `#` comments) and `{ file, regex }` (first match, one group) relative to the root. Errors
       name the file and say what was missing. Value must be `MAJOR.MINOR.PATCH`.
 - [ ] `Release.prepare(repository, component, version?, today, only?)`: unknown component,
@@ -69,3 +69,10 @@ SHOULD be part of the release commit, which the project's release process makes.
   `updated` (§5) although the criterion said nothing else changes; criterion corrected.
   External flow: stamping runs in the ticket repository with the version given; `--ticket` for
   when `done` can't be trusted to mean "in this release".
+- **2026-10-02** · step 1 · `Version` (parse, compare) and `Versions.read(repository, source)`
+  → `Found` or `Failed(reason)`. Properties: `=` or `:`, spaces around, `#`/`!` comments, last
+  one wins (Java properties). Regex: multiline, first match, group 1. The child-version rule
+  (`child-resolved-later`) now uses `Version` instead of its own parsing. JVM quirk:
+  `match.groups[1]` throws when the regex has no group (native returns null), so the count is
+  checked first. Tests also read every version source of this repository and of
+  `SAFANORIA_EXTRA_REPOS` (VacAppKMP's `app` and `ktor`: both read).
