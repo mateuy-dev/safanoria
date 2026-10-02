@@ -44,6 +44,35 @@ today's date. It refuses an id that exists (ids are never reused), an unknown pa
 parent that can't have children; a branch with the same name is a warning. The suggested id is
 short (filler words dropped, at most four words): confirm or change it, it's the branch name.
 
+## Viewing tickets
+
+```sh
+safanoria list                                  # one line per ticket, in-progress first
+safanoria list --status ready,backlog --type bug
+safanoria list --parent v1-tooling --blocked    # children blocked by a ticket that is not done
+safanoria list --format json                    # {tickets: [...]}: every field, plus children, blocks, openBlockers, progress
+safanoria board                                 # markdown board on stdout
+safanoria board -o docs/BOARD.md                # links relative to the file
+```
+
+`list` and `board` show tickets in the same order: status (in-progress, review, ready, backlog,
+done, wontfix), then priority, then id. In `board`, children appear under their parent with
+the parent's `done/total` Plan items (children and own steps). The board has no dates, so a
+committed one only changes when tickets do. This repository's board, shortened:
+
+```markdown
+## In progress (1)
+
+- [v1-tooling](tickets/v1-tooling.md) Tooling and open points to make Safanoria v1 usable across projects (high) · 8/14
+  - [x] [v1-tooling-new](tickets/v1-tooling-new.md) `safanoria new`: create a ticket from a title
+  - [ ] [v1-tooling-board](tickets/v1-tooling-board.md) `safanoria list` and `safanoria board` (in-progress)
+  - [ ] [v1-tooling-install](tickets/v1-tooling-install.md) Install the CLI, and set up or update Safanoria in a project with one command (backlog, high) · blocked by [v1-tooling-spec-decisions](tickets/v1-tooling-spec-decisions.md)
+
+## Backlog (1)
+
+- [gui-viewer](tickets/gui-viewer.md) Compose Desktop app to view tickets
+```
+
 ## Validating tickets
 
 ```sh
@@ -81,7 +110,7 @@ exec safanoria validate --staged
 
 ## Planned
 
-- CLI commands: `list`, `board`, `release <component> <version>`, `init`.
+- CLI commands: `release <component> <version>`, `init`.
 - `apps/`: viewers and editors.
 
 ## Development

@@ -2,7 +2,7 @@
 id: v1-tooling-board
 type: feature
 title: "`safanoria list` and `safanoria board`"
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-10-01
@@ -48,7 +48,7 @@ order), so a committed board only changes when tickets do.
       compact (id and title). Ids link to the ticket files, relative to where the board is
       written (`--output FILE`, default stdout, links relative to the root), so it reads well on
       GitHub. Golden-file test on the `valid` fixture, on JVM and native.
-- [ ] README: `list` and `board` usage; this repository's board generated as an example.
+- [x] README: `list` and `board` usage; this repository's board generated as an example.
 
 ## Work Log
 - **2026-10-02** · status · Started. Branch `v1-tooling-board` from `v1-tooling`, worktree
@@ -79,3 +79,8 @@ order), so a committed board only changes when tickets do.
   `/` on every OS. Missing output directory: exit 2. Tests: golden file
   (`cli/src/commonTest/fixtures/board/valid.md`, CRLF-normalised for Windows checkouts),
   `--output` links, core edge cases; JVM and linuxX64.
+- **2026-10-02** · step 4 · README "Viewing tickets": usage, order, and a shortened board of
+  this repository. Deviation: the example is an excerpt in the README, not a committed
+  `BOARD.md`: a committed board must be regenerated (and checked in CI) on every ticket
+  change; that belongs with `v1-tooling-hooks`. `list`/`board` out of Planned.
+- **2026-10-02** · status · review. `allTests` green; this repository validates clean.
