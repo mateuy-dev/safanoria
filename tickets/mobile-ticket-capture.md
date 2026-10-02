@@ -51,7 +51,7 @@ user's OK (an API spike would write to a repository).
       GitHub App). Sketch the hand-off alternative: an issue with a label, turned into a ticket
       by a GitHub Action that runs `safanoria new` and moves the issue's image into
       attachments. Ask the user before trying either against a real repository.
-- [ ] Core on Android: in `spike/`, add an `androidTarget` (Android SDK is in
+- [x] Core on Android: in `spike/`, add an `androidTarget` (Android SDK is in
       `~/Android/Sdk`) to a copy of `core`'s build, see which dependencies resolve (kaml,
       json-schema-validator, okio) and which sources fail to compile (`Pipe`, `Git`). Record
       what an app could reuse.
@@ -120,3 +120,18 @@ user's OK (an API spike would write to a repository).
   - F: a cloud session commits on its own session branch, which then needs a PR into
     `mainBranch`; through Remote Control the session is on the user's machine and can commit on
     `mainBranch` like any local session (`--on main`).
+- **2026-10-02** · step 3 · Core on Android: `spike/` builds core's own sources (common +
+  `jvmMain` as `androidMain`) with the `com.android.kotlin.multiplatform.library` plugin.
+  `compileAndroidMain` succeeds unchanged. AGP 9.1 refused Gradle 9.3.0 (needs 9.3.1), so the
+  spike uses AGP 8.13.2 (`androidLibrary {}` DSL; AGP 9 calls it `android {}`). Every dependency
+  resolves: okio, kaml (+ snakeyaml-engine-kmp), json-schema-validator (+ normalize,
+  karacteristics, codepoints) through their `-jvm` artifacts, uri-kmp through its `-android`
+  one. The linuxX64 `libunistring` problem doesn't exist there (JVM artifact). Only compiled,
+  not run on a device or emulator: the libraries are plain Kotlin/JVM, the risk is low, and an
+  app ticket would test it first. Reusable without git: `Repository` (on any Okio
+  `FileSystem`, `git` is lazy), the parser, the validator's per-file checks and
+  `NewTicket.prepare(repository, request, today, takenIds)`, which returns the files to write
+  instead of writing them, so an app can feed it tickets fetched from the API (in a
+  `FakeFileSystem`-like tree) and commit the result through the Git Data API. Needs git, so not
+  usable on a phone: `Git`, `Branches`, `BranchView`, `GitTreeFileSystem`, `Resume`, `Hooks`
+  (Android has `sh` and `ProcessBuilder`, but no `git`).
