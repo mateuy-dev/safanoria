@@ -8,7 +8,7 @@ import dev.mateuy.safanoria.core.SystemFileSystem
 import okio.Path.Companion.toPath
 
 /** `safanoria board`: the markdown board, to stdout or a file. */
-class BoardCommand : RepositoryCommand(name = "board") {
+class BoardCommand : AcrossBranchesCommand(name = "board") {
     override fun help(context: Context) =
         "Print a markdown board: a section per status, parents with their children and progress, " +
             "blocked tickets marked. No dates in it, so a committed board only changes when tickets do."
@@ -19,12 +19,12 @@ class BoardCommand : RepositoryCommand(name = "board") {
         val repo = repository
         val file = output?.toPath()
         if (file == null) {
-            echo(Board.markdown(repo.graph, repo.root), trailingNewline = false)
+            echo(Board.markdown(graph, repo.root), trailingNewline = false)
             return
         }
         val dir = file.parent ?: ".".toPath()
         if (!SystemFileSystem.exists(dir)) throw PrintMessage("No such directory: $dir", 2, true)
-        val markdown = Board.markdown(repo.graph, SystemFileSystem.canonicalize(dir))
+        val markdown = Board.markdown(graph, SystemFileSystem.canonicalize(dir))
         SystemFileSystem.write(file) { writeUtf8(markdown) }
         echo("wrote ${displayPath(SystemFileSystem.canonicalize(file))}")
     }

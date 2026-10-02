@@ -23,7 +23,7 @@ import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
 
 /** `safanoria list`: one line per ticket, in board order; `--format json` for agents. */
-class ListTickets : RepositoryCommand(name = "list") {
+class ListTickets : AcrossBranchesCommand(name = "list") {
     override fun help(context: Context) =
         "List tickets, one per line, in-progress first. Filters combine; comma-separated values are alternatives."
 
@@ -42,7 +42,6 @@ class ListTickets : RepositoryCommand(name = "list") {
             parent = parent,
             blocked = blocked,
         )
-        val graph = repository.graph
         val shown = graph.tickets.filter { filter.matches(graph, it) }
         if (format == "json") echo(json(graph, shown).toString()) else text(graph, shown).forEach { echo(it) }
     }
@@ -62,6 +61,7 @@ class ListTickets : RepositoryCommand(name = "list") {
         graph.progress(t)?.takeIf { graph.children(t).isNotEmpty() }?.let { "[${it.done}/${it.total}]" },
         t.frontmatter?.parent?.value?.let { "parent $it" },
         graph.openBlockers(t).takeIf { it.isNotEmpty() }?.let { "blocked by ${it.joinToString(", ")}" },
+        t.branch?.takeIf { t.onlyOnBranch }?.let { "only on $it" },
     )
 
     private fun json(graph: TicketGraph, tickets: List<Ticket>): JsonObject = buildJsonObject {
@@ -74,6 +74,8 @@ class ListTickets : RepositoryCommand(name = "list") {
         fun ids(v: List<String>) = JsonArray(v.map(::JsonPrimitive))
         put("id", t.fileId)
         put("file", t.path.relativeTo(repository.root).segments.joinToString("/")) // `/` on every OS, like the board's links
+        put("branch", str(t.branch)) // where the real copy was read (SPEC §14); null with --checkout
+        put("onlyOnBranch", t.onlyOnBranch)
         put("title", str(f?.title?.value))
         put("type", str(f?.type?.text))
         put("status", str(f?.status?.text))

@@ -35,6 +35,9 @@ public class Git(private val root: Path) {
         return result.output
     }
 
+    /** Runs any git command and returns its output (stderr included); throws [GitException] when it fails. */
+    public fun run(vararg args: String): String = gitOrThrow(*args)
+
     /** Local branch names (`main`, `feature/x`). */
     public fun branches(): List<String> = refNames(gitOrThrow("for-each-ref", "--format=%(refname)", "refs/heads"))
 

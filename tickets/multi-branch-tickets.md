@@ -71,7 +71,7 @@ Out of scope:
       `NewTicket`) works on any branch unchanged.
 - [x] core `Branches`: every branch's tickets (working-tree files for checked-out branches), the
       resolution rule, and where each real copy came from (for the "only on" marker).
-- [ ] CLI `board` and `list` use it, with `--remote` and `--checkout`; both show the marker.
+- [x] CLI `board` and `list` use it, with `--remote` and `--checkout`; both show the marker.
 - [ ] CLI `validate`: ids from every branch for references; `id-created-twice` warning.
 - [ ] CLI `new --on <branch>`: prepare against that branch's tree and commit there (see
       Implementation); `new` checks ids against every branch.

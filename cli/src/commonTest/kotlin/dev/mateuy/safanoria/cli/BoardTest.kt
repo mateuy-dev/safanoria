@@ -19,7 +19,7 @@ class BoardTest {
 
     @Test
     fun matchesGoldenFile() {
-        val r = cli().test(listOf("--root", fixture.toString(), "board"))
+        val r = cli().test(listOf("--root", fixture.toString(), "board", "--checkout"))
         assertEquals(0, r.statusCode, r.output)
         assertEquals(read(golden), r.stdout)
     }
@@ -29,7 +29,7 @@ class BoardTest {
         val dir = repoRoot / "cli" / "build" / "test-repos" / "board" / "docs"
         SystemFileSystem.deleteRecursively(dir)
         SystemFileSystem.createDirectories(dir)
-        val r = cli().test(listOf("--root", fixture.toString(), "board", "--output", (dir / "BOARD.md").toString()))
+        val r = cli().test(listOf("--root", fixture.toString(), "board", "--checkout", "--output", (dir / "BOARD.md").toString()))
         assertEquals(0, r.statusCode, r.output)
         val board = read(dir / "BOARD.md")
         val back = "../".repeat(5) // from cli/build/test-repos/board/docs up to repoRoot
