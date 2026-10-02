@@ -4,8 +4,8 @@ Tickets as markdown files in the project's own repository, written to be the wor
 for humans and AI agents.
 
 - [`SPEC.md`](SPEC.md): the format, version 1. The contract for every tool.
-- [`skill/`](skill/): agent workflow (Claude Code skill). Install by copying `skill/SKILL.md`
-  and `SPEC.md` into the project's `.claude/skills/safanoria/`.
+- [`skill/`](skill/): agent workflow (Claude Code skill). `safanoria init` / `update` install it,
+  with `SPEC.md`, into the project's `.claude/skills/safanoria/`.
 - [`templates/`](templates/): blank tickets. `ticket.md` for any type (copy to
   `<dir>/_TEMPLATE.md` to customise it), `bug.md` and `research.md` for those types (copy to
   `<dir>/_TEMPLATE.<type>.md`). The CLI embeds them.
@@ -22,15 +22,34 @@ IntelliJ), start `safanoria.yaml` with:
 Ticket frontmatter is inside markdown, which editors don't check against a schema; use
 `safanoria validate` for tickets (below).
 
+## Installing the CLI
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/mateuy-dev/safanoria/main/install.sh | sh      # Linux x64, macOS arm64
+irm https://raw.githubusercontent.com/mateuy-dev/safanoria/main/install.ps1 | iex           # Windows x64 (PowerShell)
+```
+
+The scripts download the latest release (`SAFANORIA_VERSION=0.1.0` for another), check its
+checksum, and put `safanoria` in `~/.local/bin` (`SAFANORIA_BIN_DIR` to change it). The Linux
+binary needs `libunistring.so.5` (Ubuntu 24.04+, Debian 13+: package `libunistring5`). From a
+checkout: `make install`.
+
 ## Adding Safanoria to a project
 
-1. Create `safanoria.yaml` at the repository root (SPEC §2).
-2. Create the ticket directory with `_TEMPLATE.md` and a short `README.md` pointing here.
-3. Install the skill (above).
-4. Add to the project's `CLAUDE.md`:
-   > Work is tracked as Safanoria tickets in `tickets/<id>.md`. The ticket id is also the branch
-   > name. When creating, planning or working on a ticket, use the `safanoria` skill.
-5. Make the release process run `safanoria release <component>` (see "Releasing"; SPEC §9).
+```sh
+safanoria init                      # asks for the components (parts released with their own version)
+safanoria init --component app=composeApp/gradle.properties:appVersionName --external rails
+safanoria update                    # later: this version's skill and spec, and any new templates
+```
+
+`init` writes `safanoria.yaml`, the ticket directory (`_TEMPLATE.md`, `_TEMPLATE.bug.md`,
+`_TEMPLATE.research.md`, `README.md`), the skill and SPEC.md in `.claude/skills/safanoria/`,
+and the paragraph that points agents to the skill in `CLAUDE.md`. The skill and spec are
+Safanoria's and end with `<!-- safanoria X.Y.Z -->`; `update` replaces them and says which
+version was there before. Templates, the ticket README and `CLAUDE.md` are the project's: they
+are created when missing and changed only after asking (`--yes` to accept, `--dry-run` to see).
+
+Then make the release process run `safanoria release <component>` (see "Releasing"; SPEC §9).
 
 ## Creating tickets
 
@@ -136,7 +155,6 @@ exec safanoria validate --staged
 
 ## Planned
 
-- CLI commands: `init`, `update`.
 - `apps/`: viewers and editors.
 
 ## Development
@@ -163,6 +181,20 @@ python3 tools/bench.py cli/build/bin/linuxX64/releaseExecutable/safanoria.kexe  
   plain `MAJOR.MINOR.PATCH`; it is also this repository's `safanoria` component version. Builds
   report it with `-dev`; release builds (`-Prelease`, from the `vX.Y.Z` tag) report it as is.
   The spec version (`safanoria: 1`) changes only on breaking spec changes.
+- `skill/SKILL.md`, `SPEC.md` and `templates/` are embedded too: `init` and `update` install
+  exactly this checkout's copies.
+
+### Releasing Safanoria
+
+1. On `main`, with `gradle.properties` `version` set to the release (e.g. `0.2.0`): stamp this
+   repository's tickets, `safanoria release safanoria`, and commit.
+2. Tag and push: `git tag v0.2.0 && git push origin v0.2.0`. The `release` workflow checks the
+   tag equals `version`, builds the three binaries with `-Prelease`, and publishes them with
+   `SHA256SUMS` as a GitHub release, which the install scripts download.
+3. Set `version` to the next one (e.g. `0.3.0`) for development.
+
+Changing `.github/workflows/release.yml` or the install scripts on any branch runs the workflow
+without publishing: it builds the binaries and runs both install scripts against them.
 
 ## License
 

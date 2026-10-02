@@ -1,0 +1,134 @@
+name: release
+
+# A vX.Y.Z tag publishes the three binaries as a GitHub release; install.sh / install.ps1
+# download them. Changing this file or the install scripts on any branch (or a manual run)
+# builds them as artifacts without publishing, to test it (workflow_dispatch only works once this
+# file is on the default branch; path filters don't apply to tags, so tags always publish).
+on:
+  push:
+    tags: ["v*"]
+    branches: ["**"]
+    paths: [.github/workflows/release.yml, install.sh, install.ps1]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: LinuxX64
+            dir: linuxX64
+            binary: safanoria.kexe
+            asset: safanoria-linux-x64
+          - os: windows-2022
+            target: MingwX64
+            dir: mingwX64
+            binary: safanoria.exe
+            asset: safanoria-windows-x64.exe
+          - os: macos-14
+            target: MacosArm64
+            dir: macosArm64
+            binary: safanoria.kexe
+            asset: safanoria-macos-arm64
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.konan
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties', '**/*.gradle.kts') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      # The tag must be the version being released (SPEC §13): gradle.properties `version`.
+      - name: Check version
+        run: |
+          version=$(sed -n 's/^version=//p' gradle.properties)
+          echo "version $version"
+          if [ "${GITHUB_REF_TYPE}" = tag ] && [ "${GITHUB_REF_NAME}" != "v$version" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} is not v$version (gradle.properties)"; exit 1
+          fi
+
+      # Only tag builds report the plain version; manual runs stay -dev.
+      - name: Build
+        run: ./gradlew --no-daemon :cli:linkReleaseExecutable${{ matrix.target }} ${{ github.ref_type == 'tag' && '-Prelease' || '' }}
+
+      - name: Name and smoke-test
+        run: |
+          mkdir -p dist
+          cp cli/build/bin/${{ matrix.dir }}/releaseExecutable/${{ matrix.binary }} dist/${{ matrix.asset }}
+          dist/${{ matrix.asset }} version
+          dist/${{ matrix.asset }} validate
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: dist/${{ matrix.asset }}
+
+  # On test runs: the install scripts, against a local copy laid out like a release.
+  install-test:
+    needs: build
+    if: github.ref_type != 'tag'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022, macos-14]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: rel/latest/download
+          merge-multiple: true
+      - name: Fake release
+        working-directory: rel/latest/download
+        run: (sha256sum safanoria-* 2>/dev/null || shasum -a 256 safanoria-*) > SHA256SUMS && cat SHA256SUMS
+      - name: install.sh
+        if: runner.os != 'Windows'
+        run: |
+          SAFANORIA_BASE_URL="file://$PWD/rel" SAFANORIA_BIN_DIR="$PWD/bin" ./install.sh
+          bin/safanoria version
+      - name: install.ps1
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:SAFANORIA_BASE_URL = "file:///$($PWD.Path -replace '\\','/')/rel"
+          $env:SAFANORIA_BIN_DIR = "$PWD\bin"
+          ./install.ps1
+          & "$PWD\bin\safanoria.exe" version
+
+  publish:
+    needs: build
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum safanoria-* > SHA256SUMS && cat SHA256SUMS
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" dist/* --repo "${GITHUB_REPOSITORY}" \
+            --title "Safanoria ${GITHUB_REF_NAME#v}" --generate-notes
