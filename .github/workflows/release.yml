@@ -78,6 +78,41 @@ jobs:
           name: ${{ matrix.asset }}
           path: dist/${{ matrix.asset }}
 
+  # On test runs: the install scripts, against a local copy laid out like a release.
+  install-test:
+    needs: build
+    if: github.ref_type != 'tag'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022, macos-14]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: rel/latest/download
+          merge-multiple: true
+      - name: Fake release
+        working-directory: rel/latest/download
+        run: (sha256sum safanoria-* 2>/dev/null || shasum -a 256 safanoria-*) > SHA256SUMS && cat SHA256SUMS
+      - name: install.sh
+        if: runner.os != 'Windows'
+        run: |
+          SAFANORIA_BASE_URL="file://$PWD/rel" SAFANORIA_BIN_DIR="$PWD/bin" ./install.sh
+          bin/safanoria version
+      - name: install.ps1
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:SAFANORIA_BASE_URL = "file:///$($PWD.Path -replace '\\','/')/rel"
+          $env:SAFANORIA_BIN_DIR = "$PWD\bin"
+          ./install.ps1
+          & "$PWD\bin\safanoria.exe" version
+
   publish:
     needs: build
     if: github.ref_type == 'tag'

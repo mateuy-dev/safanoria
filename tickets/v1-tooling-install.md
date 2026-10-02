@@ -61,7 +61,7 @@ schemas), so the installed files are exactly the binary's Safanoria version. Log
       spec: <before> → <after>` (`installed by hand` when there is no marker); creates missing
       templates; for a template that differs from the built-in one, asks (`--yes` replaces,
       without a terminal it is kept and reported). Tests.
-- [ ] Release workflow `.github/workflows/release.yml`, on a `vX.Y.Z` tag: fails unless the
+- [x] Release workflow `.github/workflows/release.yml`, on a `vX.Y.Z` tag: fails unless the
       tag equals `gradle.properties` `version`; builds the three binaries with `-Prelease`;
       publishes a GitHub release with `safanoria-linux-x64`, `safanoria-macos-arm64`,
       `safanoria-windows-x64.exe` and `SHA256SUMS`. Manual runs (`workflow_dispatch`) build and
@@ -125,3 +125,9 @@ From `v1-tooling-native-spike` (workflow at commit 657ea65, `.github/workflows/n
   without a marker, `not installed` without the skill) or `already <version>`. 4 tests on a
   hand-installed project like VacAppKMP: skill replaced, own template kept unless agreed,
   per-type templates created, README and CLAUDE.md left alone.
+- **2026-10-02** · step 4 · `release.yml`: tag `v*` → check tag = `version`, build with
+  `-Prelease`, smoke-test (`version`, `validate`), publish with `SHA256SUMS`. Deviation:
+  `workflow_dispatch` only runs workflows that exist on the default branch, so it can't test
+  this one before it is on `main`; it also runs (without publishing) on a push to any branch
+  that changes it or the install scripts. Path filters don't apply to tags, so tags always
+  publish.
