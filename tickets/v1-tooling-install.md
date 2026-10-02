@@ -2,7 +2,7 @@
 id: v1-tooling-install
 type: feature
 title: Install the CLI, and set up or update Safanoria in a project with one command
-status: review
+status: done
 priority: high
 size: M
 created: 2026-10-01
@@ -157,3 +157,4 @@ From `v1-tooling-native-spike` (workflow at commit 657ea65, `.github/workflows/n
   `_TEMPLATE.md` already matched the built-in one, README and CLAUDE.md unchanged. 47 tickets
   validate. Committed there as `04408caa`, not pushed. Run `update` again after `v0.1.0`.
 - **2026-10-02** · status · review. `allTests` green; this repository validates clean.
+- **2026-10-02** · status · done. Merged into `v1-tooling`.
