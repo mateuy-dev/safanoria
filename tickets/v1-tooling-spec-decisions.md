@@ -26,7 +26,7 @@ Open points left in SPEC v1, to decide and write into SPEC.md:
 
 - [ ] Each point decided, with the rejected alternatives in this ticket (Design)
 - [ ] SPEC.md updated; spec version bumped only if SPEC §13 requires it
-- [ ] This repository's `safanoria` component has a `version` source
+- [x] This repository's `safanoria` component has a `version` source
 - [ ] `validate` checks attachment links; `new` uses per-type templates
 
 ## Plan
@@ -34,7 +34,7 @@ Open points left in SPEC v1, to decide and write into SPEC.md:
 Proposed decisions, one step each. Everything added is optional for old tools, so the spec
 stays at version 1 (§13). Rejected alternatives go to Design as each step lands.
 
-- [ ] Versioning. Two numbers: the **spec version** (`safanoria: 1`, an integer, bumped only
+- [x] Versioning. Two numbers: the **spec version** (`safanoria: 1`, an integer, bumped only
       for breaking changes, §13) and the **Safanoria version** (`MAJOR.MINOR.PATCH`), one
       number for the CLI, skill, SPEC.md copy and templates, which ship together and are tagged
       `vX.Y.Z` here. It lives in `gradle.properties` `version` (plain semver: the version being
@@ -57,9 +57,34 @@ stays at version 1 (§13). Rejected alternatives go to Design as each step lands
       says answers go to Learnings. VacAppKMP's 18 bugs (ad-hoc headings today) are the test
       case. SPEC §1, §6.2; `templates/`; `new`; skill Create; README.
 
+## Design
+
+### Versioning
+
+Decided: spec version (integer, in `safanoria.yaml`) and one Safanoria version for spec text,
+skill, templates and CLI (SPEC §13). Rejected:
+
+- **Separate versions for the skill, the templates and the CLI**: they change together (a spec
+  change needs skill text, template and validator changes), and separate numbers need a
+  compatibility table.
+- **Semver for the spec** (`safanoria: 1.2`): a project only needs to know when its tickets may
+  stop being valid; additions are ignorable by definition (§13).
+- **The Safanoria version in a project's `safanoria.yaml`**: it would change on every update
+  without meaning anything for the tickets; the marker in the installed copies says it.
+- **`-SNAPSHOT` in `gradle.properties`**: the file is this repository's version source, which
+  `release` reads as `MAJOR.MINOR.PATCH`; the `-dev` suffix is added by the build instead.
+
 ## Work Log
 
 - **2026-10-02** · status · Started. Branch `v1-tooling-spec-decisions` from `v1-tooling`,
   worktree `../safanoria--v1-tooling-spec-decisions`.
 - **2026-10-02** · plan · One step per open point, each with SPEC text and the tooling that
   follows from it. No breaking change, so spec version 1 stays.
+- **2026-10-02** · out of plan · `Makefile` (`make install` to `~/.local/bin`, `PREFIX=`),
+  asked for in chat to run the CLI before `v1-tooling-install` exists. Committed separately.
+- **2026-10-02** · step 1 · SPEC §13: spec version vs Safanoria version, `<!-- safanoria X.Y.Z
+  -->` marker on installed copies (SHOULD). `gradle.properties` `version=0.1.0` (was
+  `0.1.0-SNAPSHOT`); the build checks it is `MAJOR.MINOR.PATCH` and embeds `0.1.0-dev` unless
+  `-Prelease`. `safanoria.yaml`: the `safanoria` component reads that file instead of
+  `external: true` (part of the parent's last Plan item, done here since it follows from the
+  decision). README Development. Rejected alternatives in Design.

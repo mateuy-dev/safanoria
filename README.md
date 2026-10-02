@@ -133,6 +133,10 @@ python3 tools/bench.py cli/build/bin/linuxX64/releaseExecutable/safanoria.kexe  
 - Tests also read other local repositories' tickets when `SAFANORIA_EXTRA_REPOS` lists their
   roots (`:`-separated). Those tickets are only read, never copied here.
 - `schema/*.json` are embedded into `core` at build time; edit the schemas, not the generated code.
+- Versions (SPEC §13): `gradle.properties` `version` is the Safanoria version being developed,
+  plain `MAJOR.MINOR.PATCH`; it is also this repository's `safanoria` component version. Builds
+  report it with `-dev`; release builds (`-Prelease`, from the `vX.Y.Z` tag) report it as is.
+  The spec version (`safanoria: 1`) changes only on breaking spec changes.
 
 ## License
 
