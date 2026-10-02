@@ -2,7 +2,7 @@
 id: v1-tooling-release
 type: feature
 title: "`safanoria release`: stamp resolvedIn, also for external components"
-status: review
+status: done
 priority: high
 size: M
 created: 2026-10-01
@@ -117,3 +117,4 @@ External components (SPEC §9): stamped in the ticket repository with the versio
   points to it; `release` out of Planned, `update` in). Skill: `resolvedIn` is set by
   `safanoria release` from the release process. Rejected alternatives in Design.
 - **2026-10-02** · status · review. `allTests` green; this repository validates clean.
+- **2026-10-02** · status · done. Merged into `v1-tooling`.
