@@ -7,17 +7,12 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
-import dev.mateuy.safanoria.core.BranchView
 import dev.mateuy.safanoria.core.Branches
-import dev.mateuy.safanoria.core.Git
 import dev.mateuy.safanoria.core.GitException
-import dev.mateuy.safanoria.core.PlannedFile
-import dev.mateuy.safanoria.core.Repository
 import dev.mateuy.safanoria.core.Start
+import dev.mateuy.safanoria.core.StartException
 import dev.mateuy.safanoria.core.StartResult
 import dev.mateuy.safanoria.core.Status
-import dev.mateuy.safanoria.core.TicketEditException
-import dev.mateuy.safanoria.core.Validator
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import okio.Path.Companion.toPath
@@ -75,59 +70,25 @@ class StartCommand : RepositoryCommand(name = "start") {
         }
         if (dryRun) return
 
-        val git = repo.git
-        git.run("branch", id, ready.base)
-        // Until the commit is made, a failure takes the branch back: a half-started ticket is worse than none.
-        try {
-            commitStart(repo, today)
-        } catch (e: Exception) {
-            runCatching { git.run("branch", "-D", id) }
-            throw e
+        val commit = try { Start.begin(repo, ready, today) } catch (e: StartException) {
+            if (e.problems.isEmpty()) throw PrintMessage("Not started: ${e.message}", 1, true)
+            e.problems.forEach { echo(it.copy(file = it.file?.let { p -> displayPath(p).toPath() }).toString(), err = true) }
+            throw ProgramResult(1)
         }
+        say("committed ${commit.take(7)} on $id: $id: start")
 
         if (ready.worktree != null) {
-            try { git.run("worktree", "add", ready.worktree.toString(), id) } catch (e: GitException) {
+            try { Start.addWorktree(repo, ready) } catch (e: GitException) {
                 throw PrintMessage("Started, but the worktree wasn't added: ${e.message}\nAdd it with: git worktree add ${ready.worktree} $id", 1, true)
             }
             say("worktree ${ready.worktree}: open a session there (cd ${ready.worktree} && claude)")
             if (printPath) echo(ready.worktree.toString())
         } else if (!noSwitch) {
             // Not switched (uncommitted changes) still prints this checkout: the note on stderr says why.
-            switchHere(repo.git)
+            val note = Start.switchCheckout(repo, id)
+            if (note == null) say("switched to $id") else echo("note: $note", err = true)
             if (printPath) echo(repo.root.toString())
         }
-    }
-
-    private fun commitStart(repo: Repository, today: String) {
-        // The new branch isn't checked out anywhere, so the view reads its commit: the ticket as committed on the base.
-        val view = BranchView.open(repo, id) ?: throw PrintMessage("Not started: can't read the new branch '$id'.", 1, true)
-        val ticket = view.repository.ticket(id)
-            ?: throw PrintMessage("Not started: no ticket '$id' committed on the branch it starts from.", 1, true)
-        val text = try { Start.edit(ticket.text, today) } catch (e: TicketEditException) {
-            throw PrintMessage("Not started: ${e.message}", 1, true)
-        }
-        val file = PlannedFile(ticket.path, text, isNew = false)
-        val problems = Validator(view.withFiles(listOf(file))).validate(listOf(file.path))
-        if (problems.isNotEmpty()) {
-            problems.forEach { echo(it.copy(file = it.file?.let { p -> displayPath(p).toPath() }).toString(), err = true) }
-            throw ProgramResult(1)
-        }
-        val commit = view.commit(listOf(file), "$id: start")
-        say("committed ${commit.take(7)} on $id: $id: start")
-    }
-
-    /** Switches this checkout to the new branch, unless it has uncommitted changes that would come along. */
-    private fun switchHere(git: Git) {
-        val dirty = git.run("status", "--porcelain", "--untracked-files=no").lines().any { it.isNotBlank() }
-        if (dirty) {
-            echo("note: this checkout has uncommitted changes, so it stays where it is; switch with: git switch $id", err = true)
-            return
-        }
-        try { git.run("switch", "-q", id) } catch (e: GitException) {
-            echo("note: couldn't switch to $id (${e.message}); switch with: git switch $id", err = true)
-            return
-        }
-        say("switched to $id")
     }
 }
 

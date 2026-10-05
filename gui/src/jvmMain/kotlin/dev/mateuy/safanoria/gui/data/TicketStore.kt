@@ -1,8 +1,13 @@
 package dev.mateuy.safanoria.gui.data
 
+import dev.mateuy.safanoria.core.BranchView
 import dev.mateuy.safanoria.core.Branches
 import dev.mateuy.safanoria.core.Diagnostic
+import dev.mateuy.safanoria.core.GitException
 import dev.mateuy.safanoria.core.Repository
+import dev.mateuy.safanoria.core.Start
+import dev.mateuy.safanoria.core.StartException
+import dev.mateuy.safanoria.core.StartResult
 import dev.mateuy.safanoria.core.TicketGraph
 import dev.mateuy.safanoria.core.Validator
 import kotlinx.coroutines.Dispatchers
@@ -14,6 +19,15 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okio.Path
+import java.time.LocalDate
+
+/** What [TicketStore.start] did. */
+sealed interface StartOutcome {
+    /** Started. [workspace] is where to work on it, or null when there is none yet, and [note] says why. */
+    data class Started(val workspace: Path?, val note: String? = null) : StartOutcome
+
+    data class NotStarted(val reason: String) : StartOutcome
+}
 
 /** The project's tickets as last read, and whether a read is running or failed. */
 data class TicketsSnapshot(
@@ -29,14 +43,58 @@ data class TicketsSnapshot(
 /**
  * The single source of the project's tickets for every screen: reads them through `core` (each
  * ticket's real copy from every local branch, SPEC §14, as `safanoria list` does) and keeps the
- * last result. Operations that change tickets (start, finish) belong here too, followed by a
- * [refresh].
+ * last result. Operations that change tickets ([start]; later finish) are here too, followed by
+ * a [refresh].
  */
 class TicketStore(val root: Path) {
     private val state = MutableStateFlow(TicketsSnapshot())
     val snapshot: StateFlow<TicketsSnapshot> = state.asStateFlow()
 
     private val reading = Mutex()
+
+    /**
+     * Starts ticket [id] as `safanoria start` does (SPEC §11.2): branch `<id>` with the ticket
+     * `in-progress` on it, then the worktree when `safanoria.yaml` has one, else this checkout
+     * switched to the branch. The tickets are read again afterwards.
+     */
+    suspend fun start(id: String, today: String = LocalDate.now().toString()): StartOutcome {
+        val outcome = withContext(Dispatchers.IO) {
+            try {
+                val repository = Repository(root)
+                val branches = Branches.read(repository)
+                    ?: return@withContext StartOutcome.NotStarted("needs a git repository with the branch '${repository.config.mainBranch}' (mainBranch)")
+                val ready = when (val r = Start.prepare(repository, branches, id)) {
+                    is StartResult.Refused -> return@withContext StartOutcome.NotStarted(r.reason)
+                    is StartResult.Ready -> r
+                }
+                try {
+                    Start.begin(repository, ready, today)
+                } catch (e: StartException) {
+                    return@withContext StartOutcome.NotStarted((listOf(e.message) + e.problems.map { "${it.code}: ${it.message}" }).joinToString("\n"))
+                }
+                if (ready.worktree != null) {
+                    try {
+                        Start.addWorktree(repository, ready)
+                        StartOutcome.Started(ready.worktree)
+                    } catch (e: GitException) {
+                        StartOutcome.Started(null, "the worktree wasn't added: ${e.message}\nAdd it with: git worktree add ${ready.worktree} $id")
+                    }
+                } else {
+                    val note = Start.switchCheckout(repository, id)
+                    StartOutcome.Started(root.takeIf { note == null }, note)
+                }
+            } catch (e: Exception) {
+                StartOutcome.NotStarted(e.message ?: e.toString())
+            }
+        }
+        if (outcome is StartOutcome.Started) refresh()
+        return outcome
+    }
+
+    /** The directory where ticket [id]'s branch is checked out (its worktree, or this checkout), or null. */
+    suspend fun workspace(id: String): Path? = withContext(Dispatchers.IO) {
+        runCatching { BranchView.open(Repository(root), id)?.worktree }.getOrNull()
+    }
 
     /** Reads the tickets again. The previous ones stay visible until the new ones are ready. */
     suspend fun refresh() = reading.withLock {

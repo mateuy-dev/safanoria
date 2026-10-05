@@ -3,6 +3,7 @@ package dev.mateuy.safanoria.gui
 import dev.mateuy.safanoria.core.Severity
 import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.gui.data.TicketsSnapshot
+import dev.mateuy.safanoria.gui.ticket.TicketAction
 import dev.mateuy.safanoria.gui.ticket.TicketLink
 import dev.mateuy.safanoria.gui.ticket.TicketProblem
 import dev.mateuy.safanoria.gui.ticket.ticketViewState
@@ -65,6 +66,18 @@ class TicketViewStateTest {
             second.blockedBy,
         )
         assertEquals(listOf("second"), ticketViewState("first", snapshot).blocks.map { it.id })
+    }
+
+    @Test
+    fun theActionDependsOnTheStatus() {
+        fun action(status: String) = ticketViewState("the-one", snapshotOf(ticket("the-one", status = status))).action
+        assertEquals(TicketAction.START, action("backlog"))
+        assertEquals(TicketAction.START, action("ready"))
+        assertEquals(TicketAction.OPEN_TERMINAL, action("in-progress"))
+        assertEquals(TicketAction.OPEN_TERMINAL, action("review"))
+        assertNull(action("done"))
+        assertNull(action("wontfix"))
+        assertNull(action("paused"))
     }
 
     @Test

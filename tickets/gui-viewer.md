@@ -16,6 +16,10 @@ children and progress, blocked tickets, and a readable ticket view. It reuses th
 module from `v1-tooling` (parser, validator, operations), so it never re-implements the format.
 Editing comes later, through the same targeted edits the CLI uses.
 
+It also acts on a ticket from its screen: **Start** on a backlog or ready ticket (as
+`safanoria start`), which then opens a terminal in the new workspace, and **Open terminal** on a
+ticket in progress or in review, in the directory where its branch is checked out.
+
 Out of scope for v1 (see `v1-tooling`).
 
 ## Acceptance Criteria
@@ -56,3 +60,15 @@ Out of scope for v1 (see `v1-tooling`).
 - **2026-10-05** · decision · Board columns go left to right as a ticket moves: Backlog, Ready,
   In progress, Review, Done, Won't fix. The user asked for Backlog first; the rest follows the
   workflow. Core's `STATUS_ORDER` (work in hand first) stays for `list` and the markdown board.
+- **2026-10-05** · decision · Objective widened at the user's request: Start and Open terminal
+  on the ticket screen. Start is offered for `ready` tickets too, since `safanoria start`
+  accepts both.
+- **2026-10-05** · decision · The steps of starting (branch with the started ticket committed,
+  worktree, switching the checkout) moved from the CLI's `StartCommand` into core's `Start`
+  (`begin`, `addWorktree`, `switchCheckout`), so the app starts a ticket exactly as the CLI
+  does without needing the CLI installed. The command keeps its messages and options.
+- **2026-10-05** · decision · Open terminal goes where branch `<id>` is checked out
+  (`BranchView.open(...).worktree`); a branch checked out nowhere gets a message, not a new
+  worktree. On Linux the terminal is `$TERMINAL`, else the first usual one on the PATH
+  (`x-terminal-emulator` first), run with the workspace as its working directory. Only a
+  terminal is opened; no agent session is launched in it.

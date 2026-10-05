@@ -20,7 +20,23 @@ data class TicketViewState(
     val body: String = "",
     /** `validate` problems in the ticket, in file order. */
     val problems: List<TicketProblem> = emptyList(),
+    /** What can be done with the ticket in its status, or null. */
+    val action: TicketAction? = null,
+    /** True while [action] runs. */
+    val busy: Boolean = false,
+    /** How the last action went, when there is something to tell. */
+    val notice: Notice? = null,
 )
+
+enum class TicketAction {
+    /** Backlog or ready: start it (branch, worktree) and open a terminal there. */
+    START,
+
+    /** In progress or review: open a terminal where its branch is checked out. */
+    OPEN_TERMINAL,
+}
+
+data class Notice(val text: String, val error: Boolean)
 
 /** A `validate` problem: its [code] is stable (SPEC §12), [line] is in the ticket file. */
 data class TicketProblem(val line: Int?, val code: String, val message: String, val error: Boolean)

@@ -41,7 +41,7 @@ fun App(container: AppContainer) {
                 }
                 entry<TicketRoute> { route ->
                     TicketScreen(
-                        viewModel = viewModel { TicketViewModel(route.id, container.ticketStore) },
+                        viewModel = viewModel { TicketViewModel(route.id, container.ticketStore, container.terminal) },
                         onOpenTicket = { backStack.add(TicketRoute(it)) },
                         onBack = { if (backStack.size > 1) backStack.removeLast() },
                     )

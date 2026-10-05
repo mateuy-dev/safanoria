@@ -3,20 +3,63 @@ package dev.mateuy.safanoria.gui.ticket
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.mateuy.safanoria.core.Severity
+import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.core.Ticket
 import dev.mateuy.safanoria.core.TicketGraph
 import dev.mateuy.safanoria.core.text
+import dev.mateuy.safanoria.gui.data.StartOutcome
+import dev.mateuy.safanoria.gui.data.Terminal
 import dev.mateuy.safanoria.gui.data.TicketStore
 import dev.mateuy.safanoria.gui.data.TicketsSnapshot
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import okio.Path
 
-class TicketViewModel(private val id: String, store: TicketStore) : ViewModel() {
-    val state: StateFlow<TicketViewState> = store.snapshot
-        .map { ticketViewState(id, it) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ticketViewState(id, store.snapshot.value))
+class TicketViewModel(private val id: String, private val store: TicketStore, private val terminal: Terminal) : ViewModel() {
+    /** The running action and the last one's result: what the tickets themselves don't say. */
+    private data class Activity(val busy: Boolean = false, val notice: Notice? = null)
+
+    private val activity = MutableStateFlow(Activity())
+
+    val state: StateFlow<TicketViewState> = combine(store.snapshot, activity) { snapshot, activity ->
+        ticketViewState(id, snapshot).copy(busy = activity.busy, notice = activity.notice)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ticketViewState(id, store.snapshot.value))
+
+    /** Starts the ticket and opens a terminal where it is to be worked on. */
+    fun start() = act {
+        when (val outcome = store.start(id)) {
+            is StartOutcome.NotStarted -> Notice("Not started: ${outcome.reason}", error = true)
+            is StartOutcome.Started -> when (val workspace = outcome.workspace) {
+                null -> Notice("Started, but ${outcome.note}", error = true)
+                else -> openTerminal(workspace, "Started in $workspace")
+            }
+        }
+    }
+
+    /** Opens a terminal where the ticket's branch is checked out. */
+    fun openTerminal() = act {
+        when (val workspace = store.workspace(id)) {
+            null -> Notice("Branch '$id' isn't checked out anywhere: add a worktree for it, or switch to it.", error = true)
+            else -> openTerminal(workspace, done = null)
+        }
+    }
+
+    private fun openTerminal(workspace: Path, done: String?): Notice? =
+        when (val problem = terminal.open(workspace)) {
+            null -> done?.let { Notice(it, error = false) }
+            else -> Notice(listOfNotNull(done, "No terminal opened: $problem").joinToString(". "), error = true)
+        }
+
+    /** Runs one action at a time; its result replaces the previous notice. */
+    private fun act(action: suspend () -> Notice?) {
+        if (activity.value.busy) return
+        activity.value = Activity(busy = true)
+        viewModelScope.launch { activity.value = Activity(notice = action()) }
+    }
 }
 
 internal fun ticketViewState(id: String, snapshot: TicketsSnapshot): TicketViewState {
@@ -45,6 +88,11 @@ internal fun ticketViewState(id: String, snapshot: TicketsSnapshot): TicketViewS
         blockedBy = f?.blockedBy.orEmpty().map { it.value }.distinct().map(::link),
         blocks = graph.blocks(ticket).map(::link),
         body = body(ticket),
+        action = when (f?.status) {
+            Status.BACKLOG, Status.READY -> TicketAction.START
+            Status.IN_PROGRESS, Status.REVIEW -> TicketAction.OPEN_TERMINAL
+            else -> null
+        },
         problems = snapshot.diagnostics[id].orEmpty().map { TicketProblem(it.line, it.code, it.message, it.severity == Severity.ERROR) },
     )
 }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,8 +18,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -43,12 +47,18 @@ import dev.mateuy.safanoria.gui.theme.label
 @Composable
 fun TicketScreen(viewModel: TicketViewModel, onOpenTicket: (String) -> Unit, onBack: () -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    TicketContent(state, onOpenTicket, onBack)
+    TicketContent(state, onOpenTicket, onBack, onStart = viewModel::start, onOpenTerminal = viewModel::openTerminal)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TicketContent(state: TicketViewState, onOpenTicket: (String) -> Unit, onBack: () -> Unit) {
+fun TicketContent(
+    state: TicketViewState,
+    onOpenTicket: (String) -> Unit,
+    onBack: () -> Unit,
+    onStart: () -> Unit,
+    onOpenTerminal: () -> Unit,
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -58,6 +68,15 @@ fun TicketContent(state: TicketViewState, onOpenTicket: (String) -> Unit, onBack
                         Text(state.title.ifEmpty { state.id }, maxLines = 1)
                         Text(state.id, style = MaterialTheme.typography.labelMedium, fontFamily = FontFamily.Monospace)
                     }
+                },
+                actions = {
+                    if (state.busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                    when (state.action) {
+                        TicketAction.START -> Button(onClick = onStart, enabled = !state.busy) { Text("Start") }
+                        TicketAction.OPEN_TERMINAL -> OutlinedButton(onClick = onOpenTerminal, enabled = !state.busy) { Text("Open terminal") }
+                        null -> {}
+                    }
+                    Spacer(Modifier.width(16.dp))
                 },
             )
         },
@@ -72,6 +91,13 @@ fun TicketContent(state: TicketViewState, onOpenTicket: (String) -> Unit, onBack
                     Modifier.verticalScroll(rememberScrollState()).padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
+                    state.notice?.let {
+                        Text(
+                            it.text,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (it.error) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary,
+                        )
+                    }
                     Problems(state.problems)
                     Markdown(state.body, typography = ticketTypography())
                 }
