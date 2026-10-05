@@ -181,13 +181,17 @@ already started (the branch exists), and children whose parent isn't started yet
 
 To land in the worktree, `--print-path` prints only the directory to work in (the worktree, or
 this checkout once switched) and sends everything else to stderr. A program can't change its
-shell's directory, so wrap it in a function in `~/.bashrc` or `~/.zshrc`:
+shell's directory, so wrap it in a function in `~/.bashrc` or `~/.zshrc` (`safanoria start --help`
+prints it too):
 
 ```sh
-sstart() { local d; d=$(safanoria start "$@" --print-path) && [ -n "$d" ] && cd "$d"; }
+safanoria-start() {
+  local d
+  d=$(safanoria start "$@" --print-path) && [ -n "$d" ] && cd "$d"
+}
 ```
 
-`sstart herd-photos && claude` then starts the ticket and opens the session in its worktree.
+`safanoria-start herd-photos && claude` then starts the ticket and opens the session in its worktree.
 
 **Work.** Open Claude Code in the worktree yourself. The session belongs to that worktree, so
 `claude --resume` there finds it again after a restart. The SessionStart hook that `init`

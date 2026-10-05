@@ -33,7 +33,10 @@ class StartCommand : RepositoryCommand(name = "start") {
     override fun help(context: Context) =
         "Start a ticket: create branch <id> (from the parent's branch when its children merge into it, " +
             "else from mainBranch), set status: in-progress and log it in a commit on that branch, then add the " +
-            "worktree when safanoria.yaml has one, else switch to the branch."
+            "worktree when safanoria.yaml has one, else switch to the branch.\n\n" +
+            "To land in that directory, add this function to ~/.bashrc or ~/.zshrc and start tickets with " +
+            "safanoria-start <id> (a program can't change its shell's directory):\n\n" +
+            SHELL_FUNCTION.joinToString("\u0085")
 
     private val id by argument(help = "Ticket id")
     private val noSwitch by option("--no-switch", help = "Without a worktree setting: create the branch but don't switch this checkout to it").flag()
@@ -122,3 +125,14 @@ class StartCommand : RepositoryCommand(name = "start") {
         say("switched to $id")
     }
 }
+
+/**
+ * The shell function the help and the README give: starts a ticket and `cd`s to where `--print-path` says.
+ * One help line each (the help formatter drops indentation and would re-wrap a one-liner).
+ */
+private val SHELL_FUNCTION = listOf(
+    "safanoria-start() {",
+    "local d",
+    "d=\$(safanoria start \"\$@\" --print-path) && [ -n \"\$d\" ] && cd \"\$d\"",
+    "}",
+)
