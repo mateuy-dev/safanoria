@@ -349,10 +349,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - uses: mateuy-dev/safanoria@v0.1.0      # installs the CLI, validates the tickets
+      - uses: mateuy-dev/safanoria@v0.2.0      # installs the CLI, validates the tickets
 ```
 
-Pin the version (`@v0.1.0`, or `with: version: 0.1.0`): a new Safanoria release then can't fail
+Pin the version (`@v0.2.0`, or `with: version: 0.2.0`): a new Safanoria release then can't fail
 your CI until you move to it. `with: args: …` runs another command, e.g. `list --blocked`.
 Elsewhere, install with `SAFANORIA_CLI_ONLY=1` and `install.sh`, and run `safanoria-cli validate`.
 
