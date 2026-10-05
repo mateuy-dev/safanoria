@@ -4,7 +4,11 @@ import okio.Path
 
 /**
  * A real git repository under `core/build/test-repos/<name>`, recreated on every use, with
- * `main` as the first branch and a fixed committer so tests don't depend on the user's config.
+ * `main` as the first branch, a fixed committer and no line ending conversion, so tests don't
+ * depend on the user's config.
+ *
+ * Each test uses its own [name]: on Windows a repository with commits can't be deleted from a
+ * test (git's object files are read-only), so Gradle clears the directory before each test task.
  */
 class GitFixture(name: String, base: Path = repoRoot / "core" / "build" / "test-repos") {
     val root: Path
@@ -21,7 +25,7 @@ class GitFixture(name: String, base: Path = repoRoot / "core" / "build" / "test-
 
     /** Runs git in [at] (default: [root]) and returns its output; fails the test on errors. */
     fun git(vararg args: String, at: Path = root): String {
-        val line = (listOf("git", "-C", at.toString(), "-c", "user.name=test", "-c", "user.email=test@example.com", "-c", "commit.gpgsign=false") + args)
+        val line = (listOf("git", "-C", at.toString(), "-c", "user.name=test", "-c", "user.email=test@example.com", "-c", "commit.gpgsign=false", "-c", "core.autocrlf=false") + args)
             .joinToString(" ") { quote(it) }
         val result = runCommand("$line 2>&1")
         check(result.exitCode == 0) { "$line failed (${result.exitCode}): ${result.output}" }

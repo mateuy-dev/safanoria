@@ -24,8 +24,8 @@ class BranchesTest {
      *   parent-open (in progress on its own branch, created from the parent's).
      * - feature: has stray (only there) and twice; other: has twice too (created separately).
      */
-    private fun scenario(): GitFixture {
-        val f = GitFixture("branches")
+    private fun scenario(name: String): GitFixture {
+        val f = GitFixture(name)
         f.write(CONFIG_FILE, GitFixture.CONFIG)
         for (id in listOf("unstarted", "started", "checked-out", "kept", "parent")) f.write("tickets/$id.md", t(id))
         f.commit("tickets")
@@ -69,7 +69,7 @@ class BranchesTest {
 
     @Test
     fun realCopies() {
-        val f = scenario()
+        val f = scenario("branches")
         val branches = assertNotNull(Branches.read(f.repository))
         assertEquals(
             mapOf(
@@ -93,7 +93,7 @@ class BranchesTest {
 
     @Test
     fun fromAnotherBranchTheResultIsTheSame() {
-        val f = scenario()
+        val f = scenario("branches-from-started")
         f.checkout("started")
         val branches = assertNotNull(Branches.read(f.repository))
         assertEquals("in-progress@started", branches.summary()["started"])
@@ -103,7 +103,7 @@ class BranchesTest {
 
     @Test
     fun remoteBranchesOnlyWhenAsked() {
-        val origin = scenario()
+        val origin = scenario("branches-origin")
         val clone = GitFixture("branches-clone")
         clone.git("remote", "add", "origin", origin.root.toString())
         clone.git("fetch", "-q", "origin")
