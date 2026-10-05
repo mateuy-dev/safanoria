@@ -38,3 +38,7 @@ Out of scope for v1 (see `v1-tooling`).
 - **2026-10-05** · decision · The kanban shows every ticket as its own card in its status column,
   children too (with their parent's id), instead of nesting children under the parent as the
   markdown board does: a child's status often differs from its parent's.
+- **2026-10-05** · decision · The ticket body is drawn by `multiplatform-markdown-renderer`
+  (mikepenz, 0.45.0) rather than our own renderer: tickets use tables, code and task lists.
+  Known defect: text in angle brackets inside inline code is dropped (`attachments/<id>/` shows
+  as `attachments//`).

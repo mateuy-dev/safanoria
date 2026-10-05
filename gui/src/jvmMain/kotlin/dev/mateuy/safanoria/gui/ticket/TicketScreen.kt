@@ -31,6 +31,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.mikepenz.markdown.m3.Markdown
+import com.mikepenz.markdown.m3.markdownTypography
+import com.mikepenz.markdown.model.MarkdownTypography
 import dev.mateuy.safanoria.gui.theme.color
 import dev.mateuy.safanoria.gui.theme.label
 
@@ -62,12 +65,10 @@ fun TicketContent(state: TicketViewState, onOpenTicket: (String) -> Unit, onBack
         }
         Row(Modifier.padding(padding).fillMaxSize()) {
             SelectionContainer(Modifier.weight(1f).fillMaxHeight()) {
-                // Spike: the markdown as text. Rendering it comes next.
-                Text(
+                Markdown(
                     state.body,
-                    Modifier.verticalScroll(rememberScrollState()).padding(24.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontFamily = FontFamily.Monospace,
+                    modifier = Modifier.verticalScroll(rememberScrollState()).padding(24.dp),
+                    typography = ticketTypography(),
                 )
             }
             VerticalDivider()
@@ -91,6 +92,29 @@ fun TicketContent(state: TicketViewState, onOpenTicket: (String) -> Unit, onBack
             }
         }
     }
+}
+
+/** Headings sized for a ticket: its sections are `##`, which the default draws as a display title. */
+@Composable
+private fun ticketTypography(): MarkdownTypography {
+    val t = MaterialTheme.typography
+    return markdownTypography(
+        h1 = t.headlineSmall,
+        h2 = t.titleLarge,
+        h3 = t.titleMedium,
+        h4 = t.titleSmall,
+        h5 = t.titleSmall,
+        h6 = t.titleSmall,
+        text = t.bodyMedium,
+        paragraph = t.bodyMedium,
+        ordered = t.bodyMedium,
+        bullet = t.bodyMedium,
+        list = t.bodyMedium,
+        quote = t.bodyMedium,
+        code = t.bodySmall.copy(fontFamily = FontFamily.Monospace),
+        inlineCode = t.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+        table = t.bodySmall,
+    )
 }
 
 @Composable

@@ -17,10 +17,6 @@ class BoardViewModel(private val store: TicketStore) : ViewModel() {
         .map(::boardViewState)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BoardViewState())
 
-    init {
-        refresh()
-    }
-
     fun refresh() {
         viewModelScope.launch { store.refresh() }
     }

@@ -1,6 +1,7 @@
 package dev.mateuy.safanoria.gui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -20,6 +21,8 @@ import dev.mateuy.safanoria.gui.ticket.TicketViewModel
 /** The app: the theme and the navigation between screens. Each back stack entry owns its ViewModel. */
 @Composable
 fun App(container: AppContainer) {
+    // The first read; screens ask for later ones.
+    LaunchedEffect(container) { container.ticketStore.refresh() }
     SafanoriaTheme {
         val backStack = remember { mutableStateListOf<Route>(BoardRoute) }
         NavDisplay(
