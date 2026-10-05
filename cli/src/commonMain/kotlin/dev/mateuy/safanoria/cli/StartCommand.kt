@@ -29,16 +29,13 @@ import kotlin.time.Clock
  * then adds the worktree when configured, else switches this checkout to the branch.
  *
  * A process can't change its shell's directory, so `--print-path` prints only the directory to work
- * in (the rest goes to stderr) for a shell function to `cd` to; see the README.
+ * in (the rest goes to stderr) for a shell function to `cd` to; see `safanoria --help` and the README.
  */
 class StartCommand : RepositoryCommand(name = "start") {
     override fun help(context: Context) =
         "Start a ticket: create branch <id> (from the parent's branch when its children merge into it, " +
             "else from mainBranch), set status: in-progress and log it in a commit on that branch, then add the " +
-            "worktree when safanoria.yaml has one, else switch to the branch.\n\n" +
-            "To land in that directory, add this function to ~/.bashrc or ~/.zshrc and start tickets with " +
-            "safanoria-start <id> (a program can't change its shell's directory):\n\n" +
-            SHELL_FUNCTION.joinToString("\u0085")
+            "worktree when safanoria.yaml has one, else switch to the branch."
 
     private val idArgument by argument(name = "id", help = "Ticket id (on a terminal: asks, from the backlog and ready tickets)").optional()
     private val noSwitch by option("--no-switch", help = "Without a worktree setting: create the branch but don't switch this checkout to it").flag()
@@ -132,10 +129,10 @@ class StartCommand : RepositoryCommand(name = "start") {
 }
 
 /**
- * The shell function the help and the README give: starts a ticket and `cd`s to where `--print-path` says.
- * One help line each (the help formatter drops indentation and would re-wrap a one-liner).
+ * The shell function `safanoria --help` and the README give: starts a ticket and `cd`s to where
+ * `--print-path` says. One help line each (the help formatter drops indentation and would re-wrap a one-liner).
  */
-private val SHELL_FUNCTION = listOf(
+internal val SHELL_FUNCTION = listOf(
     "safanoria-start() {",
     "local d",
     "d=\$(safanoria start \"\$@\" --print-path) && [ -n \"\$d\" ] && cd \"\$d\"",

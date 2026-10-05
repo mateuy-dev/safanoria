@@ -52,6 +52,11 @@ class Safanoria(private val prompts: Prompts? = null) : CliktCommand(name = "saf
     override fun help(context: Context) =
         "Tickets as markdown files in your repository (SPEC.md). Without a command, on a terminal, asks which one to run."
 
+    override fun helpEpilog(context: Context) =
+        "To land in a started ticket's directory, add this function to ~/.bashrc or ~/.zshrc and start tickets with " +
+            "safanoria-start <id> (a program can't change its shell's directory):\n\n" +
+            SHELL_FUNCTION.joinToString("\u0085")
+
     override fun run() {
         val cli = context // create it with --root before subcommands run
         if (currentContext.invokedSubcommand != null) return
