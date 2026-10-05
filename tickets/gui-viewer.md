@@ -2,11 +2,11 @@
 id: gui-viewer
 type: feature
 title: Compose Desktop app to view tickets
-status: backlog
+status: in-progress
 priority: low
 size: L
 created: 2026-10-01
-updated: 2026-10-01
+updated: 2026-10-05
 ---
 
 ## Objective
@@ -23,3 +23,5 @@ Out of scope for v1 (see `v1-tooling`).
 ## Plan
 
 ## Work Log
+
+- **2026-10-05** · status · started
