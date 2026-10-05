@@ -95,3 +95,7 @@ Out of scope for v1 (see `v1-tooling`).
 - **2026-10-05** · decision · Start and Finish ask for confirmation first (asked by the user):
   one click would otherwise create a branch and worktree or make a commit. Open terminal
   changes nothing and doesn't ask.
+- **2026-10-05** · decision · The user's icons (`design/`, SVG) are the window icon and sit in
+  the board's top bar, read from `design/` as a resource directory rather than copied into
+  `gui/`. The app uses `safanoria-icon-small.svg`, drawn for small sizes; the detailed
+  `safanoria-icon.svg` is for large ones (an installer, later).

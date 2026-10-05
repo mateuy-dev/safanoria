@@ -1,5 +1,6 @@
 package dev.mateuy.safanoria.gui.board
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -52,6 +53,7 @@ import dev.mateuy.safanoria.core.TicketType
 import dev.mateuy.safanoria.core.text
 import dev.mateuy.safanoria.gui.theme.WarningColor
 import dev.mateuy.safanoria.gui.theme.color
+import dev.mateuy.safanoria.gui.theme.rememberAppIcon
 import dev.mateuy.safanoria.gui.theme.label
 
 @Composable
@@ -89,6 +91,7 @@ fun BoardContent(state: BoardViewState, actions: BoardActions) {
     Scaffold(
         topBar = {
             TopAppBar(
+                navigationIcon = { Image(rememberAppIcon(), contentDescription = null, Modifier.padding(start = 12.dp, end = 4.dp).size(32.dp)) },
                 title = { Text("Board · " + (if (filtered) "${state.shownCount} of " else "") + "${state.ticketCount} tickets") },
                 actions = {
                     if (state.loading) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)

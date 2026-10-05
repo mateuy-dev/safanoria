@@ -11,6 +11,8 @@ kotlin {
     jvm()
 
     sourceSets {
+        // The app's icons are the repository's (design/), not a copy.
+        jvmMain { resources.srcDir(rootProject.layout.projectDirectory.dir("design")) }
         jvmMain.dependencies {
             implementation(project(":core"))
             implementation(compose.desktop.currentOs)
@@ -18,6 +20,7 @@ kotlin {
             implementation(libs.compose.foundation)
             implementation(libs.compose.ui)
             implementation(libs.compose.material3)
+            implementation(libs.compose.resources) // decodes the SVG icons
             implementation(libs.navigation3.ui)
             implementation(libs.lifecycle.viewmodel.compose)
             implementation(libs.lifecycle.viewmodel.navigation3)

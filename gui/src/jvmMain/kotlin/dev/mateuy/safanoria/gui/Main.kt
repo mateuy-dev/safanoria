@@ -6,6 +6,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import dev.mateuy.safanoria.core.Repository
+import dev.mateuy.safanoria.gui.theme.rememberAppIcon
 import okio.Path.Companion.toPath
 import kotlin.system.exitProcess
 
@@ -22,6 +23,7 @@ fun main(args: Array<String>) {
             onCloseRequest = ::exitApplication,
             title = "Safanoria · ${repository.root.name}",
             state = rememberWindowState(size = DpSize(1400.dp, 900.dp)),
+            icon = rememberAppIcon(),
         ) {
             App(container)
         }
