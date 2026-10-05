@@ -2,7 +2,7 @@
 id: gui-detach-from-terminal
 type: feature
 title: safanoria keeps running when its terminal is closed
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-05
@@ -38,3 +38,4 @@ Out of scope: a desktop entry (`.desktop` file, starting from the application me
 
 ## Work Log
 
+- **2026-10-05** · status · started
