@@ -16,7 +16,7 @@ val generateEmbedded = tasks.register("generateEmbedded") {
         .map { rootProject.layout.projectDirectory.file("templates/$it.md") }
         .filter { it.asFile.exists() }
     // gradle.properties holds the version being developed (plain MAJOR.MINOR.PATCH, read by
-    // `safanoria release` as this repository's component version). Only release builds
+    // `safanoria-cli release` as this repository's component version). Only release builds
     // (-Prelease, from the vX.Y.Z tag) report it as is; every other build is "-dev".
     val plain = project.version.toString()
     require(Regex("""\d+\.\d+\.\d+""").matches(plain)) { "gradle.properties version must be MAJOR.MINOR.PATCH, got '$plain'" }

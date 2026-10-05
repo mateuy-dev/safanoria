@@ -45,7 +45,7 @@ class InitTest {
 
         val again = run("--external", "rails")
         assertEquals(1, again.statusCode)
-        assertTrue(again.stderr.contains("use `safanoria update`"), again.stderr)
+        assertTrue(again.stderr.contains("use `safanoria-cli update`"), again.stderr)
     }
 
     @Test

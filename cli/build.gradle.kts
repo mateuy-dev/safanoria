@@ -11,7 +11,7 @@ kotlin {
     }
     listOf(linuxX64(), mingwX64(), macosArm64()).forEach { target ->
         target.binaries.executable {
-            baseName = "safanoria"
+            baseName = "safanoria-cli"
             entryPoint = "dev.mateuy.safanoria.cli.main"
         }
         // The compiler caches (debug builds) link clikt and clikt-mordant with a duplicate symbol

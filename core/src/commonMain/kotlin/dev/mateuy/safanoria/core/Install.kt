@@ -47,7 +47,8 @@ public object Install {
      * The SessionStart hook command: puts the ticket of a ticket branch into the session (README
      * "Agent sessions"). Quiet and successful without the CLI, so clones without it aren't bothered.
      */
-    public const val CONTEXT_HOOK: String = "safanoria context 2>/dev/null || true"
+    public const val CONTEXT_HOOK: String = "safanoria-cli context 2>/dev/null || true"
+    private val OLD_CONTEXT_HOOK = Regex("""(?<![\w-])safanoria context""")
     private val MARKER = Regex("""<!-- safanoria (\S+) -->""")
 
     /** The marker line installed copies end with. */
@@ -72,7 +73,7 @@ public object Install {
             "one markdown file per ticket, `<id>.md`. The format is in `$SKILL_DIR/SPEC.md`.\n\n" +
             "- `_TEMPLATE.md`: template for new tickets; `_TEMPLATE.<type>.md` for one type.\n" +
             "- `attachments/<id>/`: files a ticket links to.\n\n" +
-            "`safanoria list`, `safanoria board` and `safanoria validate` show and check them.\n"
+            "`safanoria-cli list`, `safanoria-cli board` and `safanoria-cli validate` show and check them.\n"
 
     /** The CLAUDE.md paragraph that points agents to the skill (README "Adding Safanoria"). */
     public fun claudeParagraph(dir: String): String =
@@ -84,10 +85,12 @@ public object Install {
 
     /**
      * Claude Code settings ([existing], or none) with the SessionStart hook added; [existing]
-     * unchanged when it already runs `safanoria context`, null when it isn't a JSON object.
+     * unchanged when it already runs `safanoria-cli context`, null when it isn't a JSON object.
+     * A hook that calls the CLI by its old name (`safanoria context`, up to 0.2) is renamed.
      */
     public fun settingsWithHook(existing: String?): String? {
-        if (existing != null && "safanoria context" in existing) return existing
+        if (existing != null && "safanoria-cli context" in existing) return existing
+        if (existing != null && OLD_CONTEXT_HOOK in existing) return existing.replace(OLD_CONTEXT_HOOK, "safanoria-cli context")
         val settings = if (existing == null) JsonObject(emptyMap()) else
             runCatching { Json.parseToJsonElement(existing) as? JsonObject }.getOrNull() ?: return null
         val hooks = settings["hooks"]?.let { it as? JsonObject ?: return null } ?: JsonObject(emptyMap())

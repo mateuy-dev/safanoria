@@ -9,7 +9,7 @@ session in that worktree. The session knows its ticket from the branch, works as
 and records its decisions in the ticket as it commits. No planning or approval steps.
 
 - [`SPEC.md`](SPEC.md): the format, version 1. The contract for every tool.
-- [`skill/`](skill/): agent workflow (Claude Code skill). `safanoria init` / `update` install it,
+- [`skill/`](skill/): agent workflow (Claude Code skill). `safanoria-cli init` / `update` install it,
   with `SPEC.md`, into the project's `.claude/skills/safanoria/`.
 - [`templates/`](templates/): blank tickets. `ticket.md` for any type (copy to
   `<dir>/_TEMPLATE.md` to customise it), `bug.md` and `research.md` for those types (copy to
@@ -25,10 +25,12 @@ IntelliJ), start `safanoria.yaml` with:
 ```
 
 Ticket frontmatter is inside markdown, which editors don't check against a schema; use
-`safanoria validate` for tickets (below).
+`safanoria-cli validate` for tickets (below).
 
-The `safanoria` CLI does the mechanical parts, so agents and people spend their time on the
-content. `safanoria --help` lists the commands; each is described below.
+There are two commands. `safanoria` opens the desktop app on the project you are in: a board
+of the tickets you can click through (see "The desktop app"). `safanoria-cli` is the
+command-line tool: it does the mechanical parts, so agents and people spend their time on the
+content. `safanoria-cli --help` lists its commands; each is described below.
 
 | Command | Does |
 |---|---|
@@ -41,7 +43,7 @@ content. `safanoria --help` lists the commands; each is described below.
 | `release` | Stamp `resolvedIn` on the tickets a release ships |
 | `notes` | The tickets a version shipped, to write its release notes from |
 
-## Installing the CLI
+## Installing
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/mateuy-dev/safanoria/main/install.sh | sh      # Linux x64, macOS arm64
@@ -50,16 +52,33 @@ irm https://raw.githubusercontent.com/mateuy-dev/safanoria/main/install.ps1 | ie
 
 Releases start at `v0.1.0`; until it is published, use `make install` from a checkout.
 The scripts download the latest release (`SAFANORIA_VERSION=0.1.0` for another), check its
-checksum, and put `safanoria` in `~/.local/bin` (`SAFANORIA_BIN_DIR` to change it). The Linux
-binary needs `libunistring.so.5` (Ubuntu 24.04+, Debian 13+: package `libunistring5`). From a
-checkout: `make install`.
+checksums, and put `safanoria-cli` and `safanoria` in `~/.local/bin` (`SAFANORIA_BIN_DIR` to
+change it). The app comes with its own Java runtime (about 150 MB), in
+`~/.local/share/safanoria` (Windows: `%LOCALAPPDATA%\safanoria`; `SAFANORIA_APP_DIR` to change
+it); `SAFANORIA_CLI_ONLY=1` installs only the CLI, for CI and servers. The Linux CLI needs
+`libunistring.so.5` (Ubuntu 24.04+, Debian 13+: package `libunistring5`). From a checkout:
+`make install`.
+
+**Updating from 0.2 or earlier.** The command-line tool was `safanoria` then; that name now
+opens the app. The install scripts replace the old binary. Hooks set up before still call the
+old name, so in each project (and each clone, for the git hook) run:
+
+```sh
+safanoria-cli update          # the SessionStart hook in .claude/settings.json, the skill
+safanoria-cli hook install    # the git pre-commit hook
+```
+
+Until then nothing runs a command by mistake: `safanoria validate --staged` and the like open no
+window, fail, and say to use `safanoria-cli`. So a commit with the old git hook is refused with
+that message, and the old SessionStart hook gives sessions no ticket. Rename the command in your
+own scripts and CI too. Workflows that use the Action at an older tag keep working.
 
 ## Adding Safanoria to a project
 
 ```sh
-safanoria init                      # asks for the components (parts released with their own version)
-safanoria init --component app=composeApp/gradle.properties:appVersionName --external rails
-safanoria update                    # later: this version's skill and spec, and any new templates
+safanoria-cli init                      # asks for the components (parts released with their own version)
+safanoria-cli init --component app=composeApp/gradle.properties:appVersionName --external rails
+safanoria-cli update                    # later: this version's skill and spec, and any new templates
 ```
 
 `init` writes `safanoria.yaml`, the ticket directory (`_TEMPLATE.md`, `_TEMPLATE.bug.md`,
@@ -70,7 +89,7 @@ with `<!-- safanoria X.Y.Z -->`; `update` replaces them and says which version w
 Templates, the ticket README, `CLAUDE.md` and `.claude/settings.json` are the project's: they
 are created when missing and changed only after asking (`--yes` to accept, `--dry-run` to see).
 
-Then make the release process run `safanoria release <component>` (see "Releasing"; SPEC §9).
+Then make the release process run `safanoria-cli release <component>` (see "Releasing"; SPEC §9).
 
 ## Creating tickets
 
@@ -81,10 +100,10 @@ rest. Ask it to rename the id if you don't like it: before the ticket is started
 The command, which you can use too:
 
 ```sh
-safanoria new "Herd photos from the field" --dry-run   # suggested id, files it would write
-safanoria new "Herd photos from the field" --id herd-photos --size M --objective "Why…"
-safanoria new "Map pin" --parent herd-locations          # child: herd-locations-map-pin, added to the parent's Plan
-safanoria new "Export is slow" --on main                 # from another branch: committed on main, this checkout untouched
+safanoria-cli new "Herd photos from the field" --dry-run   # suggested id, files it would write
+safanoria-cli new "Herd photos from the field" --id herd-photos --size M --objective "Why…"
+safanoria-cli new "Map pin" --parent herd-locations          # child: herd-locations-map-pin, added to the parent's Plan
+safanoria-cli new "Export is slow" --on main                 # from another branch: committed on main, this checkout untouched
 ```
 
 `new` fills the template for the type (`<dir>/_TEMPLATE.<type>.md`, else `<dir>/_TEMPLATE.md`,
@@ -95,7 +114,7 @@ any branch (ids are never reused), an unknown parent, and a parent that can't ha
 branch with the same name is a warning. The suggested id is short (filler words dropped, at
 most four words); it's the branch name.
 
-**On a terminal, the CLI asks** for what you leave out. `safanoria` alone asks which command to
+**On a terminal, the CLI asks** for what you leave out. `safanoria-cli` alone asks which command to
 run. `new` without a title asks for the title, the type and the id (enter keeps the suggestion),
 optionally priority, size, parent and objective, and, on a branch other than `mainBranch`,
 whether the ticket goes on `mainBranch`; with a title it asks only for a missing `area`.
@@ -129,14 +148,14 @@ merging into `mainBranch`.
 ## Viewing tickets
 
 ```sh
-safanoria list                                  # one line per ticket, in-progress first
-safanoria list --status ready,backlog --type bug
-safanoria list --parent v1-tooling --blocked    # children blocked by a ticket that is not done
-safanoria list --format json                    # {tickets: [...]}: every field, plus children, blocks, openBlockers, progress
-safanoria board                                 # markdown board on stdout
-safanoria board -o docs/BOARD.md                # links relative to the file
-safanoria list --remote                         # also origin/* branches (git fetch first)
-safanoria list --checkout                       # only this checkout's files
+safanoria-cli list                                  # one line per ticket, in-progress first
+safanoria-cli list --status ready,backlog --type bug
+safanoria-cli list --parent v1-tooling --blocked    # children blocked by a ticket that is not done
+safanoria-cli list --format json                    # {tickets: [...]}: every field, plus children, blocks, openBlockers, progress
+safanoria-cli board                                 # markdown board on stdout
+safanoria-cli board -o docs/BOARD.md                # links relative to the file
+safanoria-cli list --remote                         # also origin/* branches (git fetch first)
+safanoria-cli list --checkout                       # only this checkout's files
 ```
 
 **Every branch.** A ticket you start moves to its own branch: there it becomes `in-progress`
@@ -174,12 +193,14 @@ committed one only changes when tickets do. For example:
 
 ### The desktop app
 
-A desktop app shows the same tickets as a board you can click through. It runs on the JVM
-(Java 21) from a checkout of this repository; there is no installer yet:
+`safanoria` opens the desktop app: the same tickets as a board you can click through.
 
 ```sh
-./gradlew :gui:run --args=/path/to/project   # a directory in the project; default: where gradle runs
+safanoria                    # the project of the working directory
+safanoria /path/to/project   # or of another directory
 ```
+
+It stays in the terminal until its window is closed (`safanoria &` to keep the prompt).
 
 - **Board**: a column per status, left to right as a ticket moves (Backlog, Ready, In progress,
   Review, Done, Won't fix). Every ticket is a card, children too, read from every local branch
@@ -190,9 +211,9 @@ A desktop app shows the same tickets as a board you can click through. It runs o
   blockers, and its `validate` problems. Problems are those of this checkout's files, so a
   ticket shown from another branch shows none.
 - **Actions**, in the bar under the ticket (Start and Finish ask first): **Start** on a backlog or ready ticket does what
-  `safanoria start` does, then opens a terminal in the new worktree; **Open terminal** on a
+  `safanoria-cli start` does, then opens a terminal in the new worktree; **Open terminal** on a
   ticket in progress or in review opens one where its branch is checked out; **Finish** on a
-  ticket in progress sets it to `review`, as `safanoria finish` does. On Linux the terminal is
+  ticket in progress sets it to `review`, as `safanoria-cli finish` does. On Linux the terminal is
   `$TERMINAL`, else the first usual one found on the `PATH`.
 
 The app reads the tickets again when its window gets the focus back, and on Refresh.
@@ -200,11 +221,11 @@ The app reads the tickets again when its window gets the focus back, and on Refr
 ## Working on a ticket
 
 ```sh
-safanoria start herd-photos --dry-run       # what it would do
-safanoria start herd-photos                 # branch, status: in-progress, worktree
+safanoria-cli start herd-photos --dry-run       # what it would do
+safanoria-cli start herd-photos                 # branch, status: in-progress, worktree
 cd ../VacAppKMP--herd-photos && claude      # an ordinary session, in the worktree
-safanoria finish herd-photos                # work complete: status: review
-safanoria finish herd-photos --done         # after the merge: status: done
+safanoria-cli finish herd-photos                # work complete: status: review
+safanoria-cli finish herd-photos --done         # after the merge: status: done
 ```
 
 **Start.** `start` creates the branch `<id>` from the parent's branch (when the parent has
@@ -217,13 +238,13 @@ already started (the branch exists), and children whose parent isn't started yet
 
 To land in the worktree, `--print-path` prints only the directory to work in (the worktree, or
 this checkout once switched) and sends everything else to stderr. A program can't change its
-shell's directory, so wrap it in a function in `~/.bashrc` or `~/.zshrc` (`safanoria --help`
+shell's directory, so wrap it in a function in `~/.bashrc` or `~/.zshrc` (`safanoria-cli --help`
 prints it too):
 
 ```sh
 safanoria-start() {
   local d
-  d=$(safanoria start "$@" --print-path) && [ -n "$d" ] && cd "$d"
+  d=$(safanoria-cli start "$@" --print-path) && [ -n "$d" ] && cd "$d"
 }
 ```
 
@@ -231,7 +252,7 @@ safanoria-start() {
 
 **Work.** Open Claude Code in the worktree yourself. The session belongs to that worktree, so
 `claude --resume` there finds it again after a restart. The SessionStart hook that `init`
-installs runs `safanoria context`: on a ticket's branch it gives the session the ticket and
+installs runs `safanoria-cli context`: on a ticket's branch it gives the session the ticket and
 what to do with it; elsewhere it prints nothing. From there it's an ordinary session: you
 direct the work. The session keeps the ticket current. Each decision, with its reason, gets a
 short Work Log entry, committed with the code it explains. It updates Objective or Acceptance
@@ -241,7 +262,7 @@ ticket is started the same way, with `start`, in its own worktree and session.
 Hook in `.claude/settings.json`, if you set it up by hand:
 
 ```json
-{ "hooks": { "SessionStart": [ { "hooks": [ { "type": "command", "command": "safanoria context 2>/dev/null || true" } ] } ] } }
+{ "hooks": { "SessionStart": [ { "hooks": [ { "type": "command", "command": "safanoria-cli context 2>/dev/null || true" } ] } ] } }
 ```
 
 **Finish.** Tell the session the work is done, or run `finish`. It sets `status: review` and
@@ -253,10 +274,10 @@ out there, otherwise the branch itself, without checking it out.
 ## Releasing
 
 ```sh
-safanoria release app --dry-run       # which tickets would get resolvedIn.app, and the version
-safanoria release app                 # version from the component's source (e.g. gradle.properties)
-safanoria release app 4.3.0           # or given
-safanoria release rails 2.8.0 --ticket fix-login --ticket export-csv   # external: name what shipped
+safanoria-cli release app --dry-run       # which tickets would get resolvedIn.app, and the version
+safanoria-cli release app                 # version from the component's source (e.g. gradle.properties)
+safanoria-cli release app 4.3.0           # or given
+safanoria-cli release rails 2.8.0 --ticket fix-login --ticket export-csv   # external: name what shipped
 ```
 
 `release` stamps `resolvedIn.<component>` on every `done` ticket with that component in its
@@ -273,8 +294,8 @@ guarantee the ticket was in that release.
 ### Release notes
 
 ```sh
-safanoria notes app 4.3.0             # the tickets with resolvedIn.app 4.3.0, with their Objective
-safanoria notes app 4.2.0 4.3.0       # what changed after 4.2.0, up to and including 4.3.0
+safanoria-cli notes app 4.3.0             # the tickets with resolvedIn.app 4.3.0, with their Objective
+safanoria-cli notes app 4.2.0 4.3.0       # what changed after 4.2.0, up to and including 4.3.0
 ```
 
 `notes` prints the tickets a version shipped, newest version first: id, type, title, parent and
@@ -286,10 +307,10 @@ run it where the stamps are (`mainBranch` after `release`).
 ## Validating tickets
 
 ```sh
-safanoria validate                  # every ticket and safanoria.yaml
-safanoria validate tickets/a.md     # problems in a.md or caused by it (e.g. in its parent)
-safanoria validate --staged         # the git-staged tickets: for pre-commit hooks
-safanoria validate --format json    # {valid, checked, diagnostics: [{file, line, column, severity, code, message}]}
+safanoria-cli validate                  # every ticket and safanoria.yaml
+safanoria-cli validate tickets/a.md     # problems in a.md or caused by it (e.g. in its parent)
+safanoria-cli validate --staged         # the git-staged tickets: for pre-commit hooks
+safanoria-cli validate --format json    # {valid, checked, diagnostics: [{file, line, column, severity, code, message}]}
 ```
 
 Exit code 0: valid; 1: problems; 2: usage error or not in a Safanoria repository. Problems
@@ -303,14 +324,14 @@ off. In CI, `actions/checkout` with `fetch-depth: 0` gives it every branch.
 ### Before each commit
 
 ```sh
-safanoria hook install      # once per clone: git hooks aren't committed
-safanoria hook uninstall
+safanoria-cli hook install      # once per clone: git hooks aren't committed
+safanoria-cli hook uninstall
 ```
 
-The hook runs `safanoria validate --staged`. Where `safanoria` isn't installed it warns and lets
+The hook runs `safanoria-cli validate --staged`. Where `safanoria-cli` isn't installed it warns and lets
 the commit through, so a teammate without the CLI isn't blocked (CI checks anyway). A
 `pre-commit` hook from another tool is never overwritten; add the line
-`safanoria validate --staged` to it, or to your hook manager, instead.
+`safanoria-cli validate --staged` to it, or to your hook manager, instead.
 
 ### In CI (GitHub Actions)
 
@@ -323,12 +344,12 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - uses: mateuy-dev/safanoria@v0.1.0      # installs the CLI, runs `safanoria validate`
+      - uses: mateuy-dev/safanoria@v0.1.0      # installs the CLI, validates the tickets
 ```
 
 Pin the version (`@v0.1.0`, or `with: version: 0.1.0`): a new Safanoria release then can't fail
 your CI until you move to it. `with: args: …` runs another command, e.g. `list --blocked`.
-Elsewhere, install with `install.sh` and run `safanoria validate`.
+Elsewhere, install with `SAFANORIA_CLI_ONLY=1` and `install.sh`, and run `safanoria-cli validate`.
 
 ### Problem codes
 
@@ -353,18 +374,20 @@ Elsewhere, install with `install.sh` and run `safanoria validate`.
 
 ## Planned
 
-- The desktop app (`gui/`): an installer, editing tickets, marking them done.
+- The desktop app (`gui/`): editing tickets, marking them done.
 
 ## Development
 
 The CLI is Kotlin Multiplatform: `core/` holds all logic (config, parser, schema checks,
-targeted edits, git) and is shared with the apps; `cli/` is the `safanoria` command, built
-as a native binary for Linux (x64), Windows (x64) and macOS (arm64); `gui/` is the desktop app
-(Compose Desktop, JVM only).
+targeted edits, git) and is shared with the apps; `cli/` is the `safanoria-cli` command, built
+as a native binary for Linux (x64), Windows (x64) and macOS (arm64); `gui/` is the desktop app,
+the `safanoria` command (Compose Desktop, JVM only; installed with its own Java runtime, as
+`./gradlew :gui:createDistributable` builds it).
 
 ```sh
-make install                                        # build for this OS, copy to ~/.local/bin/safanoria (PREFIX=… to change)
-safanoria hook install                              # validate this repository's tickets before each commit
+make install                                        # build for this OS; safanoria-cli and safanoria in ~/.local/bin (PREFIX=… to change)
+make install-cli                                    # only the CLI, which is much faster to build
+safanoria-cli hook install                              # validate this repository's tickets before each commit
 ./gradlew allTests                                  # JVM tests + native tests for this OS
 ./gradlew :gui:run --args="$PWD"                    # the desktop app, on this repository
 ./gradlew :cli:linkReleaseExecutableLinuxX64        # or …MingwX64, …MacosArm64 (on that OS)
@@ -372,8 +395,8 @@ cli/build/bin/linuxX64/releaseExecutable/safanoria.kexe version
 python3 tools/bench.py cli/build/bin/linuxX64/releaseExecutable/safanoria.kexe   # startup times
 ```
 
-- The hook runs the installed `safanoria`, not this checkout's. After CLI changes are merged,
-  `make install` again: an older CLI can report errors the new one wouldn't (e.g. a related
+- The hook runs the installed `safanoria-cli`, not this checkout's. After CLI changes are merged,
+  `make install-cli` again: an older CLI can report errors the new one wouldn't (e.g. a related
   ticket that exists only on `main`, before cross-branch ids).
 - Needs JDK 21. The first build downloads the Kotlin/Native toolchain into `~/.konan`.
 - Linux binaries link the system `libunistring.so.5` (Ubuntu 24.04+, `libunistring5`), needed by
@@ -391,14 +414,16 @@ python3 tools/bench.py cli/build/bin/linuxX64/releaseExecutable/safanoria.kexe  
 ### Releasing Safanoria
 
 1. On `main`, with `gradle.properties` `version` set to the release (e.g. `0.2.0`): stamp this
-   repository's tickets, `safanoria release safanoria`, and commit.
+   repository's tickets, `safanoria-cli release safanoria`, and commit.
 2. Tag and push: `git tag v0.2.0 && git push origin v0.2.0`. The `release` workflow checks the
-   tag equals `version`, builds the three binaries with `-Prelease`, and publishes them with
-   `SHA256SUMS` as a GitHub release, which the install scripts download.
+   tag equals `version`, builds the CLI binaries and the app archives for the three systems
+   with `-Prelease`, and publishes them with `SHA256SUMS` as a GitHub release, which the install
+   scripts download. The CLI assets are named `safanoria-<os>` without "cli": install scripts
+   and Actions pinned to a version from before the app download the latest release by those names.
 3. Set `version` to the next one (e.g. `0.3.0`) for development.
 
 Changing `.github/workflows/release.yml`, the install scripts or `action.yml` on any branch runs
-the workflow without publishing: it builds the binaries and runs both install scripts and the
+the workflow without publishing: it builds the binaries and the app, and runs both install scripts and the
 Action against them.
 
 ## License

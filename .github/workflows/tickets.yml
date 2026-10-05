@@ -27,4 +27,4 @@ jobs:
       - name: Build CLI
         run: ./gradlew --no-daemon :cli:linkReleaseExecutableLinuxX64
       - name: Validate tickets
-        run: cli/build/bin/linuxX64/releaseExecutable/safanoria.kexe validate
+        run: cli/build/bin/linuxX64/releaseExecutable/safanoria-cli.kexe validate

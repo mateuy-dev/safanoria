@@ -20,7 +20,7 @@ import dev.mateuy.safanoria.core.SystemFileSystem
 import dev.mateuy.safanoria.core.Validator
 import dev.mateuy.safanoria.core.VersionSource
 
-/** `safanoria init`: sets up Safanoria in a project (README "Adding Safanoria to a project"). */
+/** `safanoria-cli init`: sets up Safanoria in a project (README "Adding Safanoria to a project"). */
 class Init : CliktCommand(name = "init") {
     override fun help(context: Context) =
         "Set up Safanoria here (or in --root): safanoria.yaml, the ticket directory with templates, " +
@@ -37,7 +37,7 @@ class Init : CliktCommand(name = "init") {
     override fun run() {
         val root = cli.projectRoot
         if (SystemFileSystem.exists(root / CONFIG_FILE)) {
-            throw PrintMessage("$CONFIG_FILE already exists in $root: use `safanoria update`", 1, true)
+            throw PrintMessage("$CONFIG_FILE already exists in $root: use `safanoria-cli update`", 1, true)
         }
         if (dir.startsWith("/") || ".." in dir.split('/')) throw usage("--dir must be a path inside the project", "--dir")
         val specs = components.map(::parseComponent) + externals.map { ComponentSpec(checkName(it, "--external"), null) }
@@ -54,8 +54,8 @@ class Init : CliktCommand(name = "init") {
             throw ProgramResult(1)
         }
         echo(
-            "Safanoria is set up. Next: `safanoria new \"<title>\"`; `safanoria hook install` to validate tickets before " +
-                "each commit; and `safanoria release <component>` in your release process.",
+            "Safanoria is set up. Next: `safanoria-cli new \"<title>\"`; `safanoria-cli hook install` to validate tickets before " +
+                "each commit; and `safanoria-cli release <component>` in your release process.",
         )
     }
 

@@ -20,7 +20,7 @@ import okio.Path.Companion.toPath
 import kotlin.time.Clock
 
 /**
- * `safanoria finish <id> [--done]`: SPEC §11.4 Finish. Sets the status on the ticket's real copy
+ * `safanoria-cli finish <id> [--done]`: SPEC §11.4 Finish. Sets the status on the ticket's real copy
  * (SPEC §14.1) and commits only that file there: in the worktree that has the branch checked
  * out, else on the branch without checking it out.
  */

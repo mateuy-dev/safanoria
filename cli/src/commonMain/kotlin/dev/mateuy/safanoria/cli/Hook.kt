@@ -11,7 +11,7 @@ import dev.mateuy.safanoria.core.HookState
 import dev.mateuy.safanoria.core.Hooks
 import okio.Path
 
-/** `safanoria hook install|uninstall`: the git pre-commit hook that validates staged tickets. */
+/** `safanoria-cli hook install|uninstall`: the git pre-commit hook that validates staged tickets. */
 class Hook : CliktCommand(name = "hook") {
     override fun help(context: Context) =
         "The git pre-commit hook that runs `${Hooks.COMMAND}`. Hooks aren't committed: each clone installs it."
@@ -31,19 +31,20 @@ abstract class HookCommand(name: String) : RepositoryCommand(name) {
 
 class HookInstall : HookCommand("install") {
     override fun help(context: Context) =
-        "Install the pre-commit hook. A pre-commit hook that isn't Safanoria's is left alone."
+        "Install the pre-commit hook, or update the one an earlier version installed. A pre-commit hook that isn't Safanoria's is left alone."
 
     override fun run() {
         val path = hookPath()
-        when (Hooks.state(repository, path)) {
+        when (val state = Hooks.state(repository, path)) {
             HookState.SAFANORIA -> echo("already installed: $path")
             HookState.FOREIGN -> throw PrintMessage(
                 "$path is another tool's hook; not changed. Add this line to it (or to your hook manager):\n  ${Hooks.COMMAND}",
                 1, true,
             )
-            HookState.NONE -> {
+            HookState.NONE, HookState.OUTDATED -> {
+                val verb = if (state == HookState.NONE) "install" else "update"
                 if (!dryRun) Hooks.install(repository, path)
-                echo("${if (dryRun) "would install" else "installed"} $path: runs `${Hooks.COMMAND}` before each commit")
+                echo("${if (dryRun) "would $verb" else if (state == HookState.NONE) "installed" else "updated"} $path: runs `${Hooks.COMMAND}` before each commit")
             }
         }
     }
@@ -57,7 +58,7 @@ class HookUninstall : HookCommand("uninstall") {
         when (Hooks.state(repository, path)) {
             HookState.NONE -> echo("not installed")
             HookState.FOREIGN -> throw PrintMessage("$path is another tool's hook; not removed", 1, true)
-            HookState.SAFANORIA -> {
+            HookState.SAFANORIA, HookState.OUTDATED -> {
                 if (!dryRun) repository.fileSystem.delete(path)
                 echo("${if (dryRun) "would remove" else "removed"} $path")
             }

@@ -25,7 +25,7 @@ import kotlinx.serialization.json.putJsonArray
 import okio.Path
 import okio.Path.Companion.toPath
 
-/** `safanoria validate`: SPEC §12 checks. Exit 0 valid, 1 problems, 2 usage or no repository. */
+/** `safanoria-cli validate`: SPEC §12 checks. Exit 0 valid, 1 problems, 2 usage or no repository. */
 class Validate : RepositoryCommand(name = "validate") {
     override fun help(context: Context) =
         "Check tickets and safanoria.yaml against SPEC.md §12. With files (or --staged), report only " +

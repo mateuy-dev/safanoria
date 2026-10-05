@@ -217,7 +217,7 @@ private fun ActionBar(state: TicketViewState, onAction: (TicketAction) -> Unit) 
     }
 }
 
-/** What `safanoria validate` reports for the ticket. */
+/** What `safanoria-cli validate` reports for the ticket. */
 @Composable
 private fun Problems(problems: List<TicketProblem>) {
     if (problems.isEmpty()) return

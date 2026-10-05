@@ -17,12 +17,12 @@ planning or approval step, and a session works as the user directs it.
 
 ## Rules
 
-- **Never start a ticket.** The user starts tickets with `safanoria start <id>` and opens a
+- **Never start a ticket.** The user starts tickets with `safanoria-cli start <id>` and opens a
   session in the worktree. Don't create ticket branches or worktrees, don't switch the session
   into another worktree, and don't set `in-progress` yourself.
 - Set `updated` to today on every change. Keep frontmatter field order. Preserve unknown fields and sections.
 - User Requests and Work Log are append-only.
-- **Never set `resolvedIn`.** The project's release process does that (`safanoria release`).
+- **Never set `resolvedIn`.** The project's release process does that (`safanoria-cli release`).
 - **No personal data**: `requests[].user` is the project's user id; never names, emails or phones.
   Quotes are verbatim, in the original language.
 
@@ -31,7 +31,7 @@ planning or approval step, and a session works as the user directs it.
 1. Write the ticket from the conversation. The Objective is the most valuable part: what is
    wanted and why, with the context a later session will need. For a bug, also Steps to
    reproduce, Expected and Actual. Acceptance Criteria only if they are clear already.
-2. With the `safanoria` CLI (`safanoria version` works): `safanoria new "<title>" --objective "…"
+2. With the CLI, `safanoria-cli` (`safanoria-cli version` works): `safanoria-cli new "<title>" --objective "…"
    [--type …] [--area …] [--size …] [--parent <id>] [--on <branch>]`. It picks the id, fills the
    template and validates. Don't ask the user to confirm the id: tell them which one it got,
    and rename it if they ask (rename the file, its `id`, and any references; fine while the
@@ -45,7 +45,7 @@ planning or approval step, and a session works as the user directs it.
 4. From a user: add the `requests` entry and the verbatim quote in User Requests (SPEC §7.3).
    With `--on`, edit and commit that where `mainBranch` is checked out (`git worktree list`;
    `git -C <worktree> commit -- <file>`), or ask the user.
-5. `safanoria validate <file>`.
+5. `safanoria-cli validate <file>`.
 
 Without the CLI: pick an id (SPEC §3) that no branch has used (`git rev-list --all -1 --
 '<dir>/<id>.md'` and `git branch -a --list '*<id>'` print nothing), copy the template (SPEC §6.2),
@@ -70,16 +70,16 @@ Along the way:
 
 ## Finish
 
-When the user says the work is done: `safanoria finish <id>` (or set `status: review` and log
+When the user says the work is done: `safanoria-cli finish <id>` (or set `status: review` and log
 `status · review` yourself, and commit). Resolve pending Learnings if you can, and run the
-project's tests first. Set `done` (`safanoria finish <id> --done`) only when the user says it is
+project's tests first. Set `done` (`safanoria-cli finish <id> --done`) only when the user says it is
 merged; that also checks the item in the parent's Plan.
 
 ## Release notes
 
 When the user asks what a version brings, or what changed between two versions:
-`safanoria notes <component> <version>` prints the tickets stamped with that version
-(`resolvedIn`, SPEC §9) and their Objective; `safanoria notes <component> <from> <to>` those
+`safanoria-cli notes <component> <version>` prints the tickets stamped with that version
+(`resolvedIn`, SPEC §9) and their Objective; `safanoria-cli notes <component> <from> <to>` those
 after `<from>` (which the user already has) up to and including `<to>`. Without the CLI: the
 tickets whose `resolvedIn.<component>` is in that range.
 

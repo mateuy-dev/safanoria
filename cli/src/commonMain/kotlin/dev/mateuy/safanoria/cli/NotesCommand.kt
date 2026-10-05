@@ -11,7 +11,7 @@ import dev.mateuy.safanoria.core.Ticket
 import dev.mateuy.safanoria.core.text
 
 /**
- * `safanoria notes <component> <version> [<to>]`: what a version shipped, by `resolvedIn` (SPEC §9).
+ * `safanoria-cli notes <component> <version> [<to>]`: what a version shipped, by `resolvedIn` (SPEC §9).
  * Prints the tickets, not the release notes: those are prose for end users, written from this.
  */
 class NotesCommand : RepositoryCommand(name = "notes") {

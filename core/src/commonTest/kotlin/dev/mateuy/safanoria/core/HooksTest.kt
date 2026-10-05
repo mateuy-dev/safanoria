@@ -26,7 +26,7 @@ class HooksTest {
 
         Hooks.install(repo, path)
         assertEquals(HookState.SAFANORIA, Hooks.state(repo, path))
-        assertTrue(read(path).startsWith("#!/bin/sh\n# safanoria pre-commit hook") && read(path).endsWith("exec safanoria validate --staged\n"))
+        assertTrue(read(path).startsWith("#!/bin/sh\n# safanoria pre-commit hook") && read(path).endsWith("exec safanoria-cli validate --staged\n"))
         if (environmentVariable("OS") != "Windows_NT") {
             assertEquals(0, runCommand("test -x \"$path\"").exitCode, "executable")
         }

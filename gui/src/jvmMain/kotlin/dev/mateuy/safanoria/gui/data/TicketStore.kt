@@ -54,7 +54,7 @@ data class TicketsSnapshot(
 
 /**
  * The single source of the project's tickets for every screen: reads them through `core` (each
- * ticket's real copy from every local branch, SPEC §14, as `safanoria list` does) and keeps the
+ * ticket's real copy from every local branch, SPEC §14, as `safanoria-cli list` does) and keeps the
  * last result. Operations that change tickets ([start], [finish]) are here too, followed by
  * a [refresh].
  */
@@ -65,7 +65,7 @@ class TicketStore(val root: Path) {
     private val reading = Mutex()
 
     /**
-     * Starts ticket [id] as `safanoria start` does (SPEC §11.2): branch `<id>` with the ticket
+     * Starts ticket [id] as `safanoria-cli start` does (SPEC §11.2): branch `<id>` with the ticket
      * `in-progress` on it, then the worktree when `safanoria.yaml` has one, else this checkout
      * switched to the branch. The tickets are read again afterwards.
      */
@@ -104,7 +104,7 @@ class TicketStore(val root: Path) {
     }
 
     /**
-     * Sets ticket [id] to `review` as `safanoria finish` does (SPEC §11.4): on its real copy, in
+     * Sets ticket [id] to `review` as `safanoria-cli finish` does (SPEC §11.4): on its real copy, in
      * one commit with only that file. The tickets are read again afterwards.
      */
     suspend fun finish(id: String, today: String = LocalDate.now().toString()): FinishOutcome {
