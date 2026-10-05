@@ -107,7 +107,7 @@ abstract class RepositoryCommand(name: String) : CliktCommand(name = name) {
 }
 
 /** The command tree; tests run it with Clikt's `test()`, and give it [prompts] to answer questions. */
-fun cli(prompts: Prompts? = null): CliktCommand = Safanoria(prompts).subcommands(Init(), Update(), New(), ListTickets(), BoardCommand(), ReleaseCommand(), StartCommand(), FinishCommand(), ContextCommand(), Validate(), hookCommand(), Version(), Dump())
+fun cli(prompts: Prompts? = null): CliktCommand = Safanoria(prompts).subcommands(Init(), Update(), New(), ListTickets(), BoardCommand(), ReleaseCommand(), NotesCommand(), StartCommand(), FinishCommand(), ContextCommand(), Validate(), hookCommand(), Version(), Dump())
 
 /**
  * Like Clikt's `main`, but usage errors (bad option, missing argument) exit 2 as documented

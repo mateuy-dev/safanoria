@@ -77,6 +77,10 @@ public class Body internal constructor(
     public fun hasContent(section: Section): Boolean =
         content(section).any { (_, l) -> l.isNotBlank() && !HTML_COMMENT.matches(l.trim()) }
 
+    /** A section's content as written, without the blank lines around it and comment-only lines. */
+    public fun text(section: Section): String =
+        content(section).map { it.second }.filterNot { HTML_COMMENT.matches(it.trim()) }.joinToString("\n").trim('\n', ' ')
+
     /** Non-blank content lines of a section, as (file line, text). */
     private fun content(section: Section): List<Pair<Int, String>> =
         (section.firstLine..section.lastLine).map { it to text(it) }

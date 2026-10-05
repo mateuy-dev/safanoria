@@ -39,6 +39,7 @@ content. `safanoria --help` lists the commands; each is described below.
 | `context` | The current branch's ticket, for the agent session (SessionStart hook) |
 | `validate`, `hook` | Check every SPEC rule; before each commit |
 | `release` | Stamp `resolvedIn` on the tickets a release ships |
+| `notes` | The tickets a version shipped, to write its release notes from |
 
 ## Installing the CLI
 
@@ -268,6 +269,19 @@ refuses a version lower than one already stamped for the component.
 External components (released from another repository) are stamped here with the version
 given, by hand or from that repository's release job. Use `--ticket` when `done` here doesn't
 guarantee the ticket was in that release.
+
+### Release notes
+
+```sh
+safanoria notes app 4.3.0             # the tickets with resolvedIn.app 4.3.0, with their Objective
+safanoria notes app 4.2.0 4.3.0       # what changed after 4.2.0, up to and including 4.3.0
+```
+
+`notes` prints the tickets a version shipped, newest version first: id, type, title, parent and
+Objective. That is the material, not the notes: the text users read when they update is written
+from it, by an agent with the skill ("what's new in app 4.3.0?") or by hand, in their words and
+with everything they don't notice reduced to one "Bug fixing" line. It reads the checkout, so
+run it where the stamps are (`mainBranch` after `release`).
 
 ## Validating tickets
 

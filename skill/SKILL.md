@@ -3,8 +3,9 @@ name: safanoria
 description: >
   Create and keep Safanoria tickets: markdown files in the project's ticket directory (see
   safanoria.yaml) that track the backlog and the progress of each feature. Use when the user asks
-  to create a ticket or log a user request, or to finish a ticket; and in any session on a branch
-  whose name is a ticket id, to keep that ticket current.
+  to create a ticket or log a user request, to finish a ticket, or what a version brings (release
+  notes, what changed between two versions); and in any session on a branch whose name is a
+  ticket id, to keep that ticket current.
 ---
 
 The format is defined in `SPEC.md` next to this file; read it before writing a ticket. Project
@@ -73,3 +74,23 @@ When the user says the work is done: `safanoria finish <id>` (or set `status: re
 `status · review` yourself, and commit). Resolve pending Learnings if you can, and run the
 project's tests first. Set `done` (`safanoria finish <id> --done`) only when the user says it is
 merged; that also checks the item in the parent's Plan.
+
+## Release notes
+
+When the user asks what a version brings, or what changed between two versions:
+`safanoria notes <component> <version>` prints the tickets stamped with that version
+(`resolvedIn`, SPEC §9) and their Objective; `safanoria notes <component> <from> <to>` those
+after `<from>` (which the user already has) up to and including `<to>`. Without the CLI: the
+tickets whose `resolvedIn.<component>` is in that range.
+
+Write the text from them. Its readers are the people who use the product and are updating it:
+
+- What they can now do, or what no longer goes wrong, in their words and their language. No
+  ticket ids, no code, library or screen-internal names, nothing about how it was done.
+- One entry per change the user notices: a parent and its children are one feature, told once.
+  New things first, then fixes. Short; a version is a few lines.
+- Whatever the user doesn't notice (`maintenance`, refactors, internal fixes) is not described:
+  all of it together is one last line, "Bug fixing". If nothing else shipped, that line is the text.
+- Between two versions, one text for the whole update, not one per version.
+- Only what the tickets say. If an Objective doesn't tell what changed for the user, read the
+  ticket; if it still doesn't, ask.
