@@ -2,7 +2,7 @@
 id: review-to-done
 type: feature
 title: "Review to done: land a ticket in one step, reopen it, and do both from the app"
-status: in-progress
+status: review
 priority: medium
 size: L
 created: 2026-10-05
@@ -93,3 +93,4 @@ Decided (see the Work Log): the commands are `merge` and `reopen`; `merge` takes
   checked out, not on every branch that inherited the copy.
 - **2026-10-05** · decision · Not split into children: the parts share `Finish`/`Land` in `core` and
   were done in one session.
+- **2026-10-05** · status · review
