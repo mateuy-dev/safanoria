@@ -2,11 +2,11 @@
 id: release-notes
 type: feature
 title: Version to features
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-10-05
 ---
 
 ## Objective
@@ -23,3 +23,4 @@ The tickets to include can be found with `resolvedIn.<component>` (SPEC §9).
 
 ## Work Log
 
+- **2026-10-05** · status · started
