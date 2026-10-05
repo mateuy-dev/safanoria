@@ -10,7 +10,8 @@ pluginManagement {
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
+        google() // androidx artifacts behind Compose Multiplatform (gui)
     }
 }
 
-include(":core", ":cli")
+include(":core", ":cli", ":gui")

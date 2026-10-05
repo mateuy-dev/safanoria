@@ -5,6 +5,8 @@ import org.jetbrains.kotlin.konan.target.KonanTarget
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.compose.multiplatform) apply false
+    alias(libs.plugins.compose.compiler) apply false
 }
 
 // json-schema-validator -> com.doist.x:normalize links -lunistring on linuxX64, and the
