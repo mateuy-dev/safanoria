@@ -81,7 +81,9 @@ class Safanoria(private val prompts: Prompts? = null) : CliktCommand(name = "saf
             "list" to "List tickets",
             "new" to "Create a ticket",
             "start" to "Start a ticket: its branch and worktree",
-            "finish" to "Finish a ticket: review, or done once merged",
+            "finish" to "Finish a ticket: set it to review",
+            "merge" to "Land a ticket in review: merge it, done",
+            "reopen" to "Send a ticket in review back to in-progress",
             "validate" to "Check the tickets",
             "release" to "Stamp released tickets with a version",
             "update" to "Update the skill and the hooks to this version",
@@ -108,7 +110,7 @@ abstract class RepositoryCommand(name: String) : CliktCommand(name = name) {
 }
 
 /** The command tree; tests run it with Clikt's `test()`, and give it [prompts] to answer questions. */
-fun cli(prompts: Prompts? = null): CliktCommand = Safanoria(prompts).subcommands(Init(), Update(), New(), ListTickets(), BoardCommand(), ReleaseCommand(), NotesCommand(), StartCommand(), FinishCommand(), ContextCommand(), Validate(), hookCommand(), Version(), Dump())
+fun cli(prompts: Prompts? = null): CliktCommand = Safanoria(prompts).subcommands(Init(), Update(), New(), ListTickets(), BoardCommand(), ReleaseCommand(), NotesCommand(), StartCommand(), FinishCommand(), MergeCommand(), ReopenCommand(), ContextCommand(), Validate(), hookCommand(), Version(), Dump())
 
 /**
  * Like Clikt's `main`, but usage errors (bad option, missing argument) exit 2 as documented

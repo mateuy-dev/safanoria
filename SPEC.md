@@ -146,8 +146,11 @@ A request is:
 - A ticket starts work only when a human says so. Tools and agents MUST NOT move a ticket to
   `in-progress` on their own initiative.
 - Moving forward MAY skip statuses (e.g. `backlog` → `in-progress` for a direct fix).
-- Moving backward, and reopening a `done` or `wontfix` ticket to `backlog`, MUST add a Work Log
-  entry with the reason.
+- Moving backward (for example `review` → `in-progress` when the review finds something to
+  change), and reopening a `done` or `wontfix` ticket to `backlog`, MUST add a Work Log entry
+  with the reason.
+- `done` means merged, so it SHOULD be set in the merge itself (§11.5). A ticket in `review` on
+  its target is merged: its `done` is only missing.
 - Content required by status is defined in §7.1.
 
 ### 6.2 Type
@@ -370,8 +373,17 @@ what was decided; they do not script the work. Working on a ticket is an ordinar
    explain; Objective and Acceptance Criteria are updated when the goal changes. Out-of-scope
    work becomes a new `backlog` ticket in `related`, created on `mainBranch` (§14.2). A child of
    this ticket is created on this branch and started like any ticket, in its own session.
-4. **Finish.** Set `status: review` when the work is complete. Set `done` only when it is merged
-   into its target. Never set `resolvedIn`.
+4. **Finish.** Set `status: review` when the work is complete: committed on branch `<id>`, which
+   has what its target has. Tools SHOULD refuse otherwise, and list pending Learnings and
+   unchecked Acceptance Criteria without blocking on them (§7.6). Until here tools commit only
+   ticket files. Never set `resolvedIn`.
+5. **Land** — only when the human says so, after the review. Either merge branch `<id>` into
+   its target and set `done`, or go back to `in-progress` with the reason logged (§6.1). A tool
+   MAY do the merge: with a merge commit that also sets `done`, logs it and checks the item in
+   the parent's Plan, so the status and the merge can't differ. It MUST change nothing when the
+   branch has uncommitted work, the merge conflicts or the tickets wouldn't validate, and MUST
+   NOT push. It MAY then remove the worktree and delete the branch. When the merge is made
+   elsewhere (a pull request), `done` is set on the target afterwards.
 
 ## 12. Validation
 
@@ -395,7 +407,8 @@ A validator SHOULD warn about attachment files over 1 MB.
 A validator checks the files of one checkout (what is about to be committed or merged). An id is
 unknown only if no branch the validator can see has a ticket file with it (§14), so a reference
 to a ticket that so far exists only on another branch is not an error. A validator SHOULD warn
-when the same ticket was created separately on two branches (§14.3).
+when the same ticket was created separately on two branches (§14.3), and about a ticket that is
+merged into its target but still `review`.
 
 ## 13. Versioning of this spec
 

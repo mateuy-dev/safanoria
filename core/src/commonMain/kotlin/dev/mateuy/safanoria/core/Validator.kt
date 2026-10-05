@@ -25,7 +25,8 @@ public class Validator(private val repository: Repository, private val branches:
             repository.tickets.flatMap { ticketFindings(it) } +
             CrossTicketRules(repository.tickets, branches?.ids.orEmpty()).findings() +
             AttachmentRules(repository).findings() +
-            createdTwice()
+            createdTwice() +
+            mergedInReview()
         val selected = only?.map { canonical(it) }?.toSet()
         return findings
             .filter { f -> selected == null || f.diagnostic.file?.let(::canonical) in selected || f.causes.any { canonical(it) in selected } }
@@ -47,6 +48,23 @@ public class Validator(private val repository: Repository, private val branches:
             val ticket = repository.ticket(twice.id) ?: return@mapNotNull null
             Finding(Diagnostic(ticket.path, ticket.frontmatter?.id?.line ?: 1, null, "id-created-twice",
                 "branch '$other' also created a ticket '${twice.id}' separately; they will conflict at merge, so rename one (§14.3)", Severity.WARNING))
+        }
+    }
+
+    /**
+     * Tickets merged into their target but still `review` ([Finish.merged]): `done` was never
+     * set. Reported where the target is checked out, or a single commit is (CI), not on every
+     * branch that inherited the copy.
+     */
+    private fun mergedInReview(): List<Finding> {
+        val b = branches ?: return emptyList()
+        val here = b.branches.first()
+        return Finish.merged(b).mapNotNull { id ->
+            val target = b.targetBranch(id)
+            if (here != target && here != "HEAD") return@mapNotNull null
+            val ticket = repository.ticket(id)?.takeIf { it.frontmatter?.status == Status.REVIEW } ?: return@mapNotNull null
+            Finding(Diagnostic(ticket.path, ticket.frontmatter?.keys?.firstOrNull { it.value == "status" }?.line ?: 1, null, "review-merged",
+                "'$id' is merged into $target but still review: set it done (safanoria-cli finish --done)", Severity.WARNING))
         }
     }
 

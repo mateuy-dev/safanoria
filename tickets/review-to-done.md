@@ -2,7 +2,7 @@
 id: review-to-done
 type: feature
 title: "Review to done: land a ticket in one step, reopen it, and do both from the app"
-status: backlog
+status: done
 priority: medium
 size: L
 created: 2026-10-05
@@ -56,17 +56,42 @@ Both go through `core`, shared with the CLI, as Start and Finish do (`TicketStor
 
 **Spec, skill, README.** SPEC §11.4 says tools commit only the ticket; landing merges code, so the lifecycle text has to allow it (and say `done` MAY be set in the merge itself). The skill's Finish section lets the session land or reopen the ticket when the user says so. The README's Finish section and command table follow.
 
-To decide in the ticket: the command names; whether the landing command also accepts a ticket still `in-progress` (review skipped, as §6.1 allows); what the sweep does with a worktree that has uncommitted files; and whether this is split into children (landing and sweep, `finish` checks, reopen, app buttons).
+Decided (see the Work Log): the commands are `merge` and `reopen`; `merge` takes only tickets in
+`review`; the sweep keeps a worktree with uncommitted files, and its branch; one ticket, no children.
 
 ## Acceptance Criteria
 
-- [ ] One command takes a `review` ticket to `done`: merged into its target, `done` and the parent's Plan item in the merge commit, worktree removed, branch deleted, nothing pushed.
-- [ ] It refuses, changing nothing, on uncommitted work, a merge conflict, or a result that wouldn't validate.
-- [ ] `finish --done` without an id, and `release`, promote `review` tickets whose branch is already merged; `validate` warns about them.
-- [ ] `finish` refuses on uncommitted changes or a branch behind its target, and lists pending Learnings and unchecked Acceptance Criteria.
-- [ ] `reopen <id> --reason` sets `in-progress` and logs the reason.
-- [ ] In the app, a ticket in review has "Merge and finish" and "Back to in progress", each asking first.
-- [ ] SPEC, skill and README describe the new flow.
+- [x] One command takes a `review` ticket to `done`: merged into its target, `done` and the parent's Plan item in the merge commit, worktree removed, branch deleted, nothing pushed.
+- [x] It refuses, changing nothing, on uncommitted work, a merge conflict, or a result that wouldn't validate.
+- [x] `finish --done` without an id, and `release`, promote `review` tickets whose branch is already merged; `validate` warns about them.
+- [x] `finish` refuses on uncommitted changes or a branch behind its target (commits that only touch tickets don't count), and lists pending Learnings and unchecked Acceptance Criteria.
+- [x] `reopen <id> --reason` sets `in-progress` and logs the reason.
+- [x] In the app, a ticket in review has "Merge and finish" and "Back to in progress", each asking first.
+- [x] SPEC, skill and README describe the new flow.
 
 ## Work Log
 
+- **2026-10-05** · status · started
+- **2026-10-05** · decision · Commands: `merge <id>` and `reopen <id> --reason`. `finish --merge` was
+  rejected: `finish` already means two things (`review`, and `--done` for merges made elsewhere).
+- **2026-10-05** · decision · `merge` takes only `review`, not `in-progress`: `finish` is where the
+  branch is checked (committed, not behind), and `review` is the person saying the work is complete.
+- **2026-10-05** · decision · The merge is computed with `git merge-tree --write-tree` (git 2.38) and
+  committed with plumbing, then the target moves by `merge --ff-only` where it is checked out, else
+  by `update-ref`. No checkout is touched until the merge commit exists, so a conflict or an invalid
+  ticket leaves nothing to undo, and it works from any checkout. `git merge --no-commit` in the
+  target's worktree was rejected: it needs the target checked out and a `merge --abort` on failure.
+- **2026-10-05** · decision · `finish` counts a branch as behind only for target commits that change
+  something outside the ticket directory. Deviation from the Objective: tickets are created on
+  `mainBranch` all the time (SPEC §14.2), so a plain "behind" would refuse almost every `finish`.
+- **2026-10-05** · decision · The sweep sets `done` whatever the worktree has, since merged is a fact,
+  but keeps a worktree with uncommitted files, and its branch, and says so. `release` promotes in
+  the files it writes instead of committing, as it never commits.
+- **2026-10-05** · decision · Merged elsewhere is "in `review` on its target", the condition
+  `finish <id> --done` already had, not a branch lookup: it also covers a branch deleted after a
+  squash merge. `validate` warns (`review-merged`) only where the target or a single commit is
+  checked out, not on every branch that inherited the copy.
+- **2026-10-05** · decision · Not split into children: the parts share `Finish`/`Land` in `core` and
+  were done in one session.
+- **2026-10-05** · status · review
+- **2026-10-05** · status · done

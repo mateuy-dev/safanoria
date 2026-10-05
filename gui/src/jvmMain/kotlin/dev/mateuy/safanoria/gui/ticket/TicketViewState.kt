@@ -40,6 +40,12 @@ enum class TicketAction(val confirmed: Boolean) {
 
     /** In progress: the work is complete, set it to review. */
     FINISH(confirmed = true),
+
+    /** In review: merge its branch into its target with the ticket done, and remove its worktree and branch. */
+    MERGE(confirmed = true),
+
+    /** In review: back to in progress. Confirming it takes the reason, which is logged. */
+    REOPEN(confirmed = true),
 }
 
 data class Notice(val text: String, val error: Boolean)

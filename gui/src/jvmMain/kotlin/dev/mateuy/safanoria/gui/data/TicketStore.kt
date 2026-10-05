@@ -7,6 +7,11 @@ import dev.mateuy.safanoria.core.Finish
 import dev.mateuy.safanoria.core.FinishException
 import dev.mateuy.safanoria.core.FinishResult
 import dev.mateuy.safanoria.core.GitException
+import dev.mateuy.safanoria.core.Land
+import dev.mateuy.safanoria.core.LandException
+import dev.mateuy.safanoria.core.LandResult
+import dev.mateuy.safanoria.core.Reopen
+import dev.mateuy.safanoria.core.ReopenResult
 import dev.mateuy.safanoria.core.Repository
 import dev.mateuy.safanoria.core.Start
 import dev.mateuy.safanoria.core.StartException
@@ -35,10 +40,25 @@ sealed interface StartOutcome {
 
 /** What [TicketStore.finish] did. */
 sealed interface FinishOutcome {
-    /** In review, committed on [branch]. */
-    data class Finished(val branch: String) : FinishOutcome
+    /** In review, committed on [branch]. [open] is what the ticket still has open: unchecked criteria, pending Learnings. */
+    data class Finished(val branch: String, val open: List<String> = emptyList()) : FinishOutcome
 
     data class NotFinished(val reason: String) : FinishOutcome
+}
+
+/** What [TicketStore.merge] did. */
+sealed interface MergeOutcome {
+    /** Merged into [target] and done. [cleanUp] says what happened to the worktree and the branch. */
+    data class Merged(val target: String, val cleanUp: List<String>) : MergeOutcome
+
+    data class NotMerged(val reason: String) : MergeOutcome
+}
+
+/** What [TicketStore.reopen] did. */
+sealed interface ReopenOutcome {
+    data class Reopened(val branch: String) : ReopenOutcome
+
+    data class NotReopened(val reason: String) : ReopenOutcome
 }
 
 /** The project's tickets as last read, and whether a read is running or failed. */
@@ -55,7 +75,7 @@ data class TicketsSnapshot(
 /**
  * The single source of the project's tickets for every screen: reads them through `core` (each
  * ticket's real copy from every local branch, SPEC §14, as `safanoria-cli list` does) and keeps the
- * last result. Operations that change tickets ([start], [finish]) are here too, followed by
+ * last result. Operations that change tickets ([start], [finish], [merge], [reopen]) are here too, followed by
  * a [refresh].
  */
 class TicketStore(val root: Path) {
@@ -105,7 +125,8 @@ class TicketStore(val root: Path) {
 
     /**
      * Sets ticket [id] to `review` as `safanoria-cli finish` does (SPEC §11.4): on its real copy, in
-     * one commit with only that file. The tickets are read again afterwards.
+     * one commit with only that file, unless its branch has uncommitted changes or is behind its
+     * target. The tickets are read again afterwards.
      */
     suspend fun finish(id: String, today: String = LocalDate.now().toString()): FinishOutcome {
         val outcome = withContext(Dispatchers.IO) {
@@ -113,12 +134,12 @@ class TicketStore(val root: Path) {
                 val repository = Repository(root)
                 val branches = Branches.read(repository)
                     ?: return@withContext FinishOutcome.NotFinished("needs a git repository with the branch '${repository.config.mainBranch}' (mainBranch)")
-                val ready = when (val r = Finish.prepare(branches, id, Status.REVIEW)) {
+                val ready = when (val r = Finish.prepare(repository, branches, id, Status.REVIEW)) {
                     is FinishResult.Refused -> return@withContext FinishOutcome.NotFinished(r.reason)
                     is FinishResult.Ready -> r
                 }
                 Finish.perform(repository, ready, today)
-                FinishOutcome.Finished(ready.branch)
+                FinishOutcome.Finished(ready.branch, ready.open)
             } catch (e: FinishException) {
                 FinishOutcome.NotFinished((listOf(e.message) + e.problems.map { "${it.code}: ${it.message}" }).joinToString("\n"))
             } catch (e: Exception) {
@@ -126,6 +147,54 @@ class TicketStore(val root: Path) {
             }
         }
         if (outcome is FinishOutcome.Finished) refresh()
+        return outcome
+    }
+
+    /**
+     * Lands ticket [id], in review, as `safanoria-cli merge` does (SPEC §11.5): one merge commit on
+     * its target with the ticket `done` in it, then its worktree and branch go. Nothing is pushed.
+     */
+    suspend fun merge(id: String, today: String = LocalDate.now().toString()): MergeOutcome {
+        val outcome = withContext(Dispatchers.IO) {
+            try {
+                val repository = Repository(root)
+                val branches = Branches.read(repository)
+                    ?: return@withContext MergeOutcome.NotMerged("needs a git repository with the branch '${repository.config.mainBranch}' (mainBranch)")
+                val ready = when (val r = Land.prepare(repository, branches, id)) {
+                    is LandResult.Refused -> return@withContext MergeOutcome.NotMerged(r.reason)
+                    is LandResult.Ready -> r
+                }
+                val landed = Land.perform(repository, ready, today)
+                MergeOutcome.Merged(landed.target, landed.cleanUp)
+            } catch (e: LandException) {
+                MergeOutcome.NotMerged((listOf(e.message) + e.problems.map { "${it.code}: ${it.message}" }).joinToString("\n"))
+            } catch (e: Exception) {
+                MergeOutcome.NotMerged(e.message ?: e.toString())
+            }
+        }
+        if (outcome is MergeOutcome.Merged) refresh()
+        return outcome
+    }
+
+    /** Sends ticket [id] back from `review` to `in-progress` as `safanoria-cli reopen` does, logging [reason] (SPEC §6.1). */
+    suspend fun reopen(id: String, reason: String, today: String = LocalDate.now().toString()): ReopenOutcome {
+        val outcome = withContext(Dispatchers.IO) {
+            try {
+                val repository = Repository(root)
+                val branches = Branches.read(repository)
+                    ?: return@withContext ReopenOutcome.NotReopened("needs a git repository with the branch '${repository.config.mainBranch}' (mainBranch)")
+                val ready = when (val r = Reopen.prepare(branches, id, reason)) {
+                    is ReopenResult.Refused -> return@withContext ReopenOutcome.NotReopened(r.reason)
+                    is ReopenResult.Ready -> r
+                }
+                ReopenOutcome.Reopened(Reopen.perform(repository, ready, today).branch)
+            } catch (e: FinishException) {
+                ReopenOutcome.NotReopened((listOf(e.message) + e.problems.map { "${it.code}: ${it.message}" }).joinToString("\n"))
+            } catch (e: Exception) {
+                ReopenOutcome.NotReopened(e.message ?: e.toString())
+            }
+        }
+        if (outcome is ReopenOutcome.Reopened) refresh()
         return outcome
     }
 
