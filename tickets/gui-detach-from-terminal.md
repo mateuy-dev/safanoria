@@ -1,0 +1,40 @@
+---
+id: gui-detach-from-terminal
+type: feature
+title: safanoria keeps running when its terminal is closed
+status: backlog
+priority: medium
+size: S
+created: 2026-10-05
+updated: 2026-10-05
+related: [gui-as-safanoria-command]
+---
+
+## Objective
+
+The desktop app is opened by typing `safanoria` in a terminal, and closing that terminal closes the app. The launcher runs the app in the foreground (`exec "$app_dir/$app_exe" "$@"` in `install.sh`, the same line in the `Makefile`, and `safanoria.cmd` written by `install.ps1`), so it stays in the terminal's session and gets the hangup signal when the terminal closes.
+
+That was a decision in `gui-as-safanoria-command`: stay in the foreground so messages show, and leave detaching to the shell (`safanoria &`). But `&` alone does not survive closing the terminal: bash forwards the hangup to its background jobs. `setsid -f safanoria` or `nohup safanoria >/dev/null 2>&1 &` do, and nobody should have to know that. `safanoria` is used like `code .`: typed in a project directory to open a window, expecting the prompt back and the window to outlive the terminal.
+
+Wanted: the launcher detaches the app when it is opening a window.
+
+- Window case (no arguments, or one directory): the launcher starts the app in its own session (`setsid -f` on Linux, `nohup … &` on macOS) and returns the prompt at once.
+- Everything else (`--help`, `--version`, an old hook calling `safanoria validate`) stays in the foreground as today, so the message and the exit status 2 that refuses the commit still work.
+- Once detached, a crash or stack trace no longer shows anywhere: add a way to stay attached for debugging (a `--foreground` flag or an environment variable).
+- "No safanoria.yaml found" comes from the app after it has detached, so its exit status is lost and the message may not show. Show it in a window rather than have the launcher duplicate the project lookup; a desktop entry would need that too.
+- Windows: the app is built with a console for the same foreground reason, so `install.ps1` needs its own equivalent (`Start-Process`, or a build without a console).
+
+Not verified: that `nohup` is enough to keep the Java runtime alive on macOS, and anything on Windows (only Linux at hand, as in `gui-as-safanoria-command`).
+
+Out of scope: a desktop entry (`.desktop` file, starting from the application menu). The app would have no working directory to take the project from, so it needs a project picker or recent-projects list, and it does not fix the terminal case.
+
+## Acceptance Criteria
+
+- [ ] `safanoria` and `safanoria <dir>` give the prompt back at once, and the window stays open after the terminal is closed.
+- [ ] `safanoria --help`, `--version` and `safanoria <command>` (an old hook) still print in the terminal and return their exit status (0, 0, 2).
+- [ ] There is a way to run the app attached to the terminal, to see its output.
+- [ ] Opening a directory that is in no Safanoria project tells the user so, visibly.
+- [ ] The same holds for the launchers of `install.sh`, `make install` and `install.ps1`.
+
+## Work Log
+
