@@ -2,7 +2,7 @@ package dev.mateuy.safanoria.core
 
 /** Frontmatter field order (SPEC §5). New fields are inserted at their place in it. */
 public val FIELD_ORDER: List<String> = listOf(
-    "id", "type", "title", "status", "priority", "size", "area", "assignee", "created", "updated",
+    "id", "type", "title", "status", "priority", "size", "area", "tags", "assignee", "created", "updated",
     "parent", "childrenMergeInto", "blockedBy", "related", "refs", "requests", "resolvedIn",
 )
 

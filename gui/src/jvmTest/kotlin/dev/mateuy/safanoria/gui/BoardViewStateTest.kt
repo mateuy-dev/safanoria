@@ -102,7 +102,7 @@ class BoardViewStateTest {
     fun filtersNarrowTheCardsButNotTheCounts() {
         val snapshot = snapshotOf(
             ticket("a-bug", type = "bug", extra = "area: [web]"),
-            ticket("a-feature", extra = "area: [app, web]"),
+            ticket("a-feature", extra = "area: [app, web]\ntags: [registry]"),
             ticket("blocked-bug", type = "bug", extra = "blockedBy: [a-bug]"),
         )
         fun shown(filter: TicketFilter) = boardViewState(snapshot, filter = filter).let { state -> state.columns.flatMap { it.cards }.map { it.id } }
@@ -110,6 +110,7 @@ class BoardViewStateTest {
         assertEquals(listOf("a-bug", "blocked-bug"), shown(TicketFilter(types = setOf(TicketType.BUG))))
         assertEquals(listOf("a-bug", "a-feature"), shown(TicketFilter(areas = setOf("web"))))
         assertEquals(listOf("a-feature"), shown(TicketFilter(areas = setOf("app"))))
+        assertEquals(listOf("a-feature"), shown(TicketFilter(tags = setOf("registry", "offline"))))
         assertEquals(listOf("blocked-bug"), shown(TicketFilter(blocked = true)))
         assertEquals(emptyList(), shown(TicketFilter(types = setOf(TicketType.RESEARCH))))
 
@@ -117,6 +118,8 @@ class BoardViewStateTest {
         assertEquals(3, state.ticketCount)
         assertEquals(1, state.shownCount)
         assertEquals(listOf("app", "web"), state.areas)
+        assertEquals(listOf("registry"), state.tags)
+        assertEquals(listOf("registry"), boardViewState(snapshot).card("a-feature").tags)
         assertEquals(6, state.columns.size)
     }
 

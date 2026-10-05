@@ -28,6 +28,12 @@
       "default": ["email", "phone", "in-person", "other"],
       "description": "Allowed requests[].channel values."
     },
+    "tags": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/slug" },
+      "additionalProperties": { "type": "string", "minLength": 1, "description": "One line: what the theme covers." },
+      "description": "Allowed values of a ticket's tags: theme name to its description."
+    },
     "userRef": { "type": "string", "description": "What requests[].user refers to (documentation)." },
     "refs": {
       "type": "object",

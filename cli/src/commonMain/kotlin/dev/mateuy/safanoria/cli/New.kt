@@ -43,6 +43,7 @@ class New : RepositoryCommand(name = "new") {
     private val priorityOption by option("--priority", help = "(default: medium)").choice(*Priority.entries.map { it.text }.toTypedArray())
     private val sizeOption by option("--size", help = "(default: S)").choice(*Size.entries.map { it.text }.toTypedArray())
     private val areaOption by option("--area", help = "Components, comma-separated (required with several components)").split(",")
+    private val tagOption by option("--tag", help = "Tags, comma-separated: themes declared in safanoria.yaml").split(",")
     private val objectiveOption by option("--objective", help = "Text for the Objective section")
     private val onOption by option("--on", help = "Create it on this branch and commit it there, without touching this checkout, e.g. --on main for work found on another branch (SPEC §14.2)")
     private val dryRun by option("--dry-run", help = "Show what would be created, write nothing").flag()
@@ -109,6 +110,7 @@ class New : RepositoryCommand(name = "new") {
     private var priority = "medium"
     private var size = "S"
     private var area: List<String>? = null
+    private var tags: List<String> = emptyList()
     private var objective: String? = null
     private var on: String? = null
 
@@ -120,6 +122,7 @@ class New : RepositoryCommand(name = "new") {
         priorityOption?.let { priority = it }
         sizeOption?.let { size = it }
         area = areaOption
+        tags = tagOption.orEmpty()
         objective = objectiveOption
         on = onOption
         create()
@@ -133,6 +136,7 @@ class New : RepositoryCommand(name = "new") {
         priority = Priority.entries.first { it.text == priority },
         size = Size.entries.first { it.text == size },
         area = area ?: emptyList(),
+        tags = tags,
         objective = objective,
     )
 
@@ -141,12 +145,16 @@ class New : RepositoryCommand(name = "new") {
         while (title.isBlank()) title = prompts.text("Title").trim()
         if (typeOption == null) type = prompts.choose("Type", TicketType.entries.map { Choice(it.text) }, type)
         val open = branches?.tickets.orEmpty().filter { it.frontmatter?.status !in setOf(Status.DONE, Status.WONTFIX) }
-        if (prompts.confirm("Set priority, size${if (open.isNotEmpty()) ", parent" else ""} or objective?", default = false)) {
+        val declaredTags = repo.config.tags
+        if (prompts.confirm("Set priority, size${if (open.isNotEmpty()) ", parent" else ""}${if (declaredTags.isNotEmpty()) ", tags" else ""} or objective?", default = false)) {
             if (priorityOption == null) priority = prompts.choose("Priority", Priority.entries.map { Choice(it.text) }, priority)
             if (sizeOption == null) size = prompts.choose("Size", Size.entries.map { Choice(it.text) }, size)
             if (parentOption == null && open.isNotEmpty()) {
                 val none = Choice("", "(none)", "a top-level ticket")
                 parent = prompts.choose("Parent", listOf(none) + open.map(::ticketChoice), "").ifEmpty { null }
+            }
+            if (tagOption == null && declaredTags.isNotEmpty()) {
+                tags = prompts.chooseMany("Tags: themes it belongs to, if any", declaredTags.map { (name, description) -> Choice(name, description = description) })
             }
             if (objectiveOption == null) objective = prompts.text("Objective (what is wanted and why; empty to write it later)").trim().ifEmpty { null }
         }

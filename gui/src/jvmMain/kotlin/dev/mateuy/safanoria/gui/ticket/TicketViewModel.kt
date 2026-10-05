@@ -109,6 +109,7 @@ internal fun ticketViewState(id: String, snapshot: TicketsSnapshot): TicketViewS
             f?.priority?.let { "priority" to it.text },
             f?.size?.let { "size" to it.text },
             f?.area?.takeIf { it.isNotEmpty() }?.let { areas -> "area" to areas.joinToString(", ") { it.value } },
+            f?.tags?.takeIf { it.isNotEmpty() }?.let { tags -> "tags" to tags.joinToString(", ") { it.value } },
             f?.assignee?.let { "assignee" to it.value },
             f?.created?.let { "created" to it.value },
             f?.updated?.let { "updated" to it.value },

@@ -66,6 +66,7 @@ fun BoardScreen(viewModel: BoardViewModel, onOpenTicket: (String) -> Unit) {
             toggleColumn = viewModel::toggleColumn,
             toggleType = viewModel::toggleType,
             toggleArea = viewModel::toggleArea,
+            toggleTag = viewModel::toggleTag,
             toggleBlocked = viewModel::toggleBlocked,
             clearFilter = viewModel::clearFilter,
             openTicket = onOpenTicket,
@@ -79,6 +80,7 @@ class BoardActions(
     val toggleColumn: (Status?) -> Unit,
     val toggleType: (TicketType) -> Unit,
     val toggleArea: (String) -> Unit,
+    val toggleTag: (String) -> Unit,
     val toggleBlocked: () -> Unit,
     val clearFilter: () -> Unit,
     val openTicket: (String) -> Unit,
@@ -123,7 +125,7 @@ fun BoardContent(state: BoardViewState, actions: BoardActions) {
     }
 }
 
-/** Chips to narrow the board: by type, by area (when tickets have areas) and to blocked tickets. */
+/** Chips to narrow the board: by type, by area and tag (when tickets have them) and to blocked tickets. */
 @Composable
 private fun FilterBar(state: BoardViewState, filtered: Boolean, actions: BoardActions) {
     Row(
@@ -137,6 +139,10 @@ private fun FilterBar(state: BoardViewState, filtered: Boolean, actions: BoardAc
         if (state.areas.isNotEmpty()) FilterGap()
         state.areas.forEach { area ->
             FilterChip(selected = area in state.filter.areas, onClick = { actions.toggleArea(area) }, label = { Text(area) })
+        }
+        if (state.tags.isNotEmpty()) FilterGap()
+        state.tags.forEach { tag ->
+            FilterChip(selected = tag in state.filter.tags, onClick = { actions.toggleTag(tag) }, label = { Text("#$tag") })
         }
         FilterGap()
         FilterChip(selected = state.filter.blocked, onClick = actions.toggleBlocked, label = { Text("blocked") })
@@ -254,7 +260,7 @@ private fun TicketCardView(card: TicketCard, onClick: () -> Unit) {
                 card.size?.text,
                 card.parentId?.let { "↑ $it" },
                 card.onlyOnBranch?.let { "only on $it" },
-            )
+            ) + card.tags.map { "#$it" }
             if (facts.isNotEmpty()) {
                 Text(
                     facts.joinToString(" · "),

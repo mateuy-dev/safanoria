@@ -119,6 +119,19 @@ class PromptsTest {
     }
 
     @Test
+    fun newOffersTheDeclaredTags() {
+        val repo = GitRepo.scenario("prompts-new-tags")
+        repo.write("safanoria.yaml", repo.read("safanoria.yaml") + "tags:\n  registry: Official registry integration\n  offline: Working without a connection\n")
+        repo.commit("tags")
+        val prompts = ScriptedPrompts("Herd photos", "feature", true, "medium", "S", "", listOf("offline"), "", "")
+        val r = run(repo, prompts, "new", "--date", "2026-10-03")
+        assertEquals(0, r.statusCode, r.output)
+        assertTrue("Set priority, size, parent, tags or objective?" in prompts.questions(), prompts.questions().toString())
+        assertEquals(listOf("registry", "offline"), prompts.asked.first { it.first.startsWith("Tags") }.second)
+        assertTrue("tags: [offline]\n" in repo.read("tickets/herd-photos.md"), repo.read("tickets/herd-photos.md"))
+    }
+
+    @Test
     fun newOnAnotherBranchAsksWhereItGoes() {
         val repo = GitRepo.scenario("prompts-new-branch")
         repo.checkout("feature")

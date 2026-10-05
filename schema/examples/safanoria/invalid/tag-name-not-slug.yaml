@@ -1,0 +1,7 @@
+# expect: pattern /tags
+safanoria: 1
+components:
+  app:
+    version: { file: gradle.properties, property: appVersionName }
+tags:
+  Official Registry: Official registry integration

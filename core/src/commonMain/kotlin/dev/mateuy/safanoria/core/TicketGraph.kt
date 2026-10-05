@@ -67,6 +67,7 @@ public data class TicketFilter(
     val statuses: Set<Status> = emptySet(),
     val types: Set<TicketType> = emptySet(),
     val areas: Set<String> = emptySet(),
+    val tags: Set<String> = emptySet(),
     /** Only children of this ticket. */
     val parent: String? = null,
     /** Only tickets with a `blockedBy` that is not `done`. */
@@ -77,6 +78,7 @@ public data class TicketFilter(
         return (statuses.isEmpty() || f?.status in statuses) &&
             (types.isEmpty() || f?.type in types) &&
             (areas.isEmpty() || f?.area.orEmpty().any { it.value in areas }) &&
+            (tags.isEmpty() || f?.tags.orEmpty().any { it.value in tags }) &&
             (parent == null || f?.parent?.value == parent) &&
             (!blocked || graph.openBlockers(ticket).isNotEmpty())
     }

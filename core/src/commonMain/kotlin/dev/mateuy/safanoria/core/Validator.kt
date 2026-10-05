@@ -108,6 +108,12 @@ public class Validator(private val repository: Repository, private val branches:
             }
         }
 
+        // Tags (§2, §5)
+        for (t in f.tags) if (t.value !in config.tags) {
+            val declared = config.tags.keys.joinToString().ifEmpty { "none" }
+            report(t.line, "tag-unknown", "'${t.value}' is not a tag in $CONFIG_FILE tags: $declared", t.column)
+        }
+
         // Requests (§5, §7.3, §10)
         val requests = f.requests
         for (r in requests) if (r.channel != null && r.channel !in config.channels) {

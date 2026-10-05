@@ -11,6 +11,7 @@ public data class NewTicketRequest(
     val priority: Priority = Priority.MEDIUM,
     val size: Size = Size.S,
     val area: List<String> = emptyList(),
+    val tags: List<String> = emptyList(),
     /** Text for `## Objective`; null keeps the template's. */
     val objective: String? = null,
 )
@@ -55,6 +56,11 @@ public object NewTicket {
         request.area.firstOrNull { it !in components }?.let { return refused("'$it' is not a component: ${components.joinToString()}") }
         if (request.area.isEmpty() && components.size > 1) return refused("give the area: one or more of ${components.joinToString()} (§5)")
 
+        val tags = request.tags.distinct()
+        tags.firstOrNull { it !in config.tags }?.let {
+            return refused("'$it' is not a tag in $CONFIG_FILE tags: ${config.tags.keys.joinToString().ifEmpty { "none" }} (§5)")
+        }
+
         val (templatePath, template) = template(repository, request.type)
 
         val text = try {
@@ -66,6 +72,7 @@ public object NewTicket {
                 setField("priority", request.priority.text)
                 setField("size", request.size.text)
                 if (request.area.isNotEmpty()) setList("area", request.area)
+                if (tags.isNotEmpty()) setList("tags", tags)
                 setField("created", today)
                 setField("updated", today)
                 parent?.let { setField("parent", it.fileId) }

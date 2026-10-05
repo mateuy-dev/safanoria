@@ -11,6 +11,9 @@ components:
   rails:
     external: true
 channels: [whatsapp, email, phone, in-app, in-person]
+tags:
+  registry: Official registry integration
+  offline: Working without a connection
 userRef: VacApp user id
 refs:
   sentry: { url: "https://example.sentry.io/issues/?query={id}" }

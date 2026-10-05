@@ -24,6 +24,10 @@ components:
   server:
     external: true
 """
+CONFIG_TAGS = CONFIG1 + """tags:
+  registry: Official registry integration
+  offline: Working without a connection
+"""
 
 
 def ticket(id, status="backlog", type="feature", front="", objective="Why.", requests_section=None,
@@ -77,8 +81,8 @@ case("valid", {
                               learnings="- Tiles are rate-limited.\n  → new ticket: `herd-locations-map`\n- Fine.\n  → ticket only", log=LOG),
     "user-request": ticket("user-request", front="requests:\n  - user: 1834\n    channel: whatsapp\n    date: 2026-09-28\n",
                            requests_section="> Vull veure els ramats.\n— user 1834 · whatsapp · 2026-09-28"),
-    "closed": ticket("closed", status="wontfix", log="- **2026-10-01** · status · Not needed."),
-}, [])
+    "closed": ticket("closed", status="wontfix", front="tags: [registry]\n", log="- **2026-10-01** · status · Not needed."),
+}, [], config=CONFIG_TAGS)
 case("extra-sections", {
     "custom": ticket("custom", sections=[("Original document", "Pasted."), ("Objective", "Why."), ("Acceptance Criteria", ""),
                                          ("Notes", "Anything."), ("Plan", ""), ("Work Log", "")]),
@@ -174,6 +178,11 @@ case("channel-unknown", {
     "faxed": ticket("faxed", front="requests:\n  - user: 1\n    channel: fax\n    date: 2026-09-28\n",
                     requests_section="> Please.\n— user 1 · fax · 2026-09-28"),
 }, [("faxed", "  - user: 1", "channel-unknown")])
+
+# --- tags (§2, §5) -------------------------------------------------------------------------------
+case("tag-unknown", {"themed": ticket("themed", front="tags: [registry, official-registry]\n")},
+     [("themed", "tags: [registry, official-registry]", "tag-unknown")], config=CONFIG_TAGS)
+case("tag-undeclared", {"themed": ticket("themed", front="tags: [registry]\n")}, [("themed", "tags: [registry]", "tag-unknown")])
 
 # --- config and parsing ------------------------------------------------------------------------
 case("config-schema", {"fine": ticket("fine")}, [("safanoria.yaml", "components: {}", "schema-minProperties")],

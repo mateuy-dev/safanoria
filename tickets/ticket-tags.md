@@ -34,3 +34,7 @@ Touches SPEC.md (§2, §5, §12, and §13 for how the spec version is affected),
 ## Work Log
 
 - **2026-10-05** · status · started
+- **2026-10-05** · decision · Spec stays at version 1: `tags` is an optional field old tools can ignore, and no valid ticket becomes invalid (§13). Named there as the example of such an addition.
+- **2026-10-05** · decision · Without `tags` in `safanoria.yaml` every tag is `tag-unknown`: declaring is what stops drift, so there is no free-form mode. `new` refuses an undeclared tag too, before writing.
+- **2026-10-05** · decision · A tag filter with several values matches any of them, like `--area` and `--type`; tickets show their tags as `#tag` in `list` and on board cards, so a theme is visible without filtering.
+- **2026-10-05** · decision · The skill never invents a tag: a new theme is proposed to the user, who adds it to `safanoria.yaml`. Interactive `new` offers tags only inside the optional questions, since most tickets have none.

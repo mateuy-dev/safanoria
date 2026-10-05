@@ -50,6 +50,18 @@ class NewTicketTest {
     }
 
     @Test
+    fun tagsMustBeDeclared() {
+        val (fs, repo) = repo(components = "  app:\n    external: true\ntags:\n  registry: Official registry integration\n")
+        val r = assertIs<NewTicketResult.Ready>(NewTicket.prepare(repo, NewTicketRequest("Send movements", tags = listOf("registry", "registry")), today))
+        assertTrue("size: S\ntags: [registry]\ncreated:" in r.files.single().text, r.files.single().text)
+        write(fs, r)
+        assertEquals(emptyList(), Validator(Repository(root, fs)).validate(r.files.map { it.path }).map { it.toString() })
+
+        val refused = assertIs<NewTicketResult.Refused>(NewTicket.prepare(repo, NewTicketRequest("Other", tags = listOf("official-registry")), today))
+        assertTrue("'official-registry' is not a tag" in refused.reason && "registry" in refused.reason, refused.reason)
+    }
+
+    @Test
     fun childIsAddedToTheParentPlan() {
         val (fs, repo) = repo()
         val r = assertIs<NewTicketResult.Ready>(NewTicket.prepare(repo, NewTicketRequest("Map input", parent = "herd-locations"), today))

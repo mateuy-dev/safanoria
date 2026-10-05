@@ -41,6 +41,10 @@ class BoardViewModel(private val store: TicketStore) : ViewModel() {
         filter.update { it.copy(areas = it.areas.toggled(area)) }
     }
 
+    fun toggleTag(tag: String) {
+        filter.update { it.copy(tags = it.tags.toggled(tag)) }
+    }
+
     /** Only tickets with a `blockedBy` that isn't done. */
     fun toggleBlocked() {
         filter.update { it.copy(blocked = !it.blocked) }
@@ -87,6 +91,7 @@ internal fun boardViewState(
         shownCount = shown.size,
         filter = filter,
         areas = graph.tickets.flatMap { t -> t.frontmatter?.area.orEmpty().map { it.value } }.distinct().sorted(),
+        tags = graph.tickets.flatMap { t -> t.frontmatter?.tags.orEmpty().map { it.value } }.distinct().sorted(),
         projectProblems = snapshot.projectDiagnostics.map { it.toString() },
         loading = snapshot.loading,
         error = snapshot.error,
@@ -102,6 +107,7 @@ private fun card(graph: TicketGraph, ticket: Ticket, diagnostics: List<Diagnosti
         priority = f?.priority,
         size = f?.size,
         parentId = f?.parent?.value,
+        tags = f?.tags.orEmpty().map { it.value },
         progress = graph.progress(ticket)?.takeIf { graph.children(ticket).isNotEmpty() },
         openBlockers = graph.openBlockers(ticket),
         onlyOnBranch = ticket.branch?.takeIf { ticket.onlyOnBranch },

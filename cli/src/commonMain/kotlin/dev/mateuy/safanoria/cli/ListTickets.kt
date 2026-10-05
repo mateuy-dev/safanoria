@@ -30,6 +30,7 @@ class ListTickets : AcrossBranchesCommand(name = "list") {
     private val status by option("--status", help = "Statuses, e.g. in-progress,review").choice(Status.entries.associateBy { it.text }).split(",")
     private val type by option("--type", help = "Types, e.g. bug,feature").choice(TicketType.entries.associateBy { it.text }).split(",")
     private val area by option("--area", help = "Components").split(",")
+    private val tag by option("--tag", help = "Tags (themes declared in safanoria.yaml)").split(",")
     private val parent by option("--parent", help = "Only children of this ticket")
     private val blocked by option("--blocked", help = "Only tickets blocked by a ticket that is not done").flag()
     private val format by option("--format", help = "Output format").choice("text", "json").default("text")
@@ -39,6 +40,7 @@ class ListTickets : AcrossBranchesCommand(name = "list") {
             statuses = status.orEmpty().toSet(),
             types = type.orEmpty().toSet(),
             areas = area.orEmpty().toSet(),
+            tags = tag.orEmpty().toSet(),
             parent = parent,
             blocked = blocked,
         )
@@ -57,7 +59,7 @@ class ListTickets : AcrossBranchesCommand(name = "list") {
         return rows.map { (cols, rest) -> cols.mapIndexed { i, c -> c.padEnd(widths[i]) }.joinToString("  ") + "  " + rest }
     }
 
-    private fun markers(graph: TicketGraph, t: Ticket): List<String> = listOfNotNull(
+    private fun markers(graph: TicketGraph, t: Ticket): List<String> = t.frontmatter?.tags.orEmpty().map { "#${it.value}" } + listOfNotNull(
         graph.progress(t)?.takeIf { graph.children(t).isNotEmpty() }?.let { "[${it.done}/${it.total}]" },
         t.frontmatter?.parent?.value?.let { "parent $it" },
         graph.openBlockers(t).takeIf { it.isNotEmpty() }?.let { "blocked by ${it.joinToString(", ")}" },
@@ -85,6 +87,7 @@ class ListTickets : AcrossBranchesCommand(name = "list") {
         put("updated", str(f?.updated?.value))
         put("assignee", str(f?.assignee?.value))
         put("area", ids(f?.area.orEmpty().map { it.value }))
+        put("tags", ids(f?.tags.orEmpty().map { it.value }))
         put("parent", str(f?.parent?.value))
         put("childrenMergeInto", str(f?.childrenMergeInto))
         put("blockedBy", ids(f?.blockedBy.orEmpty().map { it.value }))

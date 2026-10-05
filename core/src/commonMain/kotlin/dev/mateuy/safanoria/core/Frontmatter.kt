@@ -51,6 +51,7 @@ public class Frontmatter internal constructor(internal val block: YamlBlock) {
     public val parent: Located<String>? get() = scalar("parent")
     public val childrenMergeInto: String? get() = scalar("childrenMergeInto")?.value
     public val area: List<Located<String>> get() = idList("area")
+    public val tags: List<Located<String>> get() = idList("tags")
     public val blockedBy: List<Located<String>> get() = idList("blockedBy")
     public val related: List<Located<String>> get() = idList("related")
 

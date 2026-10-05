@@ -16,6 +16,8 @@ data class BoardViewState(
     val filter: TicketFilter = TicketFilter(),
     /** The areas tickets have, to filter by. */
     val areas: List<String> = emptyList(),
+    /** The tags tickets have, to filter by. */
+    val tags: List<String> = emptyList(),
     /** Problems outside tickets (`safanoria.yaml`, attachments), as `validate` prints them. */
     val projectProblems: List<String> = emptyList(),
     val loading: Boolean = true,
@@ -35,6 +37,7 @@ data class TicketCard(
     val priority: Priority?,
     val size: Size?,
     val parentId: String?,
+    val tags: List<String> = emptyList(),
     /** Checked Plan items out of all; null when the Plan has no items. */
     val progress: Progress?,
     /** `blockedBy` ids that are not done. */
