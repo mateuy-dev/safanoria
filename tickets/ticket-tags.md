@@ -2,7 +2,7 @@
 id: ticket-tags
 type: feature
 title: Tags to group tickets by theme
-status: backlog
+status: in-progress
 priority: medium
 size: M
 created: 2026-10-05
@@ -33,3 +33,4 @@ Touches SPEC.md (§2, §5, §12, and §13 for how the spec version is affected),
 
 ## Work Log
 
+- **2026-10-05** · status · started
