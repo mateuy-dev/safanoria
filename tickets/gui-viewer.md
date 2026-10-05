@@ -2,7 +2,7 @@
 id: gui-viewer
 type: feature
 title: Compose Desktop app to view tickets
-status: review
+status: done
 priority: low
 size: L
 created: 2026-10-01
@@ -100,3 +100,4 @@ Out of scope for v1 (see `v1-tooling`).
   `gui/`. The app uses `safanoria-icon-small.svg`, drawn for small sizes; the detailed
   `safanoria-icon.svg` is for large ones (an installer, later).
 - **2026-10-05** · status · review
+- **2026-10-05** · status · done
