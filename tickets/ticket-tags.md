@@ -2,7 +2,7 @@
 id: ticket-tags
 type: feature
 title: Tags to group tickets by theme
-status: review
+status: done
 priority: medium
 size: M
 created: 2026-10-05
@@ -39,3 +39,4 @@ Touches SPEC.md (§2, §5, §12, and §13 for how the spec version is affected),
 - **2026-10-05** · decision · A tag filter with several values matches any of them, like `--area` and `--type`; tickets show their tags as `#tag` in `list` and on board cards, so a theme is visible without filtering.
 - **2026-10-05** · decision · The skill never invents a tag: a new theme is proposed to the user, who adds it to `safanoria.yaml`. Interactive `new` offers tags only inside the optional questions, since most tickets have none.
 - **2026-10-05** · status · review
+- **2026-10-05** · status · done
