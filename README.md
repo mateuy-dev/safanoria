@@ -171,6 +171,31 @@ committed one only changes when tickets do. For example:
 - [delete-birth-crash](tickets/delete-birth-crash.md) Deleting a birth crashes (bug, urgent)
 ```
 
+### The desktop app
+
+A desktop app shows the same tickets as a board you can click through. It runs on the JVM
+(Java 21) from a checkout of this repository; there is no installer yet:
+
+```sh
+./gradlew :gui:run --args=/path/to/project   # a directory in the project; default: where gradle runs
+```
+
+- **Board**: a column per status, left to right as a ticket moves (Backlog, Ready, In progress,
+  Review, Done, Won't fix). Every ticket is a card, children too, read from every local branch
+  as `list` does. Done and Won't fix start collapsed: click a column's header to collapse or
+  open it. Chips filter by type, area and blocked. A card shows its parent, a parent's
+  `done/total` Plan items, open blockers, and how many problems `validate` finds in it.
+- **Ticket**: the body as rendered markdown, its fields, links to its parent, children and
+  blockers, and its `validate` problems. Problems are those of this checkout's files, so a
+  ticket shown from another branch shows none.
+- **Actions**, in the bar under the ticket (Start and Finish ask first): **Start** on a backlog or ready ticket does what
+  `safanoria start` does, then opens a terminal in the new worktree; **Open terminal** on a
+  ticket in progress or in review opens one where its branch is checked out; **Finish** on a
+  ticket in progress sets it to `review`, as `safanoria finish` does. On Linux the terminal is
+  `$TERMINAL`, else the first usual one found on the `PATH`.
+
+The app reads the tickets again when its window gets the focus back, and on Refresh.
+
 ## Working on a ticket
 
 ```sh
@@ -314,18 +339,20 @@ Elsewhere, install with `install.sh` and run `safanoria validate`.
 
 ## Planned
 
-- `apps/`: viewers and editors.
+- The desktop app (`gui/`): an installer, editing tickets, marking them done.
 
 ## Development
 
 The CLI is Kotlin Multiplatform: `core/` holds all logic (config, parser, schema checks,
-targeted edits, git) and is shared with future apps; `cli/` is the `safanoria` command, built
-as a native binary for Linux (x64), Windows (x64) and macOS (arm64).
+targeted edits, git) and is shared with the apps; `cli/` is the `safanoria` command, built
+as a native binary for Linux (x64), Windows (x64) and macOS (arm64); `gui/` is the desktop app
+(Compose Desktop, JVM only).
 
 ```sh
 make install                                        # build for this OS, copy to ~/.local/bin/safanoria (PREFIX=… to change)
 safanoria hook install                              # validate this repository's tickets before each commit
 ./gradlew allTests                                  # JVM tests + native tests for this OS
+./gradlew :gui:run --args="$PWD"                    # the desktop app, on this repository
 ./gradlew :cli:linkReleaseExecutableLinuxX64        # or …MingwX64, …MacosArm64 (on that OS)
 cli/build/bin/linuxX64/releaseExecutable/safanoria.kexe version
 python3 tools/bench.py cli/build/bin/linuxX64/releaseExecutable/safanoria.kexe   # startup times

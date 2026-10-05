@@ -14,10 +14,16 @@ public sealed interface FinishResult {
     public data class Refused(val reason: String) : FinishResult
 }
 
+/** Why [Finish.perform] didn't finish the ticket; [problems] when the changed tickets wouldn't validate. */
+public class FinishException(message: String, public val problems: List<Diagnostic> = emptyList()) : Exception(message)
+
+/** A commit [Finish.perform] made. */
+public data class FinishCommit(val branch: String, val commit: String, val message: String)
+
 /**
  * Finish (SPEC §11.4): `review` when the work is complete, `done` once merged into its target.
- * [prepare] only checks and decides where each copy is; the caller applies [edit] and
- * [checkInParent] there and commits.
+ * [prepare] only checks and decides where each copy is; [perform] applies [edit] and
+ * [checkInParent] there and commits. The CLI and apps share these.
  */
 public object Finish {
     public fun prepare(branches: Branches, id: String, status: Status): FinishResult {
@@ -36,6 +42,38 @@ public object Finish {
         }
         val parent = if (status == Status.DONE) branches.graph.parent(ticket)?.takeIf { p -> p.body.checklist("Plan").any { it.childId == id && !it.checked } } else null
         return FinishResult.Ready(id, status, branch, parent, parent?.branch)
+    }
+
+    /**
+     * Sets the status on the ticket's real copy and, for `done`, checks it in its parent's Plan.
+     * Commits only those files: in the worktree that has the branch checked out, else on the
+     * branch without checking it out. One commit per branch (the parent usually shares the
+     * child's, as children merge into it), each reported to [committed] as it is made.
+     */
+    public fun perform(repository: Repository, ready: FinishResult.Ready, today: String, committed: (FinishCommit) -> Unit = {}) {
+        val id = ready.id
+        val edits = linkedMapOf<String, MutableList<Pair<String, (String, okio.Path) -> String>>>()
+        edits.getOrPut(ready.branch) { mutableListOf() } += id to { text, _ -> edit(text, ready.status, today) }
+        val parent = ready.parent
+        val parentBranch = ready.parentBranch
+        if (parent != null && parentBranch != null) {
+            edits.getOrPut(parentBranch) { mutableListOf() } += parent.fileId to { text, path -> checkInParent(text, path, id, today) }
+        }
+        for ((branch, changes) in edits) committed(commit(repository, branch, changes, "$id: ${ready.status.text}"))
+    }
+
+    private fun commit(repository: Repository, branch: String, changes: List<Pair<String, (String, okio.Path) -> String>>, message: String): FinishCommit {
+        val view = BranchView.open(repository, branch) ?: throw FinishException("can't read the branch '$branch'.")
+        val files = changes.map { (ticketId, change) ->
+            val ticket = view.repository.ticket(ticketId) ?: throw FinishException("no ticket '$ticketId' on '$branch'.")
+            val text = try { change(ticket.text, ticket.path) } catch (e: TicketEditException) {
+                throw FinishException(e.message ?: e.toString())
+            }
+            PlannedFile(ticket.path, text, isNew = false)
+        }
+        val problems = Validator(view.withFiles(files)).validate(files.map { it.path })
+        if (problems.isNotEmpty()) throw FinishException("the finished ticket wouldn't be valid", problems)
+        return FinishCommit(branch, view.commit(files, message), message)
     }
 
     /** [text] with [status], `updated` and the Work Log entry. */
