@@ -2,6 +2,8 @@ package dev.mateuy.safanoria.gui.board
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,12 +24,14 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -42,32 +47,52 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.mateuy.safanoria.core.Priority
 import dev.mateuy.safanoria.core.Status
+import dev.mateuy.safanoria.core.TicketFilter
 import dev.mateuy.safanoria.core.TicketType
 import dev.mateuy.safanoria.core.text
+import dev.mateuy.safanoria.gui.theme.WarningColor
 import dev.mateuy.safanoria.gui.theme.color
 import dev.mateuy.safanoria.gui.theme.label
 
 @Composable
 fun BoardScreen(viewModel: BoardViewModel, onOpenTicket: (String) -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    BoardContent(state, onRefresh = viewModel::refresh, onToggleColumn = viewModel::toggleColumn, onOpenTicket = onOpenTicket)
+    BoardContent(
+        state,
+        actions = BoardActions(
+            refresh = viewModel::refresh,
+            toggleColumn = viewModel::toggleColumn,
+            toggleType = viewModel::toggleType,
+            toggleArea = viewModel::toggleArea,
+            toggleBlocked = viewModel::toggleBlocked,
+            clearFilter = viewModel::clearFilter,
+            openTicket = onOpenTicket,
+        ),
+    )
 }
+
+/** What the user can do on the board. */
+class BoardActions(
+    val refresh: () -> Unit,
+    val toggleColumn: (Status?) -> Unit,
+    val toggleType: (TicketType) -> Unit,
+    val toggleArea: (String) -> Unit,
+    val toggleBlocked: () -> Unit,
+    val clearFilter: () -> Unit,
+    val openTicket: (String) -> Unit,
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BoardContent(
-    state: BoardViewState,
-    onRefresh: () -> Unit,
-    onToggleColumn: (Status?) -> Unit,
-    onOpenTicket: (String) -> Unit,
-) {
+fun BoardContent(state: BoardViewState, actions: BoardActions) {
+    val filtered = state.filter != TicketFilter()
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Board · ${state.ticketCount} tickets") },
+                title = { Text("Board · " + (if (filtered) "${state.shownCount} of " else "") + "${state.ticketCount} tickets") },
                 actions = {
                     if (state.loading) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                    TextButton(onClick = onRefresh, enabled = !state.loading) { Text("Refresh") }
+                    TextButton(onClick = actions.refresh, enabled = !state.loading) { Text("Refresh") }
                 },
             )
         },
@@ -76,19 +101,49 @@ fun BoardContent(
             state.error?.let {
                 Text(it, Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error)
             }
+            state.projectProblems.forEach {
+                Text(it, Modifier.padding(horizontal = 16.dp, vertical = 2.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
+            FilterBar(state, filtered, actions)
             Row(
                 Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 // Open columns share the width; collapsed ones are a strip.
                 state.columns.forEach { column ->
-                    val onToggle = { onToggleColumn(column.status) }
+                    val onToggle = { actions.toggleColumn(column.status) }
                     if (column.collapsed) CollapsedColumnView(column, onToggle)
-                    else BoardColumnView(column, onToggle, onOpenTicket, Modifier.weight(1f))
+                    else BoardColumnView(column, onToggle, actions.openTicket, Modifier.weight(1f))
                 }
             }
         }
     }
+}
+
+/** Chips to narrow the board: by type, by area (when tickets have areas) and to blocked tickets. */
+@Composable
+private fun FilterBar(state: BoardViewState, filtered: Boolean, actions: BoardActions) {
+    Row(
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        TicketType.entries.forEach { type ->
+            FilterChip(selected = type in state.filter.types, onClick = { actions.toggleType(type) }, label = { Text(type.text) })
+        }
+        if (state.areas.isNotEmpty()) FilterGap()
+        state.areas.forEach { area ->
+            FilterChip(selected = area in state.filter.areas, onClick = { actions.toggleArea(area) }, label = { Text(area) })
+        }
+        FilterGap()
+        FilterChip(selected = state.filter.blocked, onClick = actions.toggleBlocked, label = { Text("blocked") })
+        if (filtered) TextButton(onClick = actions.clearFilter) { Text("Clear") }
+    }
+}
+
+@Composable
+private fun FilterGap() {
+    VerticalDivider(Modifier.height(24.dp).padding(horizontal = 4.dp))
 }
 
 @Composable
@@ -202,6 +257,17 @@ private fun TicketCardView(card: TicketCard, onClick: () -> Unit) {
                     facts.joinToString(" · "),
                     style = MaterialTheme.typography.labelSmall,
                     color = card.priority?.takeIf { it >= Priority.HIGH }?.color ?: MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (card.errors + card.warnings > 0) {
+                val counts = listOfNotNull(
+                    card.errors.takeIf { it > 0 }?.let { "$it error${if (it == 1) "" else "s"}" },
+                    card.warnings.takeIf { it > 0 }?.let { "$it warning${if (it == 1) "" else "s"}" },
+                )
+                Text(
+                    "⚠ " + counts.joinToString(", "),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (card.errors > 0) MaterialTheme.colorScheme.error else WarningColor,
                 )
             }
             if (card.openBlockers.isNotEmpty()) {

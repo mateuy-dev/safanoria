@@ -47,3 +47,6 @@ val Priority.color: Color
         Priority.MEDIUM -> Color(0xFF8A8F98)
         Priority.LOW, Priority.VERY_LOW -> Color(0xFFB4B8BF)
     }
+
+/** `validate` warnings; errors use the theme's error color. */
+val WarningColor = Color(0xFFB7791F)

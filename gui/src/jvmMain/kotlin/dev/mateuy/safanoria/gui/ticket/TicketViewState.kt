@@ -18,7 +18,12 @@ data class TicketViewState(
     val blocks: List<TicketLink> = emptyList(),
     /** The markdown after the frontmatter. */
     val body: String = "",
+    /** `validate` problems in the ticket, in file order. */
+    val problems: List<TicketProblem> = emptyList(),
 )
+
+/** A `validate` problem: its [code] is stable (SPEC §12), [line] is in the ticket file. */
+data class TicketProblem(val line: Int?, val code: String, val message: String, val error: Boolean)
 
 /** Another ticket, to navigate to. [status] is null when the ticket is missing or unreadable. */
 data class TicketLink(val id: String, val title: String?, val status: Status?)

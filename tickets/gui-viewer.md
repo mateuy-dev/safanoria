@@ -42,3 +42,14 @@ Out of scope for v1 (see `v1-tooling`).
   (mikepenz, 0.45.0) rather than our own renderer: tickets use tables, code and task lists.
   Known defect: text in angle brackets inside inline code is dropped (`attachments/<id>/` shows
   as `attachments//`).
+- **2026-10-05** · decision · Board columns share the window's width and Done and Won't fix start
+  collapsed (asked by the user): closed work is most of the tickets. Which columns are collapsed
+  and the filter are ViewModel state, so they last while the board is on the back stack, not
+  across runs.
+- **2026-10-05** · decision · Filters reuse core's `TicketFilter` (type, area, blocked); area
+  chips come from the areas tickets have, so a project without areas shows none.
+- **2026-10-05** · decision · Problems come from `Validator`, which checks this checkout's files,
+  while the board shows each ticket's real copy, maybe from another branch. A problem is shown
+  on a ticket only when the copy shown is the checkout's; for other tickets it is dropped rather
+  than shown against text it wasn't found in. So a ticket read from another branch shows no
+  problems, even if its own copy has some.

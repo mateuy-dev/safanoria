@@ -2,9 +2,13 @@ package dev.mateuy.safanoria.gui.board
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.mateuy.safanoria.core.Diagnostic
+import dev.mateuy.safanoria.core.Severity
 import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.core.Ticket
+import dev.mateuy.safanoria.core.TicketFilter
 import dev.mateuy.safanoria.core.TicketGraph
+import dev.mateuy.safanoria.core.TicketType
 import dev.mateuy.safanoria.gui.data.TicketStore
 import dev.mateuy.safanoria.gui.data.TicketsSnapshot
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +23,9 @@ class BoardViewModel(private val store: TicketStore) : ViewModel() {
     /** Closed work is collapsed until asked for: it is most of the tickets and rarely what is looked for. */
     private val collapsed = MutableStateFlow<Set<Status?>>(setOf(Status.DONE, Status.WONTFIX))
 
-    val state: StateFlow<BoardViewState> = combine(store.snapshot, collapsed, ::boardViewState)
+    private val filter = MutableStateFlow(TicketFilter())
+
+    val state: StateFlow<BoardViewState> = combine(store.snapshot, collapsed, filter, ::boardViewState)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BoardViewState())
 
     /** Collapses the column of [status], or expands it when collapsed. */
@@ -27,23 +33,60 @@ class BoardViewModel(private val store: TicketStore) : ViewModel() {
         collapsed.update { if (status in it) it - status else it + status }
     }
 
+    fun toggleType(type: TicketType) {
+        filter.update { it.copy(types = it.types.toggled(type)) }
+    }
+
+    fun toggleArea(area: String) {
+        filter.update { it.copy(areas = it.areas.toggled(area)) }
+    }
+
+    /** Only tickets with a `blockedBy` that isn't done. */
+    fun toggleBlocked() {
+        filter.update { it.copy(blocked = !it.blocked) }
+    }
+
+    fun clearFilter() {
+        filter.value = TicketFilter()
+    }
+
+    private fun <T> Set<T>.toggled(value: T) = if (value in this) this - value else this + value
+
     fun refresh() {
         viewModelScope.launch { store.refresh() }
     }
 }
 
-/** Every ticket as a card in its status column; every status has a column, even when empty. */
-internal fun boardViewState(snapshot: TicketsSnapshot, collapsed: Set<Status?> = emptySet()): BoardViewState {
-    val graph = snapshot.graph ?: return BoardViewState(loading = snapshot.loading || snapshot.error == null, error = snapshot.error)
-    val byStatus = graph.tickets.groupBy { it.frontmatter?.status }
+/**
+ * Every ticket that passes [filter] as a card in its status column; every status has a column,
+ * even when empty.
+ */
+internal fun boardViewState(
+    snapshot: TicketsSnapshot,
+    collapsed: Set<Status?> = emptySet(),
+    filter: TicketFilter = TicketFilter(),
+): BoardViewState {
+    val graph = snapshot.graph ?: return BoardViewState(loading = snapshot.loading || snapshot.error == null, error = snapshot.error, filter = filter)
+    val shown = graph.tickets.filter { filter.matches(graph, it) }
+    val byStatus = shown.groupBy { it.frontmatter?.status }
+    fun card(ticket: Ticket) = card(graph, ticket, snapshot.diagnostics[ticket.fileId].orEmpty())
     // The column for unreadable statuses only exists when there are such tickets.
     val columns = (TicketGraph.STATUS_ORDER + listOf(null))
         .filter { it != null || null in byStatus }
-        .map { status -> BoardColumn(status, byStatus[status].orEmpty().map { card(graph, it) }, status in collapsed) }
-    return BoardViewState(columns, graph.tickets.size, snapshot.loading, snapshot.error)
+        .map { status -> BoardColumn(status, byStatus[status].orEmpty().map(::card), status in collapsed) }
+    return BoardViewState(
+        columns = columns,
+        ticketCount = graph.tickets.size,
+        shownCount = shown.size,
+        filter = filter,
+        areas = graph.tickets.flatMap { t -> t.frontmatter?.area.orEmpty().map { it.value } }.distinct().sorted(),
+        projectProblems = snapshot.projectDiagnostics.map { it.toString() },
+        loading = snapshot.loading,
+        error = snapshot.error,
+    )
 }
 
-private fun card(graph: TicketGraph, ticket: Ticket): TicketCard {
+private fun card(graph: TicketGraph, ticket: Ticket, diagnostics: List<Diagnostic>): TicketCard {
     val f = ticket.frontmatter
     return TicketCard(
         id = ticket.fileId,
@@ -55,5 +98,7 @@ private fun card(graph: TicketGraph, ticket: Ticket): TicketCard {
         progress = graph.progress(ticket)?.takeIf { graph.children(ticket).isNotEmpty() },
         openBlockers = graph.openBlockers(ticket),
         onlyOnBranch = ticket.branch?.takeIf { ticket.onlyOnBranch },
+        errors = diagnostics.count { it.severity == Severity.ERROR },
+        warnings = diagnostics.count { it.severity == Severity.WARNING },
     )
 }

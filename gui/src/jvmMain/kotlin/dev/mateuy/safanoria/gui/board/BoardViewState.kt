@@ -4,12 +4,20 @@ import dev.mateuy.safanoria.core.Priority
 import dev.mateuy.safanoria.core.Progress
 import dev.mateuy.safanoria.core.Size
 import dev.mateuy.safanoria.core.Status
+import dev.mateuy.safanoria.core.TicketFilter
 import dev.mateuy.safanoria.core.TicketType
 
 /** What the board screen shows. */
 data class BoardViewState(
     val columns: List<BoardColumn> = emptyList(),
+    /** Tickets in the project, and how many of them pass [filter]. */
     val ticketCount: Int = 0,
+    val shownCount: Int = 0,
+    val filter: TicketFilter = TicketFilter(),
+    /** The areas tickets have, to filter by. */
+    val areas: List<String> = emptyList(),
+    /** Problems outside tickets (`safanoria.yaml`, attachments), as `validate` prints them. */
+    val projectProblems: List<String> = emptyList(),
     val loading: Boolean = true,
     val error: String? = null,
 )
@@ -33,4 +41,7 @@ data class TicketCard(
     val openBlockers: List<String>,
     /** The branch, when the ticket exists only there. */
     val onlyOnBranch: String?,
+    /** `validate` problems in the ticket. */
+    val errors: Int = 0,
+    val warnings: Int = 0,
 )

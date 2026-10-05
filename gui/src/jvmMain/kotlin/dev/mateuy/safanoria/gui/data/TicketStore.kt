@@ -1,8 +1,10 @@
 package dev.mateuy.safanoria.gui.data
 
 import dev.mateuy.safanoria.core.Branches
+import dev.mateuy.safanoria.core.Diagnostic
 import dev.mateuy.safanoria.core.Repository
 import dev.mateuy.safanoria.core.TicketGraph
+import dev.mateuy.safanoria.core.Validator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,6 +18,10 @@ import okio.Path
 /** The project's tickets as last read, and whether a read is running or failed. */
 data class TicketsSnapshot(
     val graph: TicketGraph? = null,
+    /** `validate`'s problems by ticket id, for the tickets shown as they are in this checkout. */
+    val diagnostics: Map<String, List<Diagnostic>> = emptyMap(),
+    /** Problems that belong to no shown ticket: `safanoria.yaml`, attachments. */
+    val projectDiagnostics: List<Diagnostic> = emptyList(),
     val loading: Boolean = false,
     val error: String? = null,
 )
@@ -39,17 +45,34 @@ class TicketStore(val root: Path) {
             runCatching {
                 // A Repository reads its files once, so a fresh one sees the current files.
                 val repository = Repository(root)
-                (Branches.read(repository)?.graph ?: repository.graph).also { graph ->
-                    // Parse now, off the UI thread: tickets parse lazily.
-                    graph.tickets.forEach { it.frontmatter; it.body }
-                }
+                val branches = Branches.read(repository)
+                val graph = branches?.graph ?: repository.graph
+                // Parse now, off the UI thread: tickets parse lazily.
+                graph.tickets.forEach { it.frontmatter; it.body }
+                snapshot(graph, Validator(repository, branches).validate(), repository.ticketDir, branches?.branches?.firstOrNull())
             }
         }
         state.update {
             result.fold(
-                onSuccess = { graph -> TicketsSnapshot(graph) },
+                onSuccess = { snapshot -> snapshot },
                 onFailure = { e -> it.copy(loading = false, error = e.message ?: e.toString()) },
             )
         }
     }
+}
+
+/**
+ * [graph] with [diagnostics] sorted out by ticket. `validate` checks this checkout's files
+ * ([checkoutBranch]), while the graph may show a ticket's copy from another branch: a problem is
+ * only attached to a ticket when the copy shown is the one checked, and dropped otherwise.
+ */
+internal fun snapshot(graph: TicketGraph, diagnostics: List<Diagnostic>, ticketDir: Path, checkoutBranch: String?): TicketsSnapshot {
+    fun ticketId(d: Diagnostic): String? = d.file?.takeIf { it.parent == ticketDir && it.name.endsWith(".md") }?.name?.removeSuffix(".md")
+    val (ofTickets, ofProject) = diagnostics.partition { d -> ticketId(d)?.let { graph.ticket(it) } != null }
+    val shownAsChecked = graph.tickets.filter { it.branch == null || it.branch == checkoutBranch }.map { it.fileId }.toSet()
+    return TicketsSnapshot(
+        graph = graph,
+        diagnostics = ofTickets.groupBy { ticketId(it)!! }.filterKeys { it in shownAsChecked },
+        projectDiagnostics = ofProject,
+    )
 }

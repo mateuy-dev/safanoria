@@ -2,6 +2,7 @@ package dev.mateuy.safanoria.gui.ticket
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.mateuy.safanoria.core.Severity
 import dev.mateuy.safanoria.core.Ticket
 import dev.mateuy.safanoria.core.TicketGraph
 import dev.mateuy.safanoria.core.text
@@ -44,6 +45,7 @@ internal fun ticketViewState(id: String, snapshot: TicketsSnapshot): TicketViewS
         blockedBy = f?.blockedBy.orEmpty().map { it.value }.distinct().map(::link),
         blocks = graph.blocks(ticket).map(::link),
         body = body(ticket),
+        problems = snapshot.diagnostics[id].orEmpty().map { TicketProblem(it.line, it.code, it.message, it.severity == Severity.ERROR) },
     )
 }
 

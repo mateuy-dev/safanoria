@@ -8,11 +8,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.MarkdownTypography
+import dev.mateuy.safanoria.gui.theme.WarningColor
 import dev.mateuy.safanoria.gui.theme.color
 import dev.mateuy.safanoria.gui.theme.label
 
@@ -65,11 +68,13 @@ fun TicketContent(state: TicketViewState, onOpenTicket: (String) -> Unit, onBack
         }
         Row(Modifier.padding(padding).fillMaxSize()) {
             SelectionContainer(Modifier.weight(1f).fillMaxHeight()) {
-                Markdown(
-                    state.body,
-                    modifier = Modifier.verticalScroll(rememberScrollState()).padding(24.dp),
-                    typography = ticketTypography(),
-                )
+                Column(
+                    Modifier.verticalScroll(rememberScrollState()).padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    Problems(state.problems)
+                    Markdown(state.body, typography = ticketTypography())
+                }
             }
             VerticalDivider()
             Column(
@@ -115,6 +120,31 @@ private fun ticketTypography(): MarkdownTypography {
         inlineCode = t.bodyMedium.copy(fontFamily = FontFamily.Monospace),
         table = t.bodySmall,
     )
+}
+
+/** What `safanoria validate` reports for the ticket. */
+@Composable
+private fun Problems(problems: List<TicketProblem>) {
+    if (problems.isEmpty()) return
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.errorContainer).padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        problems.forEach { p ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    (if (p.error) "error" else "warning") + (p.line?.let { " · line $it" } ?: ""),
+                    Modifier.width(130.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (p.error) MaterialTheme.colorScheme.error else WarningColor,
+                )
+                Column {
+                    Text(p.message, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer)
+                    Text(p.code, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onErrorContainer)
+                }
+            }
+        }
+    }
 }
 
 @Composable
