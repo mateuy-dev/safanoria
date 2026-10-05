@@ -99,7 +99,7 @@ and `safanoria.yaml`.
 | `type` | yes | enum | | `feature` \| `bug` \| `maintenance` \| `research` (§6.2) |
 | `title` | yes | string | | One line. |
 | `status` | yes | enum | | `backlog` \| `ready` \| `in-progress` \| `review` \| `done` \| `wontfix` (§6.1) |
-| `priority` | yes | enum | | `low` \| `medium` \| `high` \| `urgent` |
+| `priority` | yes | enum | | `very-low` \| `low` \| `medium` \| `high` \| `urgent` |
 | `size` | yes | enum | | `XS` \| `S` \| `M` \| `L` \| `XL`. For `research`, the time box. |
 | `area` | if >1 component | list of component | the only component | Components this ticket changes. |
 | `assignee` | no | string | null | Who works on it, when it is not the usual person. |

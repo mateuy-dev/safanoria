@@ -8,7 +8,7 @@ public data class Located<out T>(val value: T, val line: Int, val column: Int)
 
 public enum class TicketType { FEATURE, BUG, MAINTENANCE, RESEARCH }
 public enum class Status { BACKLOG, READY, IN_PROGRESS, REVIEW, DONE, WONTFIX }
-public enum class Priority { LOW, MEDIUM, HIGH, URGENT }
+public enum class Priority { VERY_LOW, LOW, MEDIUM, HIGH, URGENT }
 public enum class Size { XS, S, M, L, XL }
 
 /** `in-progress` → `IN_PROGRESS`; null for values outside the enum (the schema reports those). */

@@ -56,6 +56,14 @@ class FrontmatterTest {
     }
 
     @Test
+    fun veryLowPriority() {
+        val f = parse(ticket.replace("priority: high", "priority: very-low"))
+        assertEquals(Priority.VERY_LOW, f.priority)
+        assertEquals("very-low", f.priority!!.text)
+        assertEquals(emptyList(), f.schemaDiagnostics())
+    }
+
+    @Test
     fun schemaDiagnosticsUseFileLines() {
         val bad = ticket.replace("status: in-progress", "status: almost").replace("  - geo-search", "  - Geo")
         val diagnostics = parse(bad).schemaDiagnostics()
