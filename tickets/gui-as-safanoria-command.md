@@ -2,7 +2,7 @@
 id: gui-as-safanoria-command
 type: feature
 title: "safanoria opens the desktop app; the CLI becomes safanoria-cli"
-status: backlog
+status: in-progress
 priority: medium
 size: M
 created: 2026-10-05
@@ -21,3 +21,4 @@ The rename reaches everything that calls or names the CLI: the build and install
 
 ## Work Log
 
+- **2026-10-05** · status · started
