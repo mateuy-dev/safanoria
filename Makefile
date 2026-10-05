@@ -47,7 +47,7 @@ install-cli: build
 	@echo "installed $(BINDIR)/$(NAME): $$("$(BINDIR)/$(NAME)" version)"
 
 # The app with its Java runtime goes to APPDIR; BINDIR gets a launcher for it, as install.sh
-# does (it replaces the CLI of 0.2 and earlier, which had that name).
+# does, line for line (it replaces the CLI of 0.2 and earlier, which had that name).
 ifdef APP
 install-app: build-app
 	mkdir -p "$(BINDIR)" "$(APPDIR)"
@@ -56,8 +56,19 @@ install-app: build-app
 	rm -f "$(BINDIR)/safanoria"
 	printf '%s\n' '#!/bin/sh' \
 	  '# safanoria app launcher (make install): the desktop app, on the project of the working directory.' \
+	  'app="$(APPDIR)/$(APP_EXE)"' \
 	  '[ $$# -eq 0 ] && set -- "$$PWD"' \
-	  'exec "$(APPDIR)/$(APP_EXE)" "$$@"' > "$(BINDIR)/safanoria"
+	  '# Set in a terminal the app opened; with it the app would take its arguments as the JVM'"'"'s.' \
+	  'unset _JPACKAGE_LAUNCHER' \
+	  '# Opening a window (one directory): detached, so the prompt comes back and the window outlives' \
+	  '# the terminal. SAFANORIA_FOREGROUND=1 keeps it attached, to see its output. Anything else' \
+	  '# (--help, a command meant for safanoria-cli) prints here and returns its exit status.' \
+	  'if [ $$# -eq 1 ] && [ -d "$$1" ] && [ -z "$${SAFANORIA_FOREGROUND:-}" ]; then' \
+	  '  detach=nohup; command -v setsid >/dev/null 2>&1 && detach=setsid' \
+	  '  $$detach "$$app" "$$@" </dev/null >/dev/null 2>&1 &' \
+	  '  exit 0' \
+	  'fi' \
+	  'exec "$$app" "$$@"' > "$(BINDIR)/safanoria"
 	chmod 755 "$(BINDIR)/safanoria"
 	@echo "installed $(BINDIR)/safanoria: $$("$(BINDIR)/safanoria" --version)"
 else
