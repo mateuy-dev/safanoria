@@ -8,6 +8,8 @@ size: S
 created: 2026-10-05
 updated: 2026-10-05
 related: [gui-as-safanoria-command]
+resolvedIn:
+  safanoria: 0.2.0
 ---
 
 ## Objective
@@ -47,3 +49,4 @@ Out of scope: a desktop entry (`.desktop` file, starting from the application me
 - **2026-10-05** · decision · Verified on Linux with the `make install` launcher (same text as `install.sh`'s): prompt back at once, the app survives the hangup of its terminal with `setsid` and with `nohup`, and dies when attached. Not run: macOS, and `install.ps1` (no Windows here); its launcher is written but untried.
 - **2026-10-05** · status · review
 - **2026-10-05** · status · done
+- **2026-10-05** · release · safanoria 0.2.0

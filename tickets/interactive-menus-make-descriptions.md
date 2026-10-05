@@ -7,6 +7,8 @@ priority: medium
 size: S
 created: 2026-10-05
 updated: 2026-10-05
+resolvedIn:
+  safanoria: 0.2.0
 ---
 
 ## Objective
@@ -24,3 +26,4 @@ Make the descriptions visually secondary (e.g. dim/gray, via the list's descript
 - **2026-10-05** · decision · Mordant 3.0.2 has no description style, so the description is part of the entry title (`choiceLines`), styled with `dim`: it keeps the terminal's own foreground, so it reads on light and dark themes. Descriptions that don't fit the terminal width are cut with `…` rather than wrapped, to keep one line per entry. Cursor (`❯` + green label) and title (bold, unindented) were already distinct, also without colour; left as they are.
 - **2026-10-05** · status · review
 - **2026-10-05** · status · done
+- **2026-10-05** · release · safanoria 0.2.0

@@ -7,6 +7,8 @@ priority: low
 size: L
 created: 2026-10-01
 updated: 2026-10-05
+resolvedIn:
+  safanoria: 0.2.0
 ---
 
 ## Objective
@@ -101,3 +103,4 @@ Out of scope for v1 (see `v1-tooling`).
   `safanoria-icon.svg` is for large ones (an installer, later).
 - **2026-10-05** · status · review
 - **2026-10-05** · status · done
+- **2026-10-05** · release · safanoria 0.2.0

@@ -7,6 +7,8 @@ priority: medium
 size: M
 created: 2026-10-05
 updated: 2026-10-05
+resolvedIn:
+  safanoria: 0.2.0
 ---
 
 ## Objective
@@ -34,3 +36,4 @@ The rename reaches everything that calls or names the CLI: the build and install
 - **2026-10-05** · decision · Not tried on a machine: the macOS and Windows packages and `install.ps1` (only Linux here). The `release` workflow's install test covers them when this branch is pushed.
 - **2026-10-05** · status · review
 - **2026-10-05** · status · done
+- **2026-10-05** · release · safanoria 0.2.0

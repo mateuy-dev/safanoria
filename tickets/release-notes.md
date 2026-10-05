@@ -8,6 +8,8 @@ size: S
 created: 2026-10-02
 updated: 2026-10-05
 related: [notes-text-directly]
+resolvedIn:
+  safanoria: 0.2.0
 ---
 
 ## Objective
@@ -34,3 +36,4 @@ The tickets to include can be found with `resolvedIn.<component>` (SPEC §9).
 - **2026-10-05** · decision · The range ends need not be stamped versions (a user may come from a version that shipped no ticket); an empty result exits 0 and lists the stamped versions on stderr.
 - **2026-10-05** · status · review
 - **2026-10-05** · status · done
+- **2026-10-05** · release · safanoria 0.2.0

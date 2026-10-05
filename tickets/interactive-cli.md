@@ -8,6 +8,8 @@ size: S
 created: 2026-10-02
 updated: 2026-10-05
 related: [cli-all-actions]
+resolvedIn:
+  safanoria: 0.2.0
 ---
 
 ## Objective
@@ -46,3 +48,4 @@ Scripts and agents must keep working: the non-interactive behaviour stays the de
 - **2026-10-05** · decision · `init` and `update` moved onto `Prompts` after all, so every command asks the same way: they checked only stdin, took end of input as "no", and couldn't be scripted in tests. `init` now offers file or external as a list instead of a typed 'external'.
 - **2026-10-05** · status · review
 - **2026-10-05** · status · done
+- **2026-10-05** · release · safanoria 0.2.0

@@ -6,8 +6,10 @@ status: done
 priority: high
 size: M
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-10-05
 related: [v1-tooling]
+resolvedIn:
+  safanoria: 0.2.0
 ---
 
 ## Objective
@@ -209,3 +211,4 @@ together" (§11.4).
   repository, `list` from the main checkout shows this ticket as `in-progress`, read from its
   worktree; `validate` takes 45 ms.
 - **2026-10-02** · status · done: merged into main.
+- **2026-10-05** · release · safanoria 0.2.0

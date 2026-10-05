@@ -7,6 +7,8 @@ priority: medium
 size: S
 created: 2026-10-02
 updated: 2026-10-05
+resolvedIn:
+  safanoria: 0.2.0
 ---
 
 ## Objective
@@ -28,3 +30,4 @@ A child process can't change its parent shell's working directory, so this needs
 - **2026-10-05** · decision · The shell function is named `safanoria-start` (was `sstart`) and `start --help` prints it too, so it's found without the README. It is written over several lines: the help formatter re-wraps a long one-liner into something that doesn't parse.
 - **2026-10-05** · status · done
 - **2026-10-05** · decision · The function moved from `start --help` to the end of `safanoria --help`: that is where the user looked for it, and one place is enough. `start --help` no longer prints it.
+- **2026-10-05** · release · safanoria 0.2.0

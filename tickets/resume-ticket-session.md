@@ -6,8 +6,10 @@ status: done
 priority: high
 size: M
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-10-05
 related: [worktree-no-prompt, ticket-status-line]
+resolvedIn:
+  safanoria: 0.2.0
 ---
 
 ## Objective
@@ -136,4 +138,5 @@ log entry would only repeat it and could go stale (worktree moved or removed).
   branch's build validates every ticket. The learning about the hook running the installed CLI
   is in README's Development section.
 - **2026-10-02** · status · Done. The user confirmed it is merged into `main` (`8078d12`).
+- **2026-10-05** · release · safanoria 0.2.0
 

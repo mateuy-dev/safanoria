@@ -7,6 +7,8 @@ priority: medium
 size: S
 created: 2026-10-02
 updated: 2026-10-05
+resolvedIn:
+  safanoria: 0.2.0
 ---
 
 ## Objective
@@ -55,3 +57,4 @@ Priority is referenced in SPEC §5, the schema, `Frontmatter.kt` (enum), `Ticket
 Implemented as planned, no deviations. `./gradlew allTests` passes (JVM and linuxX64). No
 learnings beyond the ticket: the spec-version call is recorded in the Plan.
 - **2026-10-05** · status · done
+- **2026-10-05** · release · safanoria 0.2.0
