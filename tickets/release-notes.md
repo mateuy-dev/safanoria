@@ -7,6 +7,7 @@ priority: medium
 size: S
 created: 2026-10-02
 updated: 2026-10-05
+related: [notes-text-directly]
 ---
 
 ## Objective
