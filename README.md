@@ -59,7 +59,7 @@ it); `SAFANORIA_CLI_ONLY=1` installs only the CLI, for CI and servers. The Linux
 `libunistring.so.5` (Ubuntu 24.04+, Debian 13+: package `libunistring5`). From a checkout:
 `make install`.
 
-**Updating from 0.2 or earlier.** The command-line tool was `safanoria` then; that name now
+**Updating from 0.1.** The command-line tool was `safanoria` then; that name now
 opens the app. The install scripts replace the old binary. Hooks set up before still call the
 old name, so in each project (and each clone, for the git hook) run:
 
