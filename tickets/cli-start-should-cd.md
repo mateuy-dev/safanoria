@@ -2,7 +2,7 @@
 id: cli-start-should-cd
 type: feature
 title: CLI start should cd to the created worktree
-status: review
+status: done
 priority: medium
 size: S
 created: 2026-10-02
@@ -26,3 +26,4 @@ A child process can't change its parent shell's working directory, so this needs
 - **2026-10-03** · decision · `--print-path` flag plus a README shell function, rather than `init` installing a function into shell rc files (touching the user's dotfiles is out of `init`'s scope) or spawning a subshell (nests shells, not scriptable). Messages go to stderr so stdout is only the path; without a worktree it prints the checkout root, even when uncommitted changes kept it from switching. `--no-switch` with `--print-path` is a usage error (no directory to go to); `--dry-run` prints no path.
 - **2026-10-03** · status · review
 - **2026-10-05** · decision · The shell function is named `safanoria-start` (was `sstart`) and `start --help` prints it too, so it's found without the README. It is written over several lines: the help formatter re-wraps a long one-liner into something that doesn't parse.
+- **2026-10-05** · status · done
