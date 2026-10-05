@@ -35,6 +35,18 @@ class ScriptedPrompts(vararg answers: Any) : Prompts {
 }
 
 class PromptsTest {
+    @Test
+    fun choiceLinesPutDescriptionsInAColumnBesideTheLabels() {
+        val choices = listOf(Choice("new", description = "Create a ticket"), Choice("validate", description = "Check the tickets"), Choice("list"))
+        assertEquals(
+            listOf("new       <Create a ticket>", "validate  <Check the tickets>", "list"),
+            choiceLines(choices, 80) { "<$it>" },
+        )
+        // A description that doesn't fit is cut, not wrapped; with no room at all it is left out.
+        assertEquals(listOf("new       Creat…", "validate  Check…", "list"), choiceLines(choices, 16) { it })
+        assertEquals(listOf("new", "validate", "list"), choiceLines(choices, 10) { it })
+    }
+
     private fun run(repo: GitRepo, prompts: Prompts?, vararg args: String) =
         cli(prompts).test(listOf("--root", repo.root.toString()) + args.toList())
 
