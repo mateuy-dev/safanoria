@@ -45,7 +45,7 @@ class Init : CliktCommand(name = "init") {
         chosen.groupBy { it.name }.filterValues { it.size > 1 }.keys.firstOrNull()?.let { throw usage("component '$it' given twice") }
 
         val config = FileChange(root / CONFIG_FILE, Install.config(dir, chosen, mainBranch), FileAction.CREATE, managed = false)
-        applyChanges(root, listOf(config) + Install.plan(SystemFileSystem, root, dir), yes, dryRun)
+        applyChanges(root, listOf(config) + Install.plan(SystemFileSystem, root, dir), yes, dryRun, cli.prompts)
         if (dryRun) return
 
         val problems = Validator(Repository(root)).validate()
@@ -78,16 +78,24 @@ class Init : CliktCommand(name = "init") {
         return ComponentSpec(checkName(name, "--component"), VersionSource.Property(file, property))
     }
 
-    /** Asks on the terminal: names, then each one's version source. */
+    /** Asks for the names, then for each one where its version is. */
     private fun askComponents(): List<ComponentSpec> {
-        if (!interactive) throw usage("give the components with --component NAME=FILE:PROPERTY or --external NAME (no terminal to ask)")
+        val prompts = cli.prompts
+            ?: throw usage("give the components with --component NAME=FILE:PROPERTY or --external NAME (no terminal to ask)")
         echo("Components are the parts of the project released with their own version (e.g. app, server).")
-        val names = ask("Components, comma-separated", "app").orEmpty().split(',').map { it.trim() }.filter { it.isNotEmpty() }
+        val names = prompts.text("Components, comma-separated", "app").split(',').map { it.trim() }.filter { it.isNotEmpty() }
         if (names.isEmpty()) throw usage("at least one component is needed")
         return names.map { name ->
             checkName(name, "component")
-            val answer = ask("Where is $name's version? FILE:PROPERTY, or 'external' if released from another repository", "gradle.properties:version").orEmpty()
-            if (answer == "external") ComponentSpec(name, null) else parseComponent("$name=$answer")
+            val where = prompts.choose(
+                "Where is $name's version?",
+                listOf(
+                    Choice("file", "a file in this repository", "e.g. gradle.properties, property version"),
+                    Choice("external", "another repository", "an external component: the version is given when releasing"),
+                ),
+            )
+            if (where == "external") ComponentSpec(name, null)
+            else parseComponent("$name=${prompts.text("$name's version, as FILE:PROPERTY", "gradle.properties:version").trim()}")
         }
     }
 }

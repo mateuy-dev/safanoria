@@ -4,6 +4,7 @@ import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.PrintMessage
 import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import dev.mateuy.safanoria.core.BranchView
@@ -14,6 +15,7 @@ import dev.mateuy.safanoria.core.PlannedFile
 import dev.mateuy.safanoria.core.Repository
 import dev.mateuy.safanoria.core.Start
 import dev.mateuy.safanoria.core.StartResult
+import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.core.TicketEditException
 import dev.mateuy.safanoria.core.Validator
 import kotlinx.datetime.TimeZone
@@ -32,10 +34,12 @@ class StartCommand : RepositoryCommand(name = "start") {
             "else from mainBranch), set status: in-progress and log it in a commit on that branch, then add the " +
             "worktree when safanoria.yaml has one, else switch to the branch."
 
-    private val id by argument(help = "Ticket id")
+    private val idArgument by argument(name = "id", help = "Ticket id (on a terminal: asks, from the backlog and ready tickets)").optional()
     private val noSwitch by option("--no-switch", help = "Without a worktree setting: create the branch but don't switch this checkout to it").flag()
     private val dryRun by option("--dry-run", help = "Show what would be done, change nothing").flag()
     private val date by option("--date", hidden = true, help = "Today's date (tests)")
+
+    private lateinit var id: String
 
     override fun run() {
         val repo = repository
@@ -43,6 +47,7 @@ class StartCommand : RepositoryCommand(name = "start") {
         val branches = Branches.read(repo) ?: throw PrintMessage(
             "Not started: needs a git repository with the branch '${repo.config.mainBranch}' (mainBranch).", 1, true,
         )
+        id = idArgument ?: askTicket(branches, "Start which ticket?", setOf(Status.BACKLOG, Status.READY), "nothing to start: no backlog or ready ticket")
         val ready = when (val r = Start.prepare(repo, branches, id)) {
             is StartResult.Refused -> throw PrintMessage("Not started: ${r.reason}", 1, true)
             is StartResult.Ready -> r

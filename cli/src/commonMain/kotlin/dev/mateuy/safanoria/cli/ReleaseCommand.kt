@@ -3,6 +3,7 @@ package dev.mateuy.safanoria.cli
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.PrintMessage
 import com.github.ajalt.clikt.core.ProgramResult
+import com.github.ajalt.clikt.core.UsageError
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.flag
@@ -25,7 +26,7 @@ class ReleaseCommand : RepositoryCommand(name = "release") {
         "Stamp resolvedIn.<component> on every done ticket with the component in its area and no " +
             "version for it yet, and log it. Run on the main branch, as part of the release commit."
 
-    private val component by argument(help = "Component from safanoria.yaml")
+    private val componentArgument by argument(name = "component", help = "Component from safanoria.yaml (on a terminal: asks)").optional()
     private val version by argument(help = "MAJOR.MINOR.PATCH (default: read from the component's version source; required for external ones)").optional()
     private val tickets by option("--ticket", help = "Stamp only this ticket (repeatable): when done doesn't mean 'in this release', e.g. external components").multiple()
     private val dryRun by option("--dry-run", help = "Show what would be stamped, write nothing").flag()
@@ -35,6 +36,7 @@ class ReleaseCommand : RepositoryCommand(name = "release") {
     override fun run() {
         val repo = repository
         val today = date ?: Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+        val component = componentArgument ?: askComponent(repo)
         val ready = when (val r = Release.prepare(repo, ReleaseRequest(component, version, tickets.ifEmpty { null }), today)) {
             is ReleaseResult.Refused -> throw PrintMessage("Not stamped: ${r.reason}", 1, true)
             is ReleaseResult.Ready -> r
@@ -58,6 +60,13 @@ class ReleaseCommand : RepositoryCommand(name = "release") {
             problems.forEach { echo(it.copy(file = it.file?.let { p -> displayPath(p).toPath() }).toString(), err = true) }
             throw ProgramResult(1)
         }
+    }
+
+    private fun askComponent(repo: Repository): String {
+        val prompts = prompts ?: throw UsageError("missing argument <component>").apply { context = currentContext }
+        val names = repo.config.components.keys.toList()
+        // One component: nothing to choose.
+        return names.singleOrNull() ?: prompts.choose("Release which component?", names.map { Choice(it) })
     }
 
     /** §9: stamping reads mainBranch, so elsewhere it would stamp work that isn't released. */

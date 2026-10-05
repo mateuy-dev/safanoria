@@ -26,7 +26,7 @@ class Update : RepositoryCommand(name = "update") {
             else -> Install.installedVersion(SystemFileSystem.read(skill) { readUtf8() }) ?: "installed by hand"
         }
         val changes = Install.plan(SystemFileSystem, repo.root, repo.config.dir)
-        applyChanges(repo.root, changes, yes, dryRun)
+        applyChanges(repo.root, changes, yes, dryRun, prompts)
         val managedChanged = changes.any { it.managed && it.action != FileAction.SAME }
         echo(
             if (managedChanged) "skill and spec: $before → ${Embedded.VERSION}${if (dryRun) " (dry run)" else ""}"

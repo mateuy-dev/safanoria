@@ -94,6 +94,16 @@ any branch (ids are never reused), an unknown parent, and a parent that can't ha
 branch with the same name is a warning. The suggested id is short (filler words dropped, at
 most four words); it's the branch name.
 
+**On a terminal, the CLI asks** for what you leave out. `safanoria` alone asks which command to
+run. `new` without a title asks for the title, the type and the id (enter keeps the suggestion),
+optionally priority, size, parent and objective, and, on a branch other than `mainBranch`,
+whether the ticket goes on `mainBranch`; with a title it asks only for a missing `area`.
+`start`, `finish` and `release` without an id or component offer a list (backlog and ready
+tickets to start; in-progress ones to finish, or in review with `--done`). `init` asks for the
+components and where each one's version is, and `init` and `update` ask before changing a file
+of yours. Ctrl-C cancels without changing anything. When stdin or stdout isn't a terminal (scripts, agents, CI), nothing is asked:
+a missing value is an error, as before.
+
 **Which branch** (SPEC §14.2): a new top-level ticket belongs on `mainBranch`, even when you
 find the work while on another ticket's branch. On `main` the id is taken at once, the ticket
 survives if that branch is abandoned, and it can be prioritized on its own. `--on main` does

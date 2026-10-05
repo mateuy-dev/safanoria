@@ -4,6 +4,7 @@ import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.PrintMessage
 import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import dev.mateuy.safanoria.core.BranchView
@@ -31,10 +32,12 @@ class FinishCommand : RepositoryCommand(name = "finish") {
         "Finish a ticket: set status: review (work complete), or with --done set done once its branch is merged, " +
             "and log it. Commits only the ticket, on the branch that has its real copy."
 
-    private val id by argument(help = "Ticket id")
+    private val idArgument by argument(name = "id", help = "Ticket id (on a terminal: asks, starting on this branch's ticket)").optional()
     private val done by option("--done", help = "Set done: the branch is merged into its target (also checks the parent's Plan item)").flag()
     private val dryRun by option("--dry-run", help = "Show what would be done, change nothing").flag()
     private val date by option("--date", hidden = true, help = "Today's date (tests)")
+
+    private lateinit var id: String
 
     override fun run() {
         val repo = repository
@@ -43,6 +46,7 @@ class FinishCommand : RepositoryCommand(name = "finish") {
         val branches = Branches.read(repo) ?: throw PrintMessage(
             "Not finished: needs a git repository with the branch '${repo.config.mainBranch}' (mainBranch).", 1, true,
         )
+        id = idArgument ?: askFinish(repo, branches, status)
         val ready = when (val r = Finish.prepare(branches, id, status)) {
             is FinishResult.Refused -> throw PrintMessage("Not finished: ${r.reason}", 1, true)
             is FinishResult.Ready -> r
@@ -61,6 +65,13 @@ class FinishCommand : RepositoryCommand(name = "finish") {
             edits.getOrPut(parentBranch) { mutableListOf() } += parent.fileId to { text, path -> Finish.checkInParent(text, path, id, today) }
         }
         for ((branch, changes) in edits) commit(repo, branch, changes, "$id: ${status.text}")
+    }
+
+    /** review: in-progress tickets; done: in review. Starts on this branch's ticket when it's one of them. */
+    private fun askFinish(repo: Repository, branches: Branches, status: Status): String {
+        val from = if (status == Status.DONE) setOf(Status.REVIEW) else setOf(Status.IN_PROGRESS)
+        val current = runCatching { repo.git.currentBranch() }.getOrNull()
+        return askTicket(branches, "Set which ticket to ${status.text}?", from, "nothing to finish: no ${from.single().text} ticket", default = current)
     }
 
     private fun commit(repo: Repository, branch: String, changes: List<Pair<String, (String, okio.Path) -> String>>, message: String) {
