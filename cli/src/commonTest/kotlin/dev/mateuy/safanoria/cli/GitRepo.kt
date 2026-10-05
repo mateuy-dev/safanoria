@@ -10,6 +10,9 @@ import okio.Path.Companion.toPath
  * A real git repository under `cli/build/test-repos/<name>`, recreated on every use, with `main`
  * as the first branch and a fixed committer. The core tests have the full scenarios
  * (`BranchesTest`); this one is for the commands' wiring.
+ *
+ * Each test uses its own [name]: on Windows a repository with commits can't be deleted from a
+ * test (git's object files are read-only), so Gradle clears the directory before each test task.
  */
 class GitRepo(name: String) {
     val root: Path
@@ -25,6 +28,7 @@ class GitRepo(name: String) {
         git("config", "user.name", "test")
         git("config", "user.email", "test@example.com")
         git("config", "commit.gpgsign", "false")
+        git("config", "core.autocrlf", "false") // Git for Windows checks files out with CRLF
     }
 
     fun git(vararg args: String, at: Path = root): String = Git(at).run(*args)

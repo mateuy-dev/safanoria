@@ -21,15 +21,29 @@ val testEnvironment = buildMap {
 }
 
 subprojects {
+    // Tests create git repositories in build/test-repos. Git marks its object files read-only,
+    // and on Windows a test can't delete those, so each test task starts without the
+    // repositories the previous one left (jvmTest, then mingwX64Test).
+    val testRepos = layout.buildDirectory.dir("test-repos")
+    val deleteTestRepos = Action<Task> {
+        val dir = testRepos.get().asFile
+        if (dir.exists()) dir.walkBottomUp().forEach {
+            it.setWritable(true)
+            if (!it.delete()) throw GradleException("can't delete $it")
+        }
+    }
+
     // Environment variables aren't task inputs by default: without inputs.property, changing
     // SAFANORIA_EXTRA_REPOS would reuse a cached test result.
     tasks.withType<Test>().configureEach {
         testEnvironment.forEach { (k, v) -> environment(k, v) }
         inputs.property("testEnvironment", testEnvironment)
+        doFirst(deleteTestRepos)
     }
     tasks.withType<org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest>().configureEach {
         testEnvironment.forEach { (k, v) -> environment(k, v) }
         inputs.property("testEnvironment", testEnvironment)
+        doFirst(deleteTestRepos)
     }
 
     plugins.withId("org.jetbrains.kotlin.multiplatform") {

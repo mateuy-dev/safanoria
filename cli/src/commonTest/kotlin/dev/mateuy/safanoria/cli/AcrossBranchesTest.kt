@@ -73,7 +73,8 @@ class AcrossBranchesTest {
         val all = run(repo, "validate")
         assertEquals(0, all.statusCode, all.output) // a warning only
         assertTrue(
-            "tickets/stray.md:2: warning[id-created-twice]: branch 'feature' also created a ticket 'stray' separately" in all.stdout,
+            // Paths are printed with the system's separator.
+            "tickets/stray.md:2: warning[id-created-twice]: branch 'feature' also created a ticket 'stray' separately" in all.stdout.replace('\\', '/'),
             all.stdout,
         )
     }
