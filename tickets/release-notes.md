@@ -2,7 +2,7 @@
 id: release-notes
 type: feature
 title: Version to features
-status: review
+status: done
 priority: medium
 size: S
 created: 2026-10-02
@@ -33,3 +33,4 @@ The tickets to include can be found with `resolvedIn.<component>` (SPEC §9).
 - **2026-10-05** · decision · `notes` reads the checkout, not every branch like `list`: stamps are made on `mainBranch` (§9), so the checkout has them wherever it branched from a release.
 - **2026-10-05** · decision · The range ends need not be stamped versions (a user may come from a version that shipped no ticket); an empty result exits 0 and lists the stamped versions on stderr.
 - **2026-10-05** · status · review
+- **2026-10-05** · status · done
