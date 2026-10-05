@@ -58,8 +58,15 @@ class BoardViewModel(private val store: TicketStore) : ViewModel() {
 }
 
 /**
+ * Columns left to right, the way a ticket moves. Not core's `TicketGraph.STATUS_ORDER`, which
+ * puts work in hand first for lists read from the top.
+ */
+internal val COLUMN_ORDER: List<Status> =
+    listOf(Status.BACKLOG, Status.READY, Status.IN_PROGRESS, Status.REVIEW, Status.DONE, Status.WONTFIX)
+
+/**
  * Every ticket that passes [filter] as a card in its status column; every status has a column,
- * even when empty.
+ * even when empty. Within a column, cards keep the graph's order (priority, then id).
  */
 internal fun boardViewState(
     snapshot: TicketsSnapshot,
@@ -71,7 +78,7 @@ internal fun boardViewState(
     val byStatus = shown.groupBy { it.frontmatter?.status }
     fun card(ticket: Ticket) = card(graph, ticket, snapshot.diagnostics[ticket.fileId].orEmpty())
     // The column for unreadable statuses only exists when there are such tickets.
-    val columns = (TicketGraph.STATUS_ORDER + listOf(null))
+    val columns = (COLUMN_ORDER + listOf(null))
         .filter { it != null || null in byStatus }
         .map { status -> BoardColumn(status, byStatus[status].orEmpty().map(::card), status in collapsed) }
     return BoardViewState(

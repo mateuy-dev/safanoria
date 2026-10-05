@@ -34,10 +34,10 @@ class BoardViewStateTest {
     }
 
     @Test
-    fun everyStatusHasAColumnInBoardOrder() {
+    fun everyStatusHasAColumnInWorkflowOrder() {
         val state = boardViewState(snapshotOf(ticket("one-ticket", status = "ready")))
         assertEquals(
-            listOf(Status.IN_PROGRESS, Status.REVIEW, Status.READY, Status.BACKLOG, Status.DONE, Status.WONTFIX),
+            listOf(Status.BACKLOG, Status.READY, Status.IN_PROGRESS, Status.REVIEW, Status.DONE, Status.WONTFIX),
             state.columns.map { it.status },
         )
         assertEquals(listOf("one-ticket"), state.ids(Status.READY))

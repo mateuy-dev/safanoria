@@ -53,3 +53,6 @@ Out of scope for v1 (see `v1-tooling`).
   on a ticket only when the copy shown is the checkout's; for other tickets it is dropped rather
   than shown against text it wasn't found in. So a ticket read from another branch shows no
   problems, even if its own copy has some.
+- **2026-10-05** · decision · Board columns go left to right as a ticket moves: Backlog, Ready,
+  In progress, Review, Done, Won't fix. The user asked for Backlog first; the rest follows the
+  workflow. Core's `STATUS_ORDER` (work in hand first) stays for `list` and the markdown board.
