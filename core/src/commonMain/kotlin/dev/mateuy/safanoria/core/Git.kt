@@ -123,7 +123,7 @@ public class Git(private val root: Path) {
 
     /** Moves branch [branch] from [old] to [new]; fails if it moved meanwhile. */
     public fun updateBranch(branch: String, new: String, old: String) {
-        gitOrThrow("update-ref", "-m", "safanoria new", "refs/heads/$branch", new, old)
+        gitOrThrow("update-ref", "-m", "safanoria-cli new", "refs/heads/$branch", new, old)
     }
 
     /** The best common ancestor of [a] and [b], or null when they share no history. */

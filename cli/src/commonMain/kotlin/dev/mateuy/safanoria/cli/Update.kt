@@ -8,7 +8,7 @@ import dev.mateuy.safanoria.core.FileAction
 import dev.mateuy.safanoria.core.Install
 import dev.mateuy.safanoria.core.SystemFileSystem
 
-/** `safanoria update`: installs this version's skill and spec; offers its templates. */
+/** `safanoria-cli update`: installs this version's skill and spec; offers its templates. */
 class Update : RepositoryCommand(name = "update") {
     override fun help(context: Context) =
         "Replace the installed skill and SPEC.md with this version's, and add missing templates. " +

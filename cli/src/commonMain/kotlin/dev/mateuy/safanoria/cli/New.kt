@@ -30,7 +30,7 @@ import okio.Path
 import okio.Path.Companion.toPath
 import kotlin.time.Clock
 
-/** `safanoria new "<title>"`: SPEC §11 Create, the mechanical part. */
+/** `safanoria-cli new "<title>"`: SPEC §11 Create, the mechanical part. */
 class New : RepositoryCommand(name = "new") {
     override fun help(context: Context) =
         "Create a backlog ticket from a title: suggests an id (or use --id), checks it isn't taken, " +

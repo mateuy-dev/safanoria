@@ -6,7 +6,7 @@ import kotlin.test.assertEquals
 class ValidatorRepositoryTest {
     @Test
     fun thisRepositoryIsValid() {
-        // Like `safanoria validate`: ids on other branches are known (SPEC §12), e.g. a ticket
+        // Like `safanoria-cli validate`: ids on other branches are known (SPEC §12), e.g. a ticket
         // created on main while working on a ticket branch.
         val repository = Repository(repoRoot)
         assertEquals(emptyList(), Validator(repository, Branches.read(repository)).validate().map { it.toString() })

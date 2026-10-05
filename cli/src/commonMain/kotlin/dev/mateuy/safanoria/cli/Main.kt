@@ -43,14 +43,15 @@ class CliContext(val rootOption: String?, val prompts: Prompts?) {
 }
 
 /** The root command. [prompts] replaces the terminal's (tests); by default they exist only on a terminal. */
-class Safanoria(private val prompts: Prompts? = null) : CliktCommand(name = "safanoria") {
+class Safanoria(private val prompts: Prompts? = null) : CliktCommand(name = "safanoria-cli") {
     private val root by option("--root", help = "Repository root (default: the nearest directory with safanoria.yaml)")
     private val context by findOrSetObject { CliContext(root, prompts ?: terminalPrompts()) }
 
     override val invokeWithoutSubcommand = true
 
     override fun help(context: Context) =
-        "Tickets as markdown files in your repository (SPEC.md). Without a command, on a terminal, asks which one to run."
+        "Tickets as markdown files in your repository (SPEC.md). Without a command, on a terminal, asks which one to run. " +
+            "The desktop app is `safanoria`."
 
     override fun helpEpilog(context: Context) =
         "To land in a started ticket's directory, add this function to ~/.bashrc or ~/.zshrc and start tickets with " +
@@ -89,7 +90,7 @@ class Safanoria(private val prompts: Prompts? = null) : CliktCommand(name = "saf
 
 class Version : CliktCommand(name = "version") {
     override fun help(context: Context) = "Print the tool version and the spec version it implements."
-    override fun run() = echo("safanoria ${Embedded.VERSION} (spec $SPEC_VERSION)")
+    override fun run() = echo("safanoria-cli ${Embedded.VERSION} (spec $SPEC_VERSION)")
 }
 
 /** A path as shown to the user: relative to the working directory when it's under it. */

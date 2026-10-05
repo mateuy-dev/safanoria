@@ -7,7 +7,7 @@ import dev.mateuy.safanoria.core.Board
 import dev.mateuy.safanoria.core.SystemFileSystem
 import okio.Path.Companion.toPath
 
-/** `safanoria board`: the markdown board, to stdout or a file. */
+/** `safanoria-cli board`: the markdown board, to stdout or a file. */
 class BoardCommand : AcrossBranchesCommand(name = "board") {
     override fun help(context: Context) =
         "Print a markdown board: a section per status, parents with their children and progress, " +

@@ -14,15 +14,15 @@ jobs:
         include:
           - os: ubuntu-24.04
             target: LinuxX64
-            binary: safanoria.kexe
+            binary: safanoria-cli.kexe
             dir: linuxX64
           - os: windows-2022
             target: MingwX64
-            binary: safanoria.exe
+            binary: safanoria-cli.exe
             dir: mingwX64
           - os: macos-14
             target: MacosArm64
-            binary: safanoria.kexe
+            binary: safanoria-cli.kexe
             dir: macosArm64
     runs-on: ${{ matrix.os }}
     defaults:

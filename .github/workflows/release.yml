@@ -1,14 +1,14 @@
 name: release
 
-# A vX.Y.Z tag publishes the three binaries as a GitHub release; install.sh / install.ps1
-# download them. Changing this file, the install scripts or action.yml on any branch (or a manual run)
+# A vX.Y.Z tag publishes the CLI binaries and the desktop app archives for the three systems as a
+# GitHub release; install.sh / install.ps1 download them. Changing this file, the install scripts or action.yml on any branch (or a manual run)
 # builds them as artifacts without publishing, to test it (workflow_dispatch only works once this
 # file is on the default branch; path filters don't apply to tags, so tags always publish).
 on:
   push:
     tags: ["v*"]
     branches: ["**"]
-    paths: [.github/workflows/release.yml, install.sh, install.ps1, action.yml]
+    paths: [.github/workflows/release.yml, install.sh, install.ps1, action.yml, gui/build.gradle.kts]
   workflow_dispatch:
 
 permissions:
@@ -23,18 +23,21 @@ jobs:
           - os: ubuntu-24.04
             target: LinuxX64
             dir: linuxX64
-            binary: safanoria.kexe
+            binary: safanoria-cli.kexe
             asset: safanoria-linux-x64
+            app: safanoria-app-linux-x64.tar.gz
           - os: windows-2022
             target: MingwX64
             dir: mingwX64
-            binary: safanoria.exe
+            binary: safanoria-cli.exe
             asset: safanoria-windows-x64.exe
+            app: safanoria-app-windows-x64.zip
           - os: macos-14
             target: MacosArm64
             dir: macosArm64
-            binary: safanoria.kexe
+            binary: safanoria-cli.kexe
             asset: safanoria-macos-arm64
+            app: safanoria-app-macos-arm64.tar.gz
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -65,7 +68,7 @@ jobs:
 
       # Only tag builds report the plain version; manual runs stay -dev.
       - name: Build
-        run: ./gradlew --no-daemon :cli:linkReleaseExecutable${{ matrix.target }} ${{ github.ref_type == 'tag' && '-Prelease' || '' }}
+        run: ./gradlew --no-daemon :cli:linkReleaseExecutable${{ matrix.target }} :gui:createDistributable ${{ github.ref_type == 'tag' && '-Prelease' || '' }}
 
       - name: Name and smoke-test
         run: |
@@ -74,10 +77,20 @@ jobs:
           dist/${{ matrix.asset }} version
           dist/${{ matrix.asset }} validate
 
+      # The app with its Java runtime (safanoria/, or safanoria.app on macOS), as the install
+      # scripts unpack it. The CLI assets keep their names (no "cli"): see install.sh.
+      - name: Archive the app
+        run: |
+          cd gui/build/compose/binaries/main/app
+          case "${{ matrix.app }}" in
+            *.zip) 7z a -tzip "$GITHUB_WORKSPACE/dist/${{ matrix.app }}" . ;;
+            *) tar -czf "$GITHUB_WORKSPACE/dist/${{ matrix.app }}" . ;;
+          esac
+
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset }}
-          path: dist/${{ matrix.asset }}
+          path: dist/
 
   # On test runs: the install scripts, against a local copy laid out like a release.
   install-test:
@@ -103,16 +116,23 @@ jobs:
       - name: install.sh
         if: runner.os != 'Windows'
         run: |
-          SAFANORIA_BASE_URL="file://$PWD/rel" SAFANORIA_BIN_DIR="$PWD/bin" ./install.sh
-          bin/safanoria version
+          SAFANORIA_BASE_URL="file://$PWD/rel" SAFANORIA_BIN_DIR="$PWD/bin" SAFANORIA_APP_DIR="$PWD/app" ./install.sh
+          bin/safanoria-cli version
+          bin/safanoria --version
+          # What a hook written for the old `safanoria` (the CLI) gets: no window, and the new name.
+          if bin/safanoria validate --staged 2> old.txt; then echo "::error::safanoria ran a CLI command"; exit 1; fi
+          grep "safanoria-cli validate --staged" old.txt
       - name: install.ps1
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $env:SAFANORIA_BASE_URL = "file:///$($PWD.Path -replace '\\','/')/rel"
           $env:SAFANORIA_BIN_DIR = "$PWD\bin"
+          $env:SAFANORIA_APP_DIR = "$PWD\app"
           ./install.ps1
-          & "$PWD\bin\safanoria.exe" version
+          & "$PWD\bin\safanoria-cli.exe" version
+          $version = & "$PWD\bin\safanoria.cmd" --version
+          if ($version -notlike "safanoria *") { throw "safanoria --version printed '$version'" }
       # The Action (action.yml), as projects use it, on this repository's tickets.
       - name: Release URL for the Action
         run: echo "REL_URL=file://$( [ "$RUNNER_OS" = Windows ] && echo "/$(cygpath -m "$PWD")" || echo "$PWD" )/rel" >> "$GITHUB_ENV"

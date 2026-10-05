@@ -1,5 +1,5 @@
 name: Safanoria
-description: Install the safanoria CLI and validate the repository's tickets (or run another safanoria command).
+description: Install the Safanoria CLI (safanoria-cli) and validate the repository's tickets (or run another safanoria-cli command).
 branding:
   icon: check-square
   color: green
@@ -10,7 +10,7 @@ inputs:
     required: false
     default: ""
   args:
-    description: Arguments for safanoria.
+    description: Arguments for safanoria-cli.
     required: false
     default: validate
   base-url:
@@ -21,10 +21,11 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Install safanoria
+    - name: Install safanoria-cli
       if: runner.os != 'Windows'
       shell: bash
       env:
+        SAFANORIA_CLI_ONLY: "1"
         SAFANORIA_VERSION: ${{ inputs.version }}
         SAFANORIA_BASE_URL: ${{ inputs.base-url }}
         SAFANORIA_BIN_DIR: ${{ runner.temp }}/safanoria-bin
@@ -32,10 +33,11 @@ runs:
         "${{ github.action_path }}/install.sh"
         echo "$SAFANORIA_BIN_DIR" >> "$GITHUB_PATH"
 
-    - name: Install safanoria
+    - name: Install safanoria-cli
       if: runner.os == 'Windows'
       shell: pwsh
       env:
+        SAFANORIA_CLI_ONLY: "1"
         SAFANORIA_VERSION: ${{ inputs.version }}
         SAFANORIA_BASE_URL: ${{ inputs.base-url }}
         SAFANORIA_BIN_DIR: ${{ runner.temp }}\safanoria-bin
@@ -43,6 +45,6 @@ runs:
         & "${{ github.action_path }}\install.ps1"
         Add-Content -Path $env:GITHUB_PATH -Value $env:SAFANORIA_BIN_DIR
 
-    - name: safanoria ${{ inputs.args }}
+    - name: safanoria-cli ${{ inputs.args }}
       shell: bash
-      run: safanoria ${{ inputs.args }}
+      run: safanoria-cli ${{ inputs.args }}

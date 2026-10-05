@@ -30,7 +30,7 @@ internal fun CliktCommand.applyChanges(root: Path, changes: List<FileChange>, ye
                 val settings = shown == Install.SETTINGS_FILE
                 val why = when {
                     claude -> "doesn't point agents to the safanoria skill"
-                    settings -> "has no SessionStart hook that gives sessions their ticket"
+                    settings -> "has no SessionStart hook that gives sessions their ticket (`${Install.CONTEXT_HOOK.substringBefore(" 2>")}`)"
                     else -> "differs from Safanoria's"
                 }
                 val what = when {

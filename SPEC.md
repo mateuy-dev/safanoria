@@ -395,7 +395,7 @@ fields, new sections) keep the version. Changes that make valid tickets invalid,
 field's meaning, increase it.
 
 The spec version is not the **Safanoria version**. Safanoria (this spec, the agent skill, the
-ticket templates and the `safanoria` CLI) is released as one unit with one `MAJOR.MINOR.PATCH`
+ticket templates, the `safanoria-cli` CLI and the `safanoria` desktop app) is released as one unit with one `MAJOR.MINOR.PATCH`
 version, which says which spec versions it supports. A project records only the spec version.
 Copies installed into a project (the skill, this file) SHOULD end with a
 `<!-- safanoria X.Y.Z -->` line naming the Safanoria version they came from, so tools can tell

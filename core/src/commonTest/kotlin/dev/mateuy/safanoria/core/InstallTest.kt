@@ -87,6 +87,8 @@ class InstallTest {
         for (kept in listOf("Bash(ls)", "echo hi", "\"Stop\"", Install.CONTEXT_HOOK)) assertTrue(kept in merged, merged)
         assertTrue(merged.indexOf("echo hi") < merged.indexOf(Install.CONTEXT_HOOK), merged)
 
+        // The CLI's old name (`safanoria`, now the desktop app) is renamed in place.
+        assertEquals(created, Install.settingsWithHook(created.replace("safanoria-cli context", "safanoria context")))
         assertNull(Install.settingsWithHook("not json"))
         assertNull(Install.settingsWithHook("""{"hooks": []}"""), "a shape we don't know is left alone")
 

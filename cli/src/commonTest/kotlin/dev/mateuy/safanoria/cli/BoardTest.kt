@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 class BoardTest {
     private val repoRoot = (environmentVariable("SAFANORIA_REPO_ROOT") ?: error("run through Gradle")).toPath()
     private val fixture = repoRoot / "core" / "src" / "commonTest" / "fixtures" / "validate" / "valid"
-    /** Checked by hand when written; regenerate with `safanoria --root <fixture> board` after a deliberate change. */
+    /** Checked by hand when written; regenerate with `safanoria-cli --root <fixture> board` after a deliberate change. */
     private val golden = repoRoot / "cli" / "src" / "commonTest" / "fixtures" / "board" / "valid.md"
 
     /** CRLF-normalised: Windows checkouts may convert the golden file; the board is always LF. */

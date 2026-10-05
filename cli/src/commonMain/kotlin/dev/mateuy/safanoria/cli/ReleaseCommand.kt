@@ -20,7 +20,7 @@ import kotlinx.datetime.todayIn
 import okio.Path.Companion.toPath
 import kotlin.time.Clock
 
-/** `safanoria release <component> [<version>]`: SPEC §9 stamping. Doesn't commit. */
+/** `safanoria-cli release <component> [<version>]`: SPEC §9 stamping. Doesn't commit. */
 class ReleaseCommand : RepositoryCommand(name = "release") {
     override fun help(context: Context) =
         "Stamp resolvedIn.<component> on every done ticket with the component in its area and no " +

@@ -19,12 +19,12 @@ import okio.Path.Companion.toPath
 import kotlin.time.Clock
 
 /**
- * `safanoria start <id>`: SPEC §11.2 Start. Creates branch `<id>`, commits the ticket started on
+ * `safanoria-cli start <id>`: SPEC §11.2 Start. Creates branch `<id>`, commits the ticket started on
  * it (without checking it out, so nothing in this checkout changes until the branch is ready),
  * then adds the worktree when configured, else switches this checkout to the branch.
  *
  * A process can't change its shell's directory, so `--print-path` prints only the directory to work
- * in (the rest goes to stderr) for a shell function to `cd` to; see `safanoria --help` and the README.
+ * in (the rest goes to stderr) for a shell function to `cd` to; see `safanoria-cli --help` and the README.
  */
 class StartCommand : RepositoryCommand(name = "start") {
     override fun help(context: Context) =
@@ -36,7 +36,7 @@ class StartCommand : RepositoryCommand(name = "start") {
     private val noSwitch by option("--no-switch", help = "Without a worktree setting: create the branch but don't switch this checkout to it").flag()
     private val printPath by option(
         "--print-path",
-        help = "Print only the directory to work in (the worktree, or this checkout once switched) on stdout, everything else on stderr: dir=\$(safanoria start <id> --print-path) && cd \"\$dir\"",
+        help = "Print only the directory to work in (the worktree, or this checkout once switched) on stdout, everything else on stderr: dir=\$(safanoria-cli start <id> --print-path) && cd \"\$dir\"",
     ).flag()
     private val dryRun by option("--dry-run", help = "Show what would be done, change nothing").flag()
     private val date by option("--date", hidden = true, help = "Today's date (tests)")
@@ -90,12 +90,12 @@ class StartCommand : RepositoryCommand(name = "start") {
 }
 
 /**
- * The shell function `safanoria --help` and the README give: starts a ticket and `cd`s to where
+ * The shell function `safanoria-cli --help` and the README give: starts a ticket and `cd`s to where
  * `--print-path` says. One help line each (the help formatter drops indentation and would re-wrap a one-liner).
  */
 internal val SHELL_FUNCTION = listOf(
     "safanoria-start() {",
     "local d",
-    "d=\$(safanoria start \"\$@\" --print-path) && [ -n \"\$d\" ] && cd \"\$d\"",
+    "d=\$(safanoria-cli start \"\$@\" --print-path) && [ -n \"\$d\" ] && cd \"\$d\"",
     "}",
 )

@@ -22,7 +22,7 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
 
-/** `safanoria list`: one line per ticket, in board order; `--format json` for agents. */
+/** `safanoria-cli list`: one line per ticket, in board order; `--format json` for agents. */
 class ListTickets : AcrossBranchesCommand(name = "list") {
     override fun help(context: Context) =
         "List tickets, one per line, in-progress first. Filters combine; comma-separated values are alternatives."

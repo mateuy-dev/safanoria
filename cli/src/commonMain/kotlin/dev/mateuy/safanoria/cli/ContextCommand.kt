@@ -7,7 +7,7 @@ import dev.mateuy.safanoria.core.CONFIG_FILE
 import dev.mateuy.safanoria.core.Install
 
 /**
- * `safanoria context`: run by the Claude Code SessionStart hook (README "Agent sessions"). On a
+ * `safanoria-cli context`: run by the Claude Code SessionStart hook (README "Agent sessions"). On a
  * ticket's branch (SPEC §11.3: the branch name is the id) it prints the ticket and what the
  * session is expected to do with it; anywhere else it prints nothing. Never fails: a hook that
  * errors would interrupt every session.
