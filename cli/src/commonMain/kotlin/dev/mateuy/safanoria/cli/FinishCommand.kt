@@ -7,15 +7,12 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
-import dev.mateuy.safanoria.core.BranchView
 import dev.mateuy.safanoria.core.Branches
 import dev.mateuy.safanoria.core.Finish
+import dev.mateuy.safanoria.core.FinishException
 import dev.mateuy.safanoria.core.FinishResult
-import dev.mateuy.safanoria.core.PlannedFile
 import dev.mateuy.safanoria.core.Repository
 import dev.mateuy.safanoria.core.Status
-import dev.mateuy.safanoria.core.TicketEditException
-import dev.mateuy.safanoria.core.Validator
 import dev.mateuy.safanoria.core.text
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
@@ -57,14 +54,13 @@ class FinishCommand : RepositoryCommand(name = "finish") {
         if (parent != null) echo("${verb}check '$id' in the Plan of ${parent.fileId}, committed on ${ready.parentBranch}")
         if (dryRun) return
 
-        // One commit per branch: the parent usually shares the child's (children merge into it).
-        val edits = linkedMapOf<String, MutableList<Pair<String, (String, okio.Path) -> String>>>()
-        edits.getOrPut(ready.branch) { mutableListOf() } += id to { text, _ -> Finish.edit(text, status, today) }
-        val parentBranch = ready.parentBranch
-        if (parent != null && parentBranch != null) {
-            edits.getOrPut(parentBranch) { mutableListOf() } += parent.fileId to { text, path -> Finish.checkInParent(text, path, id, today) }
+        try {
+            Finish.perform(repo, ready, today) { echo("committed ${it.commit.take(7)} on ${it.branch}: ${it.message}") }
+        } catch (e: FinishException) {
+            if (e.problems.isEmpty()) throw PrintMessage("Not finished: ${e.message}", 1, true)
+            e.problems.forEach { echo(it.copy(file = it.file?.let { p -> displayPath(p).toPath() }).toString(), err = true) }
+            throw ProgramResult(1)
         }
-        for ((branch, changes) in edits) commit(repo, branch, changes, "$id: ${status.text}")
     }
 
     /** review: in-progress tickets; done: in review. Starts on this branch's ticket when it's one of them. */
@@ -74,22 +70,4 @@ class FinishCommand : RepositoryCommand(name = "finish") {
         return askTicket(branches, "Set which ticket to ${status.text}?", from, "nothing to finish: no ${from.single().text} ticket", default = current)
     }
 
-    private fun commit(repo: Repository, branch: String, changes: List<Pair<String, (String, okio.Path) -> String>>, message: String) {
-        val view = BranchView.open(repo, branch) ?: throw PrintMessage("Not finished: can't read the branch '$branch'.", 1, true)
-        val files = changes.map { (ticketId, change) ->
-            val ticket = view.repository.ticket(ticketId)
-                ?: throw PrintMessage("Not finished: no ticket '$ticketId' on '$branch'.", 1, true)
-            val text = try { change(ticket.text, ticket.path) } catch (e: TicketEditException) {
-                throw PrintMessage("Not finished: ${e.message}", 1, true)
-            }
-            PlannedFile(ticket.path, text, isNew = false)
-        }
-        val problems = Validator(view.withFiles(files)).validate(files.map { it.path })
-        if (problems.isNotEmpty()) {
-            problems.forEach { echo(it.copy(file = it.file?.let { p -> displayPath(p).toPath() }).toString(), err = true) }
-            throw ProgramResult(1)
-        }
-        val commit = view.commit(files, message)
-        echo("committed ${commit.take(7)} on $branch: $message")
-    }
 }

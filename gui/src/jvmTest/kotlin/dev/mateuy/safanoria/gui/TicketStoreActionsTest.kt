@@ -1,6 +1,7 @@
 package dev.mateuy.safanoria.gui
 
 import dev.mateuy.safanoria.core.Status
+import dev.mateuy.safanoria.gui.data.FinishOutcome
 import dev.mateuy.safanoria.gui.data.StartOutcome
 import dev.mateuy.safanoria.gui.data.TicketStore
 import kotlinx.coroutines.runBlocking
@@ -15,8 +16,8 @@ import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/** Starting a ticket from the app, on a real git repository in a temporary directory. */
-class TicketStoreStartTest {
+/** Starting and finishing a ticket from the app, on a real git repository in a temporary directory. */
+class TicketStoreActionsTest {
     private val base: File = Files.createTempDirectory("safanoria-gui").toRealPath().toFile()
     private val project = File(base, "project").apply { mkdirs() }
     private val root: Path = project.toOkioPath()
@@ -89,6 +90,29 @@ class TicketStoreStartTest {
         assertEquals("'closed-one' is done; only backlog and ready tickets can be started", outcome.reason)
         assertEquals("main", git("branch", "--format=%(refname:short)"))
         assertIs<StartOutcome.NotStarted>(store.start("no-such-ticket"))
+    }
+
+    @Test
+    fun finishSetsTheStartedTicketToReviewInItsWorktree() = runBlocking<Unit> {
+        repository(worktree = true, "first-one" to "backlog")
+        val store = TicketStore(root)
+        store.start("first-one", today = "2026-10-05")
+
+        assertEquals(FinishOutcome.Finished("first-one"), store.finish("first-one", today = "2026-10-06"))
+
+        val workspace = File(base, "project--first-one")
+        assertEquals("first-one: review", git("log", "-1", "--format=%s", "first-one"))
+        assertTrue("- **2026-10-06** · status · review" in File(workspace, "tickets/first-one.md").readText())
+        assertEquals("", git("status", "--porcelain", dir = workspace))
+        assertEquals(Status.REVIEW, store.status("first-one"))
+    }
+
+    @Test
+    fun aTicketThatIsNotInProgressCannotBeFinished() = runBlocking<Unit> {
+        repository(worktree = true, "first-one" to "backlog")
+        val outcome = assertIs<FinishOutcome.NotFinished>(TicketStore(root).finish("first-one"))
+        assertEquals("'first-one' is backlog; review needs in-progress", outcome.reason)
+        assertEquals("tickets", git("log", "-1", "--format=%s"))
     }
 
     @Test

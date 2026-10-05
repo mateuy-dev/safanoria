@@ -69,15 +69,15 @@ class TicketViewStateTest {
     }
 
     @Test
-    fun theActionDependsOnTheStatus() {
-        fun action(status: String) = ticketViewState("the-one", snapshotOf(ticket("the-one", status = status))).action
-        assertEquals(TicketAction.START, action("backlog"))
-        assertEquals(TicketAction.START, action("ready"))
-        assertEquals(TicketAction.OPEN_TERMINAL, action("in-progress"))
-        assertEquals(TicketAction.OPEN_TERMINAL, action("review"))
-        assertNull(action("done"))
-        assertNull(action("wontfix"))
-        assertNull(action("paused"))
+    fun theActionsDependOnTheStatus() {
+        fun actions(status: String) = ticketViewState("the-one", snapshotOf(ticket("the-one", status = status))).actions
+        assertEquals(listOf(TicketAction.START), actions("backlog"))
+        assertEquals(listOf(TicketAction.START), actions("ready"))
+        assertEquals(listOf(TicketAction.OPEN_TERMINAL, TicketAction.FINISH), actions("in-progress"))
+        assertEquals(listOf(TicketAction.OPEN_TERMINAL), actions("review"))
+        assertEquals(emptyList(), actions("done"))
+        assertEquals(emptyList(), actions("wontfix"))
+        assertEquals(emptyList(), actions("paused"))
     }
 
     @Test

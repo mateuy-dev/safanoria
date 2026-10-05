@@ -3,11 +3,15 @@ package dev.mateuy.safanoria.gui.data
 import dev.mateuy.safanoria.core.BranchView
 import dev.mateuy.safanoria.core.Branches
 import dev.mateuy.safanoria.core.Diagnostic
+import dev.mateuy.safanoria.core.Finish
+import dev.mateuy.safanoria.core.FinishException
+import dev.mateuy.safanoria.core.FinishResult
 import dev.mateuy.safanoria.core.GitException
 import dev.mateuy.safanoria.core.Repository
 import dev.mateuy.safanoria.core.Start
 import dev.mateuy.safanoria.core.StartException
 import dev.mateuy.safanoria.core.StartResult
+import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.core.TicketGraph
 import dev.mateuy.safanoria.core.Validator
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +33,14 @@ sealed interface StartOutcome {
     data class NotStarted(val reason: String) : StartOutcome
 }
 
+/** What [TicketStore.finish] did. */
+sealed interface FinishOutcome {
+    /** In review, committed on [branch]. */
+    data class Finished(val branch: String) : FinishOutcome
+
+    data class NotFinished(val reason: String) : FinishOutcome
+}
+
 /** The project's tickets as last read, and whether a read is running or failed. */
 data class TicketsSnapshot(
     val graph: TicketGraph? = null,
@@ -43,7 +55,7 @@ data class TicketsSnapshot(
 /**
  * The single source of the project's tickets for every screen: reads them through `core` (each
  * ticket's real copy from every local branch, SPEC §14, as `safanoria list` does) and keeps the
- * last result. Operations that change tickets ([start]; later finish) are here too, followed by
+ * last result. Operations that change tickets ([start], [finish]) are here too, followed by
  * a [refresh].
  */
 class TicketStore(val root: Path) {
@@ -88,6 +100,32 @@ class TicketStore(val root: Path) {
             }
         }
         if (outcome is StartOutcome.Started) refresh()
+        return outcome
+    }
+
+    /**
+     * Sets ticket [id] to `review` as `safanoria finish` does (SPEC §11.4): on its real copy, in
+     * one commit with only that file. The tickets are read again afterwards.
+     */
+    suspend fun finish(id: String, today: String = LocalDate.now().toString()): FinishOutcome {
+        val outcome = withContext(Dispatchers.IO) {
+            try {
+                val repository = Repository(root)
+                val branches = Branches.read(repository)
+                    ?: return@withContext FinishOutcome.NotFinished("needs a git repository with the branch '${repository.config.mainBranch}' (mainBranch)")
+                val ready = when (val r = Finish.prepare(branches, id, Status.REVIEW)) {
+                    is FinishResult.Refused -> return@withContext FinishOutcome.NotFinished(r.reason)
+                    is FinishResult.Ready -> r
+                }
+                Finish.perform(repository, ready, today)
+                FinishOutcome.Finished(ready.branch)
+            } catch (e: FinishException) {
+                FinishOutcome.NotFinished((listOf(e.message) + e.problems.map { "${it.code}: ${it.message}" }).joinToString("\n"))
+            } catch (e: Exception) {
+                FinishOutcome.NotFinished(e.message ?: e.toString())
+            }
+        }
+        if (outcome is FinishOutcome.Finished) refresh()
         return outcome
     }
 

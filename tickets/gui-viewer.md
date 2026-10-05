@@ -24,6 +24,17 @@ Out of scope for v1 (see `v1-tooling`).
 
 ## Acceptance Criteria
 
+- [x] `./gradlew :gui:run --args=<path>` opens the project containing the path
+- [x] The board has a column per status with every ticket, read from every local branch
+- [x] Parents show their progress, children their parent, blocked tickets their open blockers
+- [x] The board filters by type, area and blocked
+- [x] A ticket's body is rendered markdown, with its fields and links to related tickets
+- [x] `validate` problems show on the card and in the ticket
+- [x] Start, Open terminal and Finish do what the CLI does, through `core`
+- [x] The README says how to run and use it
+- [ ] Tried by hand: opening a card, Back, Refresh, the filters, collapsing a column, Start,
+      Open terminal and Finish (so far checked with tests and by looking at each screen)
+
 ## Plan
 
 ## Work Log
@@ -72,3 +83,12 @@ Out of scope for v1 (see `v1-tooling`).
   worktree. On Linux the terminal is `$TERMINAL`, else the first usual one on the PATH
   (`x-terminal-emulator` first), run with the workspace as its working directory. Only a
   terminal is opened; no agent session is launched in it.
+- **2026-10-05** · decision · Text in angle brackets is kept by handling the parser's `HTML_TAG`
+  tokens in the renderer's annotator: tickets write placeholders as `<id>` and have no HTML to
+  draw. Fixes the defect noted above.
+- **2026-10-05** · decision · Finish (to `review`) added on in-progress tickets; its steps moved
+  from the CLI's `FinishCommand` into core's `Finish.perform`, as with Start. `done` isn't
+  offered: it means merged, which the app doesn't do.
+- **2026-10-05** · decision · The tickets are read again when the window gets the focus back,
+  not by watching files: changes on other branches are git refs, which a watcher on the
+  ticket directory wouldn't see.

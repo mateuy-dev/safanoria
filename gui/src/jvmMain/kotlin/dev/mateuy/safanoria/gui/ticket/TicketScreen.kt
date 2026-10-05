@@ -40,14 +40,26 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.MarkdownTypography
+import com.mikepenz.markdown.model.markdownAnnotator
 import dev.mateuy.safanoria.gui.theme.WarningColor
+import org.intellij.markdown.MarkdownTokenTypes
+import org.intellij.markdown.ast.getTextInNode
 import dev.mateuy.safanoria.gui.theme.color
 import dev.mateuy.safanoria.gui.theme.label
 
 @Composable
 fun TicketScreen(viewModel: TicketViewModel, onOpenTicket: (String) -> Unit, onBack: () -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    TicketContent(state, onOpenTicket, onBack, onStart = viewModel::start, onOpenTerminal = viewModel::openTerminal)
+    TicketContent(
+        state, onOpenTicket, onBack,
+        onAction = { action ->
+            when (action) {
+                TicketAction.START -> viewModel.start()
+                TicketAction.OPEN_TERMINAL -> viewModel.openTerminal()
+                TicketAction.FINISH -> viewModel.finish()
+            }
+        },
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,8 +68,7 @@ fun TicketContent(
     state: TicketViewState,
     onOpenTicket: (String) -> Unit,
     onBack: () -> Unit,
-    onStart: () -> Unit,
-    onOpenTerminal: () -> Unit,
+    onAction: (TicketAction) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -71,7 +82,7 @@ fun TicketContent(
                 },
             )
         },
-        bottomBar = { ActionBar(state, onStart, onOpenTerminal) },
+        bottomBar = { ActionBar(state, onAction) },
     ) { padding ->
         if (!state.found) {
             Text("No ticket '${state.id}'.", Modifier.padding(padding).padding(24.dp))
@@ -84,7 +95,7 @@ fun TicketContent(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     Problems(state.problems)
-                    Markdown(state.body, typography = ticketTypography())
+                    Markdown(state.body, typography = ticketTypography(), annotator = ticketAnnotator)
                 }
             }
             VerticalDivider()
@@ -107,6 +118,20 @@ fun TicketContent(
                 Links("Blocks", state.blocks, onOpenTicket)
             }
         }
+    }
+}
+
+/**
+ * Keeps text in angle brackets. The parser reads `<id>` as an HTML tag, even inside inline code,
+ * and the renderer draws no HTML, so `attachments/<id>/` would lose its middle. Tickets write
+ * placeholders that way and have no HTML to draw.
+ */
+private val ticketAnnotator = markdownAnnotator { content, child ->
+    if (child.type == MarkdownTokenTypes.HTML_TAG) {
+        append(child.getTextInNode(content).toString())
+        true
+    } else {
+        false
     }
 }
 
@@ -135,8 +160,8 @@ private fun ticketTypography(): MarkdownTypography {
 
 /** The bar under the ticket: what can be done with it in its status, and how the last action went. */
 @Composable
-private fun ActionBar(state: TicketViewState, onStart: () -> Unit, onOpenTerminal: () -> Unit) {
-    if (state.action == null && state.notice == null) return
+private fun ActionBar(state: TicketViewState, onAction: (TicketAction) -> Unit) {
+    if (state.actions.isEmpty() && state.notice == null) return
     Column {
         HorizontalDivider()
         Row(
@@ -144,10 +169,13 @@ private fun ActionBar(state: TicketViewState, onStart: () -> Unit, onOpenTermina
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            when (state.action) {
-                TicketAction.START -> Button(onClick = onStart, enabled = !state.busy) { Text("Start") }
-                TicketAction.OPEN_TERMINAL -> OutlinedButton(onClick = onOpenTerminal, enabled = !state.busy) { Text("Open terminal") }
-                null -> {}
+            state.actions.forEach { action ->
+                val onClick = { onAction(action) }
+                when (action) {
+                    TicketAction.START -> Button(onClick, enabled = !state.busy) { Text("Start") }
+                    TicketAction.OPEN_TERMINAL -> OutlinedButton(onClick, enabled = !state.busy) { Text("Open terminal") }
+                    TicketAction.FINISH -> Button(onClick, enabled = !state.busy) { Text("Finish: set to review") }
+                }
             }
             if (state.busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
             state.notice?.let {

@@ -20,9 +20,9 @@ data class TicketViewState(
     val body: String = "",
     /** `validate` problems in the ticket, in file order. */
     val problems: List<TicketProblem> = emptyList(),
-    /** What can be done with the ticket in its status, or null. */
-    val action: TicketAction? = null,
-    /** True while [action] runs. */
+    /** What can be done with the ticket in its status. */
+    val actions: List<TicketAction> = emptyList(),
+    /** True while one of the [actions] runs. */
     val busy: Boolean = false,
     /** How the last action went, when there is something to tell. */
     val notice: Notice? = null,
@@ -34,6 +34,9 @@ enum class TicketAction {
 
     /** In progress or review: open a terminal where its branch is checked out. */
     OPEN_TERMINAL,
+
+    /** In progress: the work is complete, set it to review. */
+    FINISH,
 }
 
 data class Notice(val text: String, val error: Boolean)

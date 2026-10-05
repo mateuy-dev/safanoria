@@ -7,6 +7,7 @@ import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.core.Ticket
 import dev.mateuy.safanoria.core.TicketGraph
 import dev.mateuy.safanoria.core.text
+import dev.mateuy.safanoria.gui.data.FinishOutcome
 import dev.mateuy.safanoria.gui.data.StartOutcome
 import dev.mateuy.safanoria.gui.data.Terminal
 import dev.mateuy.safanoria.gui.data.TicketStore
@@ -45,6 +46,14 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
         when (val workspace = store.workspace(id)) {
             null -> Notice("Branch '$id' isn't checked out anywhere: add a worktree for it, or switch to it.", error = true)
             else -> openTerminal(workspace, done = null)
+        }
+    }
+
+    /** The work is complete: sets the ticket to review. */
+    fun finish() = act {
+        when (val outcome = store.finish(id)) {
+            is FinishOutcome.NotFinished -> Notice("Not finished: ${outcome.reason}", error = true)
+            is FinishOutcome.Finished -> Notice("In review, committed on ${outcome.branch}", error = false)
         }
     }
 
@@ -88,10 +97,11 @@ internal fun ticketViewState(id: String, snapshot: TicketsSnapshot): TicketViewS
         blockedBy = f?.blockedBy.orEmpty().map { it.value }.distinct().map(::link),
         blocks = graph.blocks(ticket).map(::link),
         body = body(ticket),
-        action = when (f?.status) {
-            Status.BACKLOG, Status.READY -> TicketAction.START
-            Status.IN_PROGRESS, Status.REVIEW -> TicketAction.OPEN_TERMINAL
-            else -> null
+        actions = when (f?.status) {
+            Status.BACKLOG, Status.READY -> listOf(TicketAction.START)
+            Status.IN_PROGRESS -> listOf(TicketAction.OPEN_TERMINAL, TicketAction.FINISH)
+            Status.REVIEW -> listOf(TicketAction.OPEN_TERMINAL)
+            else -> emptyList()
         },
         problems = snapshot.diagnostics[id].orEmpty().map { TicketProblem(it.line, it.code, it.message, it.severity == Severity.ERROR) },
     )

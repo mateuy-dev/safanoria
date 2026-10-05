@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
@@ -21,8 +22,12 @@ import dev.mateuy.safanoria.gui.ticket.TicketViewModel
 /** The app: the theme and the navigation between screens. Each back stack entry owns its ViewModel. */
 @Composable
 fun App(container: AppContainer) {
-    // The first read; screens ask for later ones.
-    LaunchedEffect(container) { container.ticketStore.refresh() }
+    // Read at the start, and again whenever the window gets the focus back: the tickets change
+    // outside the app (a terminal, an agent session), mostly while the user is away from it.
+    val focused = LocalWindowInfo.current.isWindowFocused
+    LaunchedEffect(container, focused) {
+        if (focused || container.ticketStore.snapshot.value.graph == null) container.ticketStore.refresh()
+    }
     SafanoriaTheme {
         val backStack = remember { mutableStateListOf<Route>(BoardRoute) }
         NavDisplay(
