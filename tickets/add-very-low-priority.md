@@ -2,11 +2,11 @@
 id: add-very-low-priority
 type: feature
 title: Add very low priority
-status: review
+status: done
 priority: medium
 size: S
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-10-05
 ---
 
 ## Objective
@@ -54,3 +54,4 @@ Priority is referenced in SPEC §5, the schema, `Frontmatter.kt` (enum), `Ticket
 
 Implemented as planned, no deviations. `./gradlew allTests` passes (JVM and linuxX64). No
 learnings beyond the ticket: the spec-version call is recorded in the Plan.
+- **2026-10-05** · status · done
