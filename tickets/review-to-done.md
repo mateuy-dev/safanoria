@@ -2,7 +2,7 @@
 id: review-to-done
 type: feature
 title: "Review to done: land a ticket in one step, reopen it, and do both from the app"
-status: backlog
+status: in-progress
 priority: medium
 size: L
 created: 2026-10-05
@@ -70,3 +70,4 @@ To decide in the ticket: the command names; whether the landing command also acc
 
 ## Work Log
 
+- **2026-10-05** · status · started
