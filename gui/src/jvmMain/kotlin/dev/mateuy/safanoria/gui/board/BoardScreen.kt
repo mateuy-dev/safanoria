@@ -1,7 +1,7 @@
 package dev.mateuy.safanoria.gui.board
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -33,12 +32,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.mateuy.safanoria.core.Priority
+import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.core.TicketType
 import dev.mateuy.safanoria.core.text
 import dev.mateuy.safanoria.gui.theme.color
@@ -47,12 +50,17 @@ import dev.mateuy.safanoria.gui.theme.label
 @Composable
 fun BoardScreen(viewModel: BoardViewModel, onOpenTicket: (String) -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    BoardContent(state, onRefresh = viewModel::refresh, onOpenTicket = onOpenTicket)
+    BoardContent(state, onRefresh = viewModel::refresh, onToggleColumn = viewModel::toggleColumn, onOpenTicket = onOpenTicket)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BoardContent(state: BoardViewState, onRefresh: () -> Unit, onOpenTicket: (String) -> Unit) {
+fun BoardContent(
+    state: BoardViewState,
+    onRefresh: () -> Unit,
+    onToggleColumn: (Status?) -> Unit,
+    onOpenTicket: (String) -> Unit,
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -69,25 +77,41 @@ fun BoardContent(state: BoardViewState, onRefresh: () -> Unit, onOpenTicket: (St
                 Text(it, Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error)
             }
             Row(
-                Modifier.fillMaxSize().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp),
+                Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                state.columns.forEach { column -> BoardColumnView(column, onOpenTicket) }
+                // Open columns share the width; collapsed ones are a strip.
+                state.columns.forEach { column ->
+                    val onToggle = { onToggleColumn(column.status) }
+                    if (column.collapsed) CollapsedColumnView(column, onToggle)
+                    else BoardColumnView(column, onToggle, onOpenTicket, Modifier.weight(1f))
+                }
             }
         }
     }
 }
 
 @Composable
-private fun BoardColumnView(column: BoardColumn, onOpenTicket: (String) -> Unit) {
+private fun BoardColumnView(column: BoardColumn, onToggle: () -> Unit, onOpenTicket: (String) -> Unit, modifier: Modifier = Modifier) {
     Column(
-        Modifier.width(300.dp).fillMaxHeight()
+        modifier.fillMaxHeight()
             .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surfaceContainer),
     ) {
-        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Box(Modifier.size(10.dp).clip(CircleShape).background(column.status?.color ?: MaterialTheme.colorScheme.error))
-            Text(column.status?.label ?: "Unreadable status", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        Row(
+            Modifier.fillMaxWidth().clickable(onClick = onToggle).padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            StatusDot(column)
+            Text(
+                column.status.columnLabel,
+                Modifier.weight(1f, fill = false),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
             Text("${column.cards.size}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         LazyColumn(
@@ -96,6 +120,45 @@ private fun BoardColumnView(column: BoardColumn, onOpenTicket: (String) -> Unit)
         ) {
             items(column.cards, key = { it.id }) { card -> TicketCardView(card, onClick = { onOpenTicket(card.id) }) }
         }
+    }
+}
+
+/** A collapsed column: a strip with the count and the name written downwards. Click to open it. */
+@Composable
+private fun CollapsedColumnView(column: BoardColumn, onToggle: () -> Unit) {
+    Column(
+        Modifier.width(44.dp).fillMaxHeight()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .clickable(onClick = onToggle)
+            .padding(vertical = 14.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        StatusDot(column)
+        Text("${column.cards.size}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            column.status.columnLabel,
+            Modifier.vertical().rotate(90f),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun StatusDot(column: BoardColumn) {
+    Box(Modifier.size(10.dp).clip(CircleShape).background(column.status?.color ?: MaterialTheme.colorScheme.error))
+}
+
+private val Status?.columnLabel: String get() = this?.label ?: "Unreadable status"
+
+/** Takes the space of the content turned a quarter, so a following `rotate(90f)` fits its layout. */
+private fun Modifier.vertical() = layout { measurable, _ ->
+    val placeable = measurable.measure(Constraints())
+    layout(placeable.height, placeable.width) {
+        placeable.place(x = -(placeable.width - placeable.height) / 2, y = -(placeable.height - placeable.width) / 2)
     }
 }
 

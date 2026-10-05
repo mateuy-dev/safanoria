@@ -14,8 +14,11 @@ data class BoardViewState(
     val error: String? = null,
 )
 
-/** A status and its tickets, in board order. [status] is null for tickets whose status can't be read. */
-data class BoardColumn(val status: Status?, val cards: List<TicketCard>)
+/**
+ * A status and its tickets, in board order. [status] is null for tickets whose status can't be
+ * read. A [collapsed] column shows only its name and count.
+ */
+data class BoardColumn(val status: Status?, val cards: List<TicketCard>, val collapsed: Boolean = false)
 
 data class TicketCard(
     val id: String,
