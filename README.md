@@ -188,7 +188,7 @@ A desktop app shows the same tickets as a board you can click through. It runs o
 - **Ticket**: the body as rendered markdown, its fields, links to its parent, children and
   blockers, and its `validate` problems. Problems are those of this checkout's files, so a
   ticket shown from another branch shows none.
-- **Actions**, in the bar under the ticket: **Start** on a backlog or ready ticket does what
+- **Actions**, in the bar under the ticket (Start and Finish ask first): **Start** on a backlog or ready ticket does what
   `safanoria start` does, then opens a terminal in the new worktree; **Open terminal** on a
   ticket in progress or in review opens one where its branch is checked out; **Finish** on a
   ticket in progress sets it to `review`, as `safanoria finish` does. On Linux the terminal is

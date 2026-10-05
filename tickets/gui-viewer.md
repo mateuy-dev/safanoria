@@ -92,3 +92,6 @@ Out of scope for v1 (see `v1-tooling`).
 - **2026-10-05** · decision · The tickets are read again when the window gets the focus back,
   not by watching files: changes on other branches are git refs, which a watcher on the
   ticket directory wouldn't see.
+- **2026-10-05** · decision · Start and Finish ask for confirmation first (asked by the user):
+  one click would otherwise create a branch and worktree or make a commit. Open terminal
+  changes nothing and doesn't ask.

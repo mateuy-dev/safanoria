@@ -22,21 +22,24 @@ data class TicketViewState(
     val problems: List<TicketProblem> = emptyList(),
     /** What can be done with the ticket in its status. */
     val actions: List<TicketAction> = emptyList(),
+    /** The action waiting for the user to confirm it, or null. */
+    val confirming: TicketAction? = null,
     /** True while one of the [actions] runs. */
     val busy: Boolean = false,
     /** How the last action went, when there is something to tell. */
     val notice: Notice? = null,
 )
 
-enum class TicketAction {
+/** [confirmed] actions change the repository (a branch, a commit), so the user is asked first. */
+enum class TicketAction(val confirmed: Boolean) {
     /** Backlog or ready: start it (branch, worktree) and open a terminal there. */
-    START,
+    START(confirmed = true),
 
     /** In progress or review: open a terminal where its branch is checked out. */
-    OPEN_TERMINAL,
+    OPEN_TERMINAL(confirmed = false),
 
     /** In progress: the work is complete, set it to review. */
-    FINISH,
+    FINISH(confirmed = true),
 }
 
 data class Notice(val text: String, val error: Boolean)

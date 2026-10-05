@@ -17,21 +17,43 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import okio.Path
 
 class TicketViewModel(private val id: String, private val store: TicketStore, private val terminal: Terminal) : ViewModel() {
     /** The running action and the last one's result: what the tickets themselves don't say. */
-    private data class Activity(val busy: Boolean = false, val notice: Notice? = null)
+    private data class Activity(val busy: Boolean = false, val notice: Notice? = null, val confirming: TicketAction? = null)
 
     private val activity = MutableStateFlow(Activity())
 
     val state: StateFlow<TicketViewState> = combine(store.snapshot, activity) { snapshot, activity ->
-        ticketViewState(id, snapshot).copy(busy = activity.busy, notice = activity.notice)
+        ticketViewState(id, snapshot).copy(busy = activity.busy, notice = activity.notice, confirming = activity.confirming)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ticketViewState(id, store.snapshot.value))
 
+    /** The user asked for [action]: it runs now, or once confirmed ([confirm]) when it changes the repository. */
+    fun request(action: TicketAction) {
+        if (activity.value.busy) return
+        if (action.confirmed) activity.update { it.copy(confirming = action) } else run(action)
+    }
+
+    /** Runs the action that was waiting to be confirmed. */
+    fun confirm() {
+        activity.value.confirming?.let(::run)
+    }
+
+    fun cancel() {
+        activity.update { it.copy(confirming = null) }
+    }
+
+    private fun run(action: TicketAction) = when (action) {
+        TicketAction.START -> start()
+        TicketAction.OPEN_TERMINAL -> openTerminal()
+        TicketAction.FINISH -> finish()
+    }
+
     /** Starts the ticket and opens a terminal where it is to be worked on. */
-    fun start() = act {
+    private fun start() = act {
         when (val outcome = store.start(id)) {
             is StartOutcome.NotStarted -> Notice("Not started: ${outcome.reason}", error = true)
             is StartOutcome.Started -> when (val workspace = outcome.workspace) {
@@ -42,7 +64,7 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
     }
 
     /** Opens a terminal where the ticket's branch is checked out. */
-    fun openTerminal() = act {
+    private fun openTerminal() = act {
         when (val workspace = store.workspace(id)) {
             null -> Notice("Branch '$id' isn't checked out anywhere: add a worktree for it, or switch to it.", error = true)
             else -> openTerminal(workspace, done = null)
@@ -50,7 +72,7 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
     }
 
     /** The work is complete: sets the ticket to review. */
-    fun finish() = act {
+    private fun finish() = act {
         when (val outcome = store.finish(id)) {
             is FinishOutcome.NotFinished -> Notice("Not finished: ${outcome.reason}", error = true)
             is FinishOutcome.Finished -> Notice("In review, committed on ${outcome.branch}", error = false)

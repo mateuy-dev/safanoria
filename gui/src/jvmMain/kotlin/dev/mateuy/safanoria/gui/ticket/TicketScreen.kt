@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,13 +53,9 @@ fun TicketScreen(viewModel: TicketViewModel, onOpenTicket: (String) -> Unit, onB
     val state by viewModel.state.collectAsStateWithLifecycle()
     TicketContent(
         state, onOpenTicket, onBack,
-        onAction = { action ->
-            when (action) {
-                TicketAction.START -> viewModel.start()
-                TicketAction.OPEN_TERMINAL -> viewModel.openTerminal()
-                TicketAction.FINISH -> viewModel.finish()
-            }
-        },
+        onAction = viewModel::request,
+        onConfirm = viewModel::confirm,
+        onCancel = viewModel::cancel,
     )
 }
 
@@ -69,7 +66,10 @@ fun TicketContent(
     onOpenTicket: (String) -> Unit,
     onBack: () -> Unit,
     onAction: (TicketAction) -> Unit,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
 ) {
+    state.confirming?.let { Confirmation(it, state.id, onConfirm, onCancel) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -155,6 +155,32 @@ private fun ticketTypography(): MarkdownTypography {
         code = t.bodySmall.copy(fontFamily = FontFamily.Monospace),
         inlineCode = t.bodyMedium.copy(fontFamily = FontFamily.Monospace),
         table = t.bodySmall,
+    )
+}
+
+/** Asks before an action that changes the repository, saying what it will do. */
+@Composable
+private fun Confirmation(action: TicketAction, id: String, onConfirm: () -> Unit, onCancel: () -> Unit) {
+    val (title, text, confirm) = when (action) {
+        TicketAction.START -> Triple(
+            "Start $id?",
+            "Creates the branch $id with the ticket committed as in-progress, and its worktree when the project " +
+                "has one configured (otherwise this checkout switches to the branch). Then opens a terminal there.",
+            "Start",
+        )
+        TicketAction.FINISH -> Triple(
+            "Set $id to review?",
+            "Sets the ticket to review, logs it, and commits only the ticket on its branch.",
+            "Set to review",
+        )
+        TicketAction.OPEN_TERMINAL -> return
+    }
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text(title) },
+        text = { Text(text) },
+        confirmButton = { Button(onClick = onConfirm) { Text(confirm) } },
+        dismissButton = { TextButton(onClick = onCancel) { Text("Cancel") } },
     )
 }
 
