@@ -74,7 +74,7 @@ class TicketViewStateTest {
         assertEquals(listOf(TicketAction.START), actions("backlog"))
         assertEquals(listOf(TicketAction.START), actions("ready"))
         assertEquals(listOf(TicketAction.OPEN_TERMINAL, TicketAction.FINISH), actions("in-progress"))
-        assertEquals(listOf(TicketAction.OPEN_TERMINAL), actions("review"))
+        assertEquals(listOf(TicketAction.OPEN_TERMINAL, TicketAction.MERGE, TicketAction.REOPEN), actions("review"))
         assertEquals(emptyList(), actions("done"))
         assertEquals(emptyList(), actions("wontfix"))
         assertEquals(emptyList(), actions("paused"))

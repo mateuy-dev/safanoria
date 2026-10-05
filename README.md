@@ -37,7 +37,8 @@ content. `safanoria-cli --help` lists its commands; each is described below.
 | `init`, `update` | Set up a project; install or update the skill, SPEC.md and templates |
 | `new` | Create a ticket from a title: id, template, parent's Plan |
 | `list`, `board` | One line per ticket; a markdown board by status |
-| `start`, `finish` | Start a ticket (branch, worktree, `in-progress`); set it `review`, or `done` once merged |
+| `start`, `finish` | Start a ticket (branch, worktree, `in-progress`); set it `review` when the work is complete |
+| `merge`, `reopen` | Land a ticket in review (merged, `done`, worktree and branch removed); or send it back to `in-progress` |
 | `context` | The current branch's ticket, for the agent session (SessionStart hook) |
 | `validate`, `hook` | Check every SPEC rule; before each commit |
 | `release` | Stamp `resolvedIn` on the tickets a release ships |
@@ -120,8 +121,8 @@ most four words); it's the branch name.
 run. `new` without a title asks for the title, the type and the id (enter keeps the suggestion),
 optionally priority, size, parent, tags (when the project declares some) and objective, and, on a branch other than `mainBranch`,
 whether the ticket goes on `mainBranch`; with a title it asks only for a missing `area`.
-`start`, `finish` and `release` without an id or component offer a list (backlog and ready
-tickets to start; in-progress ones to finish, or in review with `--done`). `init` asks for the
+`start`, `finish`, `merge`, `reopen` and `release` without an id or component offer a list (backlog and ready
+tickets to start; in-progress ones to finish; those in review to merge or reopen, and `reopen` asks for the reason). `init` asks for the
 components and where each one's version is, and `init` and `update` ask before changing a file
 of yours. Ctrl-C cancels without changing anything. When stdin or stdout isn't a terminal (scripts, agents, CI), nothing is asked:
 a missing value is an error, as before.
@@ -215,10 +216,13 @@ see its output (a crash). In a directory that is in no Safanoria project, a wind
 - **Ticket**: the body as rendered markdown, its fields, links to its parent, children and
   blockers, and its `validate` problems. Problems are those of this checkout's files, so a
   ticket shown from another branch shows none.
-- **Actions**, in the bar under the ticket (Start and Finish ask first): **Start** on a backlog or ready ticket does what
+- **Actions**, in the bar under the ticket (all but Open terminal ask first): **Start** on a backlog or ready ticket does what
   `safanoria-cli start` does, then opens a terminal in the new worktree; **Open terminal** on a
   ticket in progress or in review opens one where its branch is checked out; **Finish** on a
-  ticket in progress sets it to `review`, as `safanoria-cli finish` does. On Linux the terminal is
+  ticket in progress sets it to `review`, as `safanoria-cli finish` does, and shows why it
+  refused or what the ticket still has open. A ticket in review has **Merge and finish**, which
+  does what `safanoria-cli merge` does, and **Back to in progress**, which asks for the reason
+  and does what `safanoria-cli reopen` does. On Linux the terminal is
   `$TERMINAL`, else the first usual one found on the `PATH`.
 
 The app reads the tickets again when its window gets the focus back, and on Refresh.
@@ -230,7 +234,8 @@ safanoria-cli start herd-photos --dry-run       # what it would do
 safanoria-cli start herd-photos                 # branch, status: in-progress, worktree
 cd ../VacAppKMP--herd-photos && claude      # an ordinary session, in the worktree
 safanoria-cli finish herd-photos                # work complete: status: review
-safanoria-cli finish herd-photos --done         # after the merge: status: done
+safanoria-cli merge herd-photos                 # reviewed: merged, status: done, worktree and branch gone
+safanoria-cli reopen herd-photos --reason "…"   # or: the review found something, back to in-progress
 ```
 
 **Start.** `start` creates the branch `<id>` from the parent's branch (when the parent has
@@ -270,11 +275,36 @@ Hook in `.claude/settings.json`, if you set it up by hand:
 { "hooks": { "SessionStart": [ { "hooks": [ { "type": "command", "command": "safanoria-cli context 2>/dev/null || true" } ] } ] } }
 ```
 
-**Finish.** Tell the session the work is done, or run `finish`. It sets `status: review` and
-logs it. `finish --done` sets `done` once the branch is merged into its target (it refuses
-before), and checks the ticket's item in its parent's Plan. Either way, it commits only the
-ticket, on the branch that has its real copy. That's the worktree when the branch is checked
-out there, otherwise the branch itself, without checking it out.
+**Finish.** Tell the session the work is done, or run `finish`. It sets `status: review`, logs
+it and commits only the ticket, on the branch that has its real copy: in the worktree when the
+branch is checked out there, otherwise on the branch itself, without checking it out. First it
+checks that the branch is what a reviewer should see. It refuses when the worktree has
+uncommitted changes, or when the branch is behind its target (commits that only touch tickets
+don't count: tickets are created on `main` all the time). It lists the ticket's unchecked
+Acceptance Criteria and pending Learnings without stopping for them. Then it prints what there
+is to review (the diff stat against the target) and the next command.
+
+**Review, then land or go back.** After the review, one command each way, from any checkout:
+
+- `merge <id>` lands it. It merges the branch into its target (`main`, or the parent's branch)
+  with one merge commit, `<id>: merge (done)`, that also sets `status: done`, logs it and checks
+  the ticket's item in its parent's Plan: `done` and the merge are the same commit. Then it
+  removes the worktree and deletes the branch (without a `worktree` setting, it switches the
+  checkout back to the target). It pushes nothing, so `git reset --hard HEAD~1` on the target
+  undoes it. It refuses, changing nothing, when the worktree has uncommitted changes, the merge
+  conflicts (merge the target into the branch, solve it there, `merge` again), the tickets
+  wouldn't validate, or the target is checked out with changes in the way. It only takes
+  tickets in `review`: run `finish` first. `--dry-run` checks without merging. It needs git 2.38.
+- `reopen <id> --reason "…"` sends it back to `in-progress` and logs the reason, on the same
+  branch and worktree.
+
+**Merges made elsewhere.** When the branch is merged by a pull request or by hand, the target
+has the ticket in `review`. `finish --done` without an id sets every such ticket `done` (one
+`<id>: done` commit each, checking the parent's Plan) and removes its worktree and local
+branch; a worktree with uncommitted files is kept, with its branch. `finish <id> --done` does
+one. `release` does the same before stamping, and `validate` warns about them
+(`review-merged`). A squash merge leaves no trace git can follow: delete the branch, and the
+ticket counts as merged.
 
 ## Releasing
 
@@ -290,7 +320,9 @@ safanoria-cli release rails 2.8.0 --ticket fix-login --ticket export-csv   # ext
 sets `updated`. Each component is stamped on its own, so an app and a server in the same
 repository release at their own pace; a ticket for both gets both versions. Run it on
 `mainBranch` (else `--any-branch`) as part of the release commit: it doesn't commit. It
-refuses a version lower than one already stamped for the component.
+refuses a version lower than one already stamped for the component. A ticket merged into
+`mainBranch` but still in `review` is set `done` first, in the same files, so it isn't left out
+of the version; its worktree and branch are removed as `finish --done` does.
 
 External components (released from another repository) are stamped here with the version
 given, by hand or from that repository's release job. Use `--ticket` when `done` here doesn't
@@ -377,6 +409,7 @@ Elsewhere, install with `SAFANORIA_CLI_ONLY=1` and `install.sh`, and run `safano
 | `attachment-missing` | A link to a file under `attachments/` that isn't there (§7.8) |
 | `attachment-large` (warning) | An attachment over 1 MB (§7.8); warnings don't change the exit code |
 | `id-created-twice` (warning) | Another branch created a ticket with this id separately; they will conflict at merge, so rename one (§14.3) |
+| `review-merged` (warning) | A ticket merged into its target but still `review`: `finish --done` sets it `done` (§6.1) |
 
 ## Planned
 

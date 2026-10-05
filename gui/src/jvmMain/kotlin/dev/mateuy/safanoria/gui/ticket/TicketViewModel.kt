@@ -8,6 +8,8 @@ import dev.mateuy.safanoria.core.Ticket
 import dev.mateuy.safanoria.core.TicketGraph
 import dev.mateuy.safanoria.core.text
 import dev.mateuy.safanoria.gui.data.FinishOutcome
+import dev.mateuy.safanoria.gui.data.MergeOutcome
+import dev.mateuy.safanoria.gui.data.ReopenOutcome
 import dev.mateuy.safanoria.gui.data.StartOutcome
 import dev.mateuy.safanoria.gui.data.Terminal
 import dev.mateuy.safanoria.gui.data.TicketStore
@@ -37,19 +39,21 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
         if (action.confirmed) activity.update { it.copy(confirming = action) } else run(action)
     }
 
-    /** Runs the action that was waiting to be confirmed. */
-    fun confirm() {
-        activity.value.confirming?.let(::run)
+    /** Runs the action that was waiting to be confirmed. [input] is what its question asked for: the reason to reopen. */
+    fun confirm(input: String = "") {
+        activity.value.confirming?.let { run(it, input) }
     }
 
     fun cancel() {
         activity.update { it.copy(confirming = null) }
     }
 
-    private fun run(action: TicketAction) = when (action) {
+    private fun run(action: TicketAction, input: String = "") = when (action) {
         TicketAction.START -> start()
         TicketAction.OPEN_TERMINAL -> openTerminal()
         TicketAction.FINISH -> finish()
+        TicketAction.MERGE -> merge()
+        TicketAction.REOPEN -> reopen(input)
     }
 
     /** Starts the ticket and opens a terminal where it is to be worked on. */
@@ -75,7 +79,26 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
     private fun finish() = act {
         when (val outcome = store.finish(id)) {
             is FinishOutcome.NotFinished -> Notice("Not finished: ${outcome.reason}", error = true)
-            is FinishOutcome.Finished -> Notice("In review, committed on ${outcome.branch}", error = false)
+            is FinishOutcome.Finished -> Notice(
+                (listOf("In review, committed on ${outcome.branch}") + outcome.open.map { "Still open: $it" }).joinToString("\n"),
+                error = false,
+            )
+        }
+    }
+
+    /** The review is fine: merges the ticket's branch into its target, done. */
+    private fun merge() = act {
+        when (val outcome = store.merge(id)) {
+            is MergeOutcome.NotMerged -> Notice("Not merged: ${outcome.reason}", error = true)
+            is MergeOutcome.Merged -> Notice((listOf("Merged into ${outcome.target} and done; nothing was pushed") + outcome.cleanUp).joinToString("\n"), error = false)
+        }
+    }
+
+    /** The review found something: back to in progress, with [reason] logged. */
+    private fun reopen(reason: String) = act {
+        when (val outcome = store.reopen(id, reason)) {
+            is ReopenOutcome.NotReopened -> Notice("Not reopened: ${outcome.reason}", error = true)
+            is ReopenOutcome.Reopened -> Notice("In progress again, committed on ${outcome.branch}", error = false)
         }
     }
 
@@ -123,7 +146,7 @@ internal fun ticketViewState(id: String, snapshot: TicketsSnapshot): TicketViewS
         actions = when (f?.status) {
             Status.BACKLOG, Status.READY -> listOf(TicketAction.START)
             Status.IN_PROGRESS -> listOf(TicketAction.OPEN_TERMINAL, TicketAction.FINISH)
-            Status.REVIEW -> listOf(TicketAction.OPEN_TERMINAL)
+            Status.REVIEW -> listOf(TicketAction.OPEN_TERMINAL, TicketAction.MERGE, TicketAction.REOPEN)
             else -> emptyList()
         },
         problems = snapshot.diagnostics[id].orEmpty().map { TicketProblem(it.line, it.code, it.message, it.severity == Severity.ERROR) },

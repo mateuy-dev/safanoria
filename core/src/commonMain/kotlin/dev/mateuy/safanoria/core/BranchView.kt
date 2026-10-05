@@ -40,29 +40,7 @@ public class BranchView private constructor(
         }
 
         val old = git.commitId("refs/heads/$branch") ?: throw GitException("no branch '$branch'")
-        val scratch = git.commonDir() / "safanoria-new.tmp"
-        val fs = SystemFileSystem
-        // Changes per directory (tree path), applied bottom-up: blobs first, then each new tree in its parent.
-        val changes = mutableMapOf<String, MutableMap<String, TreeEntry>>()
-        for ((f, rel) in files.zip(relative)) {
-            fs.write(scratch) { writeUtf8(f.text) }
-            val blob = git.hashObject(scratch)
-            val path = (sub + rel.split('/')).joinToString("/")
-            changes.getOrPut(path.substringBeforeLast('/', "")) { mutableMapOf() }[path.substringAfterLast('/')] =
-                TreeEntry("100644", "blob", blob, null, path.substringAfterLast('/'))
-        }
-        fs.delete(scratch)
-        val dirs = changes.keys.flatMap { dir -> generateSequence(dir) { d -> if (d.isEmpty()) null else d.substringBeforeLast('/', "") }.toList() }.toSet()
-        var tree = ""
-        for (dir in dirs.sortedByDescending { if (it.isEmpty()) 0 else it.count { c -> c == '/' } + 1 }) {
-            val entries = (git.tree(old, dir).orEmpty().associateBy { it.name } + changes[dir].orEmpty()).values.sortedBy { it.name }
-            tree = git.mktree(entries, scratch, fs)
-            if (dir.isNotEmpty()) {
-                val name = dir.substringAfterLast('/')
-                changes.getOrPut(dir.substringBeforeLast('/', "")) { mutableMapOf() }[name] = TreeEntry("040000", "tree", tree, null, name)
-            }
-        }
-        val commit = git.commitTree(tree, old, message)
+        val commit = git.commitTree(treeWith(git, old, sub, files.zip(relative) { f, rel -> rel to f.text }), listOf(old), message)
         git.updateBranch(branch, commit, old)
         return commit
     }
@@ -83,6 +61,37 @@ public class BranchView private constructor(
             return BranchView(branch, view, worktree, git, layout.sub)
         }
     }
+}
+
+/**
+ * Stores the tree of [base] (a commit or a tree) with [files] added or replaced, and returns its
+ * id. [files] are paths relative to the repository root, which is [sub] inside the git top level,
+ * with their text. Plumbing only: no working tree or index changes.
+ */
+internal fun treeWith(git: Git, base: String, sub: List<String>, files: List<Pair<String, String>>): String {
+    val scratch = git.commonDir() / "safanoria-new.tmp"
+    val fs = SystemFileSystem
+    // Changes per directory (tree path), applied bottom-up: blobs first, then each new tree in its parent.
+    val changes = mutableMapOf<String, MutableMap<String, TreeEntry>>()
+    for ((rel, text) in files) {
+        fs.write(scratch) { writeUtf8(text) }
+        val blob = git.hashObject(scratch)
+        val path = (sub + rel.split('/')).joinToString("/")
+        changes.getOrPut(path.substringBeforeLast('/', "")) { mutableMapOf() }[path.substringAfterLast('/')] =
+            TreeEntry("100644", "blob", blob, null, path.substringAfterLast('/'))
+    }
+    fs.delete(scratch)
+    val dirs = changes.keys.flatMap { dir -> generateSequence(dir) { d -> if (d.isEmpty()) null else d.substringBeforeLast('/', "") }.toList() }.toSet()
+    var tree = ""
+    for (dir in dirs.sortedByDescending { if (it.isEmpty()) 0 else it.count { c -> c == '/' } + 1 }) {
+        val entries = (git.tree(base, dir).orEmpty().associateBy { it.name } + changes[dir].orEmpty()).values.sortedBy { it.name }
+        tree = git.mktree(entries, scratch, fs)
+        if (dir.isNotEmpty()) {
+            val name = dir.substringAfterLast('/')
+            changes.getOrPut(dir.substringBeforeLast('/', "")) { mutableMapOf() }[name] = TreeEntry("040000", "tree", tree, null, name)
+        }
+    }
+    return tree
 }
 
 /** [base] with [files] added or replaced, read-only: what a repository would look like after writing them. */

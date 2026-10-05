@@ -24,6 +24,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,6 +32,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,7 +70,7 @@ fun TicketContent(
     onOpenTicket: (String) -> Unit,
     onBack: () -> Unit,
     onAction: (TicketAction) -> Unit,
-    onConfirm: () -> Unit,
+    onConfirm: (String) -> Unit,
     onCancel: () -> Unit,
 ) {
     state.confirming?.let { Confirmation(it, state.id, onConfirm, onCancel) }
@@ -160,7 +164,9 @@ private fun ticketTypography(): MarkdownTypography {
 
 /** Asks before an action that changes the repository, saying what it will do. */
 @Composable
-private fun Confirmation(action: TicketAction, id: String, onConfirm: () -> Unit, onCancel: () -> Unit) {
+private fun Confirmation(action: TicketAction, id: String, onConfirm: (String) -> Unit, onCancel: () -> Unit) {
+    // Only reopening asks for something: the reason, which the Work Log needs (SPEC §6.1).
+    var reason by remember(action) { mutableStateOf("") }
     val (title, text, confirm) = when (action) {
         TicketAction.START -> Triple(
             "Start $id?",
@@ -173,13 +179,32 @@ private fun Confirmation(action: TicketAction, id: String, onConfirm: () -> Unit
             "Sets the ticket to review, logs it, and commits only the ticket on its branch.",
             "Set to review",
         )
+        TicketAction.MERGE -> Triple(
+            "Merge and finish $id?",
+            "Merges the branch $id into its target with a merge commit that also sets the ticket to done, " +
+                "then removes its worktree and deletes the branch. Nothing is pushed.",
+            "Merge and finish",
+        )
+        TicketAction.REOPEN -> Triple(
+            "Send $id back to in progress?",
+            "Sets the ticket to in-progress again and logs the reason, committing only the ticket on its branch.",
+            "Back to in progress",
+        )
         TicketAction.OPEN_TERMINAL -> return
     }
+    val asksReason = action == TicketAction.REOPEN
     AlertDialog(
         onDismissRequest = onCancel,
         title = { Text(title) },
-        text = { Text(text) },
-        confirmButton = { Button(onClick = onConfirm) { Text(confirm) } },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(text)
+                if (asksReason) {
+                    OutlinedTextField(reason, { reason = it }, Modifier.fillMaxWidth(), label = { Text("What did the review find?") })
+                }
+            }
+        },
+        confirmButton = { Button(onClick = { onConfirm(reason) }, enabled = !asksReason || reason.isNotBlank()) { Text(confirm) } },
         dismissButton = { TextButton(onClick = onCancel) { Text("Cancel") } },
     )
 }
@@ -201,6 +226,8 @@ private fun ActionBar(state: TicketViewState, onAction: (TicketAction) -> Unit) 
                     TicketAction.START -> Button(onClick, enabled = !state.busy) { Text("Start") }
                     TicketAction.OPEN_TERMINAL -> OutlinedButton(onClick, enabled = !state.busy) { Text("Open terminal") }
                     TicketAction.FINISH -> Button(onClick, enabled = !state.busy) { Text("Finish: set to review") }
+                    TicketAction.MERGE -> Button(onClick, enabled = !state.busy) { Text("Merge and finish") }
+                    TicketAction.REOPEN -> OutlinedButton(onClick, enabled = !state.busy) { Text("Back to in progress") }
                 }
             }
             if (state.busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)

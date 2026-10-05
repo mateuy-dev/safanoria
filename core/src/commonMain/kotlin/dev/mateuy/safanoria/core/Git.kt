@@ -23,6 +23,12 @@ public data class Worktree(val path: Path, val branch: String?)
  */
 public data class TreeEntry(val mode: String, val type: String, val id: String, val size: Long?, val name: String)
 
+/** What [Git.mergeTree] found: the merged tree's id, or the paths that conflict. */
+public sealed interface MergeTree {
+    public data class Clean(val tree: String) : MergeTree
+    public data class Conflict(val paths: List<String>) : MergeTree
+}
+
 /** The git calls Safanoria needs, run in [root]. */
 public class Git(private val root: Path) {
     /** With [stderr] false, stderr is not captured (for output that must be exact, like file contents). */
@@ -117,14 +123,49 @@ public class Git(private val root: Path) {
         return result.output.trim()
     }
 
-    /** Creates a commit of [tree] on top of [parent] and returns its id; the author is the user's git identity. */
-    public fun commitTree(tree: String, parent: String, message: String): String =
-        gitOrThrow("commit-tree", tree, "-p", parent, "-m", message).trim()
+    /** Creates a commit of [tree] on top of [parents] (two for a merge) and returns its id; the author is the user's git identity. */
+    public fun commitTree(tree: String, parents: List<String>, message: String): String =
+        gitOrThrow("commit-tree", tree, *parents.flatMap { listOf("-p", it) }.toTypedArray(), "-m", message).trim()
 
-    /** Moves branch [branch] from [old] to [new]; fails if it moved meanwhile. */
-    public fun updateBranch(branch: String, new: String, old: String) {
-        gitOrThrow("update-ref", "-m", "safanoria-cli new", "refs/heads/$branch", new, old)
+    /** Moves branch [branch] from [old] to [new]; fails if it moved meanwhile. [why] goes to the reflog. */
+    public fun updateBranch(branch: String, new: String, old: String, why: String = "safanoria-cli new") {
+        gitOrThrow("update-ref", "-m", why, "refs/heads/$branch", new, old)
     }
+
+    /**
+     * Merges [theirs] into [ours] without a working tree (`merge-tree --write-tree`, git 2.38):
+     * the merged tree, or the conflicting paths. Nothing but objects is written.
+     */
+    public fun mergeTree(ours: String, theirs: String): MergeTree {
+        val result = git("merge-tree", "--write-tree", "--name-only", "--no-messages", ours, theirs, stderr = false)
+        val lines = result.output.lines().map { it.trim() }.filter { it.isNotEmpty() }
+        return when (result.exitCode) {
+            0 -> MergeTree.Clean(lines.first())
+            1 -> MergeTree.Conflict(lines.drop(1))
+            else -> throw GitException("git merge-tree failed (${result.exitCode}); it needs git 2.38 or later")
+        }
+    }
+
+    /** Uncommitted changes of this working tree, untracked files included, as `git status --porcelain` lines. */
+    public fun uncommitted(): List<String> = gitOrThrow("status", "--porcelain").lines().filter { it.isNotBlank() }
+
+    /** Whether commit [ancestor] is reachable from [descendant]. */
+    public fun isAncestor(ancestor: String, descendant: String): Boolean =
+        git("merge-base", "--is-ancestor", ancestor, descendant).exitCode == 0
+
+    /**
+     * How many commits of [target] that [branch] doesn't have change something outside [except]
+     * (a directory relative to the root).
+     */
+    public fun behind(branch: String, target: String, except: String): Int =
+        gitOrThrow("rev-list", "--count", "$branch..$target", "--", ":(top)", ":(exclude)$except").trim().toInt()
+
+    /** Paths under [dir] that differ between [from] and [to] (commits or trees); all relative to the root. */
+    public fun changedPaths(from: String, to: String, dir: String): List<String> =
+        gitOrThrow("-c", "core.quotePath=false", "diff", "--name-only", "--relative", from, to, "--", dir).lines().filter { it.isNotBlank() }
+
+    /** What [branch] changes since it left [target], as `git diff --stat`. */
+    public fun diffStat(target: String, branch: String): String = gitOrThrow("diff", "--stat", "$target...$branch").trimEnd()
 
     /** The best common ancestor of [a] and [b], or null when they share no history. */
     public fun mergeBase(a: String, b: String): String? =

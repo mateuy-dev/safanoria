@@ -73,10 +73,25 @@ Along the way:
 
 ## Finish
 
-When the user says the work is done: `safanoria-cli finish <id>` (or set `status: review` and log
-`status · review` yourself, and commit). Resolve pending Learnings if you can, and run the
-project's tests first. Set `done` (`safanoria-cli finish <id> --done`) only when the user says it is
-merged; that also checks the item in the parent's Plan.
+When the user says the work is done: resolve pending Learnings if you can, check the Acceptance
+Criteria that are met, run the project's tests and commit everything. Then `safanoria-cli finish
+<id>` (or set `status: review`, log `status · review` yourself, and commit). It refuses on
+uncommitted changes and on a branch behind its target: commit, or merge the target in, and run
+it again. It lists what the ticket still has open; tell the user.
+
+The user reviews. What comes next is theirs to say, never yours to start:
+
+- **"Merge it" / "land it"**: `safanoria-cli merge <id>`. One merge commit on the target with the
+  ticket `done` in it and the parent's Plan item checked; then it removes this worktree and
+  deletes the branch, so it is the last thing the session does. It pushes nothing. If it
+  refuses (a conflict, uncommitted changes), fix that on the branch and tell the user.
+- **The review found something**: `safanoria-cli reopen <id> --reason "<what>"`, then work on it
+  here as before.
+- **Merged elsewhere** (a pull request): `safanoria-cli finish --done` sets `done` on every ticket
+  merged but still in review, and removes their worktrees and branches.
+
+Without the CLI: merge with `git merge --no-ff --no-commit <id>` on the target, set `status: done`
+and log `status · done` (and check the item in the parent's Plan) before committing the merge.
 
 ## Release notes
 

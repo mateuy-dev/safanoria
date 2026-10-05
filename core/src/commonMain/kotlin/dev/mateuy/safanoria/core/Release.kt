@@ -18,6 +18,8 @@ public sealed interface ReleaseResult {
         val stamped: List<String>,
         val files: List<PlannedFile>,
         val warnings: List<String>,
+        /** Ids of the tickets set `done` first: merged, but still in `review` ([Finish.merged]). */
+        val promoted: List<String> = emptyList(),
     ) : ReleaseResult
 
     public data class Refused(val reason: String) : ReleaseResult
@@ -29,7 +31,39 @@ public sealed interface ReleaseResult {
  * writes [ReleaseResult.Ready.files]. All or nothing: any refusal stamps no ticket.
  */
 public object Release {
-    public fun prepare(repository: Repository, request: ReleaseRequest, today: String): ReleaseResult {
+    /**
+     * With [branches], on `mainBranch`: tickets merged there but still in `review` are set `done`
+     * first, in the same files, so a forgotten one isn't left out of the version.
+     */
+    public fun prepare(repository: Repository, request: ReleaseRequest, today: String, branches: Branches? = null): ReleaseResult {
+        val main = repository.config.mainBranch
+        val merged = branches?.takeIf { it.branches.first() == main }?.let { b ->
+            Finish.merged(b).filter { b.graph.ticket(it)?.branch == main && repository.ticket(it) != null }
+        }.orEmpty()
+        if (merged.isEmpty()) return stamp(repository, request, today)
+
+        val texts = linkedMapOf<okio.Path, String>()
+        try {
+            for (id in merged) {
+                val ticket = repository.ticket(id)!!
+                texts[ticket.path] = Finish.edit(texts[ticket.path] ?: ticket.text, Status.DONE, today)
+                val parent = repository.graph.parent(ticket) ?: continue
+                texts[parent.path] = Finish.checkInParent(texts[parent.path] ?: parent.text, parent.path, id, today)
+            }
+        } catch (e: TicketEditException) {
+            return refused("can't set a merged ticket done: ${e.message}")
+        }
+        val promoted = Repository(repository.root, OverlayFileSystem(repository.fileSystem, texts.mapKeys { it.key.normalized() }))
+        return when (val r = stamp(promoted, request, today)) {
+            is ReleaseResult.Refused -> r
+            is ReleaseResult.Ready -> {
+                val stamped = r.files.map { it.path }.toSet()
+                r.copy(files = r.files + texts.filterKeys { it !in stamped }.map { (path, text) -> PlannedFile(path, text, isNew = false) }, promoted = merged)
+            }
+        }
+    }
+
+    private fun stamp(repository: Repository, request: ReleaseRequest, today: String): ReleaseResult {
         val config = repository.config
         val c = request.component
         val component = config.components[c]

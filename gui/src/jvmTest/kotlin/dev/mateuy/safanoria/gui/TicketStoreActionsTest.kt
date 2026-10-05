@@ -2,6 +2,8 @@ package dev.mateuy.safanoria.gui
 
 import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.gui.data.FinishOutcome
+import dev.mateuy.safanoria.gui.data.MergeOutcome
+import dev.mateuy.safanoria.gui.data.ReopenOutcome
 import dev.mateuy.safanoria.gui.data.StartOutcome
 import dev.mateuy.safanoria.gui.data.TicketStore
 import kotlinx.coroutines.runBlocking
@@ -105,6 +107,57 @@ class TicketStoreActionsTest {
         assertTrue("- **2026-10-06** · status · review" in File(workspace, "tickets/first-one.md").readText())
         assertEquals("", git("status", "--porcelain", dir = workspace))
         assertEquals(Status.REVIEW, store.status("first-one"))
+    }
+
+    @Test
+    fun finishRefusesUncommittedWorkInTheWorktree() = runBlocking<Unit> {
+        repository(worktree = true, "first-one" to "backlog")
+        val store = TicketStore(root)
+        store.start("first-one", today = "2026-10-05")
+        File(base, "project--first-one/code.txt").writeText("work\n")
+
+        val outcome = assertIs<FinishOutcome.NotFinished>(store.finish("first-one", today = "2026-10-06"))
+
+        assertTrue("uncommitted changes (1 file)" in outcome.reason, outcome.reason)
+        assertEquals(Status.IN_PROGRESS, store.status("first-one"))
+    }
+
+    @Test
+    fun mergeLandsATicketInReviewAndRemovesItsWorktreeAndBranch() = runBlocking<Unit> {
+        repository(worktree = true, "first-one" to "backlog")
+        val store = TicketStore(root)
+        store.start("first-one", today = "2026-10-05")
+        val workspace = File(base, "project--first-one")
+        File(workspace, "code.txt").writeText("work\n")
+        git("add", ".", dir = workspace)
+        git("commit", "-q", "-m", "work", dir = workspace)
+        assertIs<MergeOutcome.NotMerged>(store.merge("first-one", today = "2026-10-06"))
+        store.finish("first-one", today = "2026-10-06")
+
+        val outcome = assertIs<MergeOutcome.Merged>(store.merge("first-one", today = "2026-10-07"))
+
+        assertEquals("main", outcome.target)
+        assertEquals("first-one: merge (done)", git("log", "-1", "--format=%s"))
+        assertEquals("work\n", File(project, "code.txt").readText())
+        assertTrue("- **2026-10-07** · status · done" in File(project, "tickets/first-one.md").readText())
+        assertTrue(!workspace.exists())
+        assertEquals("main", git("branch", "--format=%(refname:short)"))
+        assertEquals(Status.DONE, store.status("first-one"))
+    }
+
+    @Test
+    fun reopenSendsATicketInReviewBackWithTheReason() = runBlocking<Unit> {
+        repository(worktree = true, "first-one" to "backlog")
+        val store = TicketStore(root)
+        store.start("first-one", today = "2026-10-05")
+        store.finish("first-one", today = "2026-10-06")
+
+        assertIs<ReopenOutcome.NotReopened>(store.reopen("first-one", "  ", today = "2026-10-07"))
+        assertEquals(ReopenOutcome.Reopened("first-one"), store.reopen("first-one", "The list isn't sorted", today = "2026-10-07"))
+
+        val text = File(base, "project--first-one/tickets/first-one.md").readText()
+        assertTrue("- **2026-10-07** · status · reopened: The list isn't sorted" in text, text)
+        assertEquals(Status.IN_PROGRESS, store.status("first-one"))
     }
 
     @Test

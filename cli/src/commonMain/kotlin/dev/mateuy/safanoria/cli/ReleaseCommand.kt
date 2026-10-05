@@ -9,7 +9,9 @@ import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
+import dev.mateuy.safanoria.core.Branches
 import dev.mateuy.safanoria.core.GitException
+import dev.mateuy.safanoria.core.Land
 import dev.mateuy.safanoria.core.Release
 import dev.mateuy.safanoria.core.ReleaseRequest
 import dev.mateuy.safanoria.core.ReleaseResult
@@ -24,7 +26,8 @@ import kotlin.time.Clock
 class ReleaseCommand : RepositoryCommand(name = "release") {
     override fun help(context: Context) =
         "Stamp resolvedIn.<component> on every done ticket with the component in its area and no " +
-            "version for it yet, and log it. Run on the main branch, as part of the release commit."
+            "version for it yet, and log it. Tickets merged but still in review are set done first. " +
+            "Run on the main branch, as part of the release commit."
 
     private val componentArgument by argument(name = "component", help = "Component from safanoria.yaml (on a terminal: asks)").optional()
     private val version by argument(help = "MAJOR.MINOR.PATCH (default: read from the component's version source; required for external ones)").optional()
@@ -37,7 +40,7 @@ class ReleaseCommand : RepositoryCommand(name = "release") {
         val repo = repository
         val today = date ?: Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
         val component = componentArgument ?: askComponent(repo)
-        val ready = when (val r = Release.prepare(repo, ReleaseRequest(component, version, tickets.ifEmpty { null }), today)) {
+        val ready = when (val r = Release.prepare(repo, ReleaseRequest(component, version, tickets.ifEmpty { null }), today, Branches.read(repo))) {
             is ReleaseResult.Refused -> throw PrintMessage("Not stamped: ${r.reason}", 1, true)
             is ReleaseResult.Ready -> r
         }
@@ -46,13 +49,16 @@ class ReleaseCommand : RepositoryCommand(name = "release") {
         ready.warnings.forEach { echo("warning: $it", err = true) }
         val what = "${ready.component} ${ready.version}" +
             (if (ready.versionFromSource) " (from ${repo.config.components.getValue(ready.component).version!!.file})" else "")
+        if (ready.promoted.isNotEmpty()) {
+            echo("${if (dryRun) "would set" else "set"} done, merged but still in review: ${ready.promoted.joinToString()}")
+        }
         if (ready.stamped.isEmpty()) {
             echo("nothing to stamp with $what: no done ticket with ${ready.component} in its area is missing it")
-            return
+        } else {
+            echo("${if (dryRun) "would stamp" else "stamped"} $what on ${ready.stamped.size} ticket${if (ready.stamped.size == 1) "" else "s"}:")
+            ready.stamped.forEach { id -> echo("  ${displayPath(repo.ticketDir / "$id.md")}") }
         }
-        echo("${if (dryRun) "would stamp" else "stamped"} $what on ${ready.stamped.size} ticket${if (ready.stamped.size == 1) "" else "s"}:")
-        ready.files.forEach { echo("  ${displayPath(it.path)}") }
-        if (dryRun) return
+        if (dryRun || ready.files.isEmpty()) return
 
         ready.files.forEach { f -> repo.fileSystem.write(f.path) { writeUtf8(f.text) } }
         val problems = Validator(Repository(repo.root, repo.fileSystem)).validate(ready.files.map { it.path })
@@ -60,6 +66,7 @@ class ReleaseCommand : RepositoryCommand(name = "release") {
             problems.forEach { echo(it.copy(file = it.file?.let { p -> displayPath(p).toPath() }).toString(), err = true) }
             throw ProgramResult(1)
         }
+        ready.promoted.forEach { id -> Land.cleanUp(repo, id, repo.config.mainBranch).forEach { echo(it) } }
     }
 
     private fun askComponent(repo: Repository): String {
