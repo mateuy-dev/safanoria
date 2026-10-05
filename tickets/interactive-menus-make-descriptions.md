@@ -2,7 +2,7 @@
 id: interactive-menus-make-descriptions
 type: feature
 title: "Interactive menus: make descriptions less prominent"
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-05
@@ -19,3 +19,4 @@ Make the descriptions visually secondary (e.g. dim/gray, via the list's descript
 
 ## Work Log
 
+- **2026-10-05** · status · started
