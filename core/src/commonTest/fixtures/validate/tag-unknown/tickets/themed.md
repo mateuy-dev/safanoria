@@ -1,13 +1,13 @@
 ---
-id: closed
+id: themed
 type: feature
-title: Ticket closed
-status: wontfix
+title: Ticket themed
+status: backlog
 priority: medium
 size: S
 created: 2026-10-01
 updated: 2026-10-01
-tags: [registry]
+tags: [registry, official-registry]
 ---
 
 ## Objective
@@ -22,4 +22,3 @@ Why.
 
 ## Work Log
 
-- **2026-10-01** · status · Not needed.

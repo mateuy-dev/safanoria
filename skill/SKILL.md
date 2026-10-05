@@ -32,10 +32,13 @@ planning or approval step, and a session works as the user directs it.
    wanted and why, with the context a later session will need. For a bug, also Steps to
    reproduce, Expected and Actual. Acceptance Criteria only if they are clear already.
 2. With the CLI, `safanoria-cli` (`safanoria-cli version` works): `safanoria-cli new "<title>" --objective "…"
-   [--type …] [--area …] [--size …] [--parent <id>] [--on <branch>]`. It picks the id, fills the
+   [--type …] [--area …] [--tag …] [--size …] [--parent <id>] [--on <branch>]`. It picks the id, fills the
    template and validates. Don't ask the user to confirm the id: tell them which one it got,
    and rename it if they ask (rename the file, its `id`, and any references; fine while the
    ticket is only on one branch).
+   **Tags**: if `safanoria.yaml` has `tags`, add with `--tag` those whose description fits the
+   ticket; most tickets have none. Never a tag that isn't declared there: a new theme is the
+   user's call, so suggest it instead.
 3. **Which branch** (SPEC §14.2):
    - A top-level ticket goes on `mainBranch`. In a session on another branch, use `--on <mainBranch>`:
      it commits the ticket there without touching this checkout. If that fails (e.g. `main` is

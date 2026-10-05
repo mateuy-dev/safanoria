@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/mateuy-dev/safanoria/main/schema/ticket.schema.json",
   "title": "Safanoria ticket frontmatter",
-  "description": "Frontmatter of a Safanoria ticket (SPEC.md §5), spec version 1. Covers rules checkable from one file; cross-file rules (references, area against components, channels, Plan children) are checked by `safanoria-cli validate`.",
+  "description": "Frontmatter of a Safanoria ticket (SPEC.md §5), spec version 1. Covers rules checkable from one file; cross-file rules (references, area against components, tags, channels, Plan children) are checked by `safanoria-cli validate`.",
   "type": "object",
   "required": ["id", "type", "title", "status", "priority", "size", "created", "updated"],
   "properties": {
@@ -18,6 +18,12 @@
       "minItems": 1,
       "uniqueItems": true,
       "description": "Components this ticket changes. Required when the project has more than one component."
+    },
+    "tags": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/slug" },
+      "uniqueItems": true,
+      "description": "Themes this ticket belongs to: keys of safanoria.yaml tags."
     },
     "assignee": { "type": ["string", "null"] },
     "created": { "$ref": "#/$defs/date" },

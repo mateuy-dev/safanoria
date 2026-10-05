@@ -1,0 +1,7 @@
+# expect: type /tags/registry
+safanoria: 1
+components:
+  app:
+    version: { file: gradle.properties, property: appVersionName }
+tags:
+  registry:

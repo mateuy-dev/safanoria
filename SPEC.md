@@ -39,6 +39,8 @@ components:                           # required, at least one
   rails:
     external: true                    # released from another repository
 channels: [whatsapp, email, phone, in-app, in-person]   # allowed requests[].channel
+tags:                                 # optional; themes tickets can be grouped by (§5, tags)
+  registry: Official registry integration
 userRef: VacApp user id               # what requests[].user refers to (documentation)
 refs:                                 # external systems tickets may reference (§5, refs)
   sentry: { url: "https://example.sentry.io/issues/?query={id}" }
@@ -52,6 +54,11 @@ learningTargets: [CLAUDE.md, docs/, .claude/skills/, code comment]   # optional 
   `external: true` means the component is released from another repository, and the version is
   supplied when stamping (§9).
 - `channels` defaults to `[email, phone, in-person, other]`.
+- `tags` maps each theme's name (a slug) to a one-line description of what it covers. They are
+  the allowed values of a ticket's `tags`; without it, no ticket can have tags. The description
+  is what whoever creates a ticket decides from. Keep the list short: a theme groups tickets
+  that are otherwise independent, across components and over time. It is not for what `type`
+  or `area` already say, nor for a bounded piece of work (that is a parent, §8.1).
 - Unknown keys MUST be preserved by tools and MAY be ignored.
 - [`schema/safanoria.schema.json`](schema/safanoria.schema.json) is the JSON Schema for this file.
 
@@ -102,6 +109,7 @@ and `safanoria.yaml`.
 | `priority` | yes | enum | | `very-low` \| `low` \| `medium` \| `high` \| `urgent` |
 | `size` | yes | enum | | `XS` \| `S` \| `M` \| `L` \| `XL`. For `research`, the time box. |
 | `area` | if >1 component | list of component | the only component | Components this ticket changes. |
+| `tags` | no | list of tag | `[]` | Themes this ticket belongs to, from `safanoria.yaml` `tags`. |
 | `assignee` | no | string | null | Who works on it, when it is not the usual person. |
 | `created` | yes | date | | `YYYY-MM-DD` |
 | `updated` | yes | date | | `YYYY-MM-DD`. Set on every change. |
@@ -372,6 +380,7 @@ A validator MUST report:
 - Invalid id, filename/id mismatch, duplicate id.
 - Missing required field; value outside its enum; malformed date or version.
 - `area` or `resolvedIn` key that is not a component; `resolvedIn` key not in `area`.
+- A tag that is not in `tags` of `safanoria.yaml`.
 - `resolvedIn` on a ticket that is not `done`, or on `research`/`wontfix`.
 - References (`parent`, `blockedBy`, `related`, Plan child items, Learning `new ticket`) to
   unknown ids; `blockedBy` cycles; more than one level of parents; `research` with children.
@@ -391,7 +400,7 @@ when the same ticket was created separately on two branches (§14.3).
 ## 13. Versioning of this spec
 
 `safanoria.yaml` declares the spec version. Additions that old tools can ignore (new optional
-fields, new sections) keep the version. Changes that make valid tickets invalid, or change a
+fields such as `tags`, new sections) keep the version. Changes that make valid tickets invalid, or change a
 field's meaning, increase it.
 
 The spec version is not the **Safanoria version**. Safanoria (this spec, the agent skill, the

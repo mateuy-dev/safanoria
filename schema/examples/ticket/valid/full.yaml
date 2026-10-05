@@ -6,6 +6,7 @@ status: done
 priority: high
 size: M
 area: [app, ktor]
+tags: [registry]
 assignee: someone-else
 created: 2026-09-28
 updated: 2026-10-02

@@ -3,6 +3,3 @@ components:
   app:
     version: { file: gradle.properties, property: version }
 channels: [email, whatsapp]
-tags:
-  registry: Official registry integration
-  offline: Working without a connection

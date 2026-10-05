@@ -102,6 +102,7 @@ The command, which you can use too:
 ```sh
 safanoria-cli new "Herd photos from the field" --dry-run   # suggested id, files it would write
 safanoria-cli new "Herd photos from the field" --id herd-photos --size M --objective "Why…"
+safanoria-cli new "Send movements" --tag registry             # a theme declared in safanoria.yaml tags
 safanoria-cli new "Map pin" --parent herd-locations          # child: herd-locations-map-pin, added to the parent's Plan
 safanoria-cli new "Export is slow" --on main                 # from another branch: committed on main, this checkout untouched
 ```
@@ -109,14 +110,15 @@ safanoria-cli new "Export is slow" --on main                 # from another bran
 `new` fills the template for the type (`<dir>/_TEMPLATE.<type>.md`, else `<dir>/_TEMPLATE.md`,
 else the built-in one, which for bugs has Steps to reproduce, Expected and Actual; `--objective`
 keeps those subsections) with the id, title, type, priority, size, `area` (required when there
-are several components), `status: backlog` and today's date. It refuses an id that exists on
+are several components), `tags`, `status: backlog` and today's date. It refuses a tag that
+`safanoria.yaml` doesn't declare, an id that exists on
 any branch (ids are never reused), an unknown parent, and a parent that can't have children; a
 branch with the same name is a warning. The suggested id is short (filler words dropped, at
 most four words); it's the branch name.
 
 **On a terminal, the CLI asks** for what you leave out. `safanoria-cli` alone asks which command to
 run. `new` without a title asks for the title, the type and the id (enter keeps the suggestion),
-optionally priority, size, parent and objective, and, on a branch other than `mainBranch`,
+optionally priority, size, parent, tags (when the project declares some) and objective, and, on a branch other than `mainBranch`,
 whether the ticket goes on `mainBranch`; with a title it asks only for a missing `area`.
 `start`, `finish` and `release` without an id or component offer a list (backlog and ready
 tickets to start; in-progress ones to finish, or in review with `--done`). `init` asks for the
@@ -150,6 +152,7 @@ merging into `mainBranch`.
 ```sh
 safanoria-cli list                                  # one line per ticket, in-progress first
 safanoria-cli list --status ready,backlog --type bug
+safanoria-cli list --tag registry                    # every ticket of a theme (safanoria.yaml tags)
 safanoria-cli list --parent v1-tooling --blocked    # children blocked by a ticket that is not done
 safanoria-cli list --format json                    # {tickets: [...]}: every field, plus children, blocks, openBlockers, progress
 safanoria-cli board                                 # markdown board on stdout
@@ -205,7 +208,7 @@ It stays in the terminal until its window is closed (`safanoria &` to keep the p
 - **Board**: a column per status, left to right as a ticket moves (Backlog, Ready, In progress,
   Review, Done, Won't fix). Every ticket is a card, children too, read from every local branch
   as `list` does. Done and Won't fix start collapsed: click a column's header to collapse or
-  open it. Chips filter by type, area and blocked. A card shows its parent, a parent's
+  open it. Chips filter by type, area, tag and blocked. A card shows its parent, its tags, a parent's
   `done/total` Plan items, open blockers, and how many problems `validate` finds in it.
 - **Ticket**: the body as rendered markdown, its fields, links to its parent, children and
   blockers, and its `validate` problems. Problems are those of this checkout's files, so a
@@ -359,6 +362,7 @@ Elsewhere, install with `SAFANORIA_CLI_ONLY=1` and `install.sh`, and run `safano
 | `schema-<keyword>` | A frontmatter or config rule of `schema/` (§2, §5): `schema-required`, `schema-enum`, `schema-pattern`… |
 | `id-mismatch`, `id-duplicate` | id differs from the filename, or is used twice (§3) |
 | `area-required`, `area-unknown-component` | `area` missing with several components, or not a component (§5) |
+| `tag-unknown` | a tag that `safanoria.yaml` `tags` doesn't declare (§2, §5) |
 | `resolved-in-not-allowed`, `resolved-in-unknown-component`, `resolved-in-not-in-area` | `resolvedIn` on a ticket that isn't `done`, on `research`/`wontfix`, or for a wrong component (§9) |
 | `channel-unknown`, `requests-quotes-mismatch` | request channel not configured; requests and quotes differ in count (§5, §7.3) |
 | `quote-attribution`, `work-log-entry`, `learning-resolution` | Malformed quote attribution, Work Log entry or Learning `→` line (§7.3, §7.7, §7.6) |

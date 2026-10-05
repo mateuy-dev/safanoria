@@ -38,6 +38,8 @@ public data class Config(
     val worktree: String? = null,
     val components: Map<String, Component> = emptyMap(),
     val channels: List<String> = DEFAULT_CHANNELS,
+    /** Themes tickets can be tagged with: name to its one-line description. */
+    val tags: Map<String, String> = emptyMap(),
     val userRef: String? = null,
     val refs: Map<String, RefSystem> = emptyMap(),
     val learningTargets: List<String> = emptyList(),
@@ -90,6 +92,7 @@ public object ConfigLoader {
         val refs = root.get("refs").mapEntries().mapNotNull { (key, value) ->
             value.get("url").text()?.let { key.content to RefSystem(key.content, it) }
         }.toMap()
+        val tags = root.get("tags").mapEntries().associate { (key, value) -> key.content to value.text().orEmpty() }
         val config = Config(
             path = path,
             specVersion = root.get("safanoria").text()?.toIntOrNull(),
@@ -98,6 +101,7 @@ public object ConfigLoader {
             worktree = root.get("worktree").text(),
             components = components,
             channels = root.get("channels").textList() ?: Config.DEFAULT_CHANNELS,
+            tags = tags,
             userRef = root.get("userRef").text(),
             refs = refs,
             learningTargets = root.get("learningTargets").textList() ?: emptyList(),

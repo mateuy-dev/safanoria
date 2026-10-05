@@ -26,6 +26,9 @@ class ConfigTest {
               rails:
                 external: true    # released elsewhere
             channels: [whatsapp, email]
+            tags:
+              registry: Official registry integration
+              offline: Working without a connection
             userRef: VacApp user id
             refs:
               sentry: { url: "https://example.sentry.io/issues/?query={id}" }
@@ -36,6 +39,7 @@ class ConfigTest {
         assertTrue(result.diagnostics.isEmpty())
         val config = assertNotNull(result.config)
         assertEquals(1, config.specVersion)
+        assertEquals(mapOf("registry" to "Official registry integration", "offline" to "Working without a connection"), config.tags)
         assertEquals("issues", config.dir)
         assertEquals("master", config.mainBranch)
         assertEquals("../VacAppKMP--{id}", config.worktree)
@@ -47,7 +51,7 @@ class ConfigTest {
         assertEquals(listOf("whatsapp", "email"), config.channels)
         assertEquals("https://example.sentry.io/issues/?query={id}", config.refs["sentry"]?.url)
         assertEquals(listOf("CLAUDE.md", "docs/"), config.learningTargets)
-        assertEquals(17, config.keyLines["unknownKey"])
+        assertEquals(20, config.keyLines["unknownKey"])
     }
 
     @Test

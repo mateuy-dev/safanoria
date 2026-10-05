@@ -30,6 +30,7 @@ class ListTest {
         val lines = r.stdout.lines()
         assertTrue(lines[0].startsWith("herd-locations        in-progress  medium  feature   S  Ticket herd-locations  [1/3]"), lines[0])
         assertTrue(lines[1].endsWith("Ticket herd-locations-map  parent herd-locations"), lines[1])
+        assertTrue(lines[5].endsWith("Ticket closed  #registry"), lines[5])
     }
 
     @Test
@@ -40,6 +41,8 @@ class ListTest {
         assertEquals(listOf("herd-locations-map", "herd-locations-model"), ids(run("--parent", "herd-locations").stdout))
         assertEquals(emptyList(), ids(run("--blocked").stdout), "its blocker is done")
         assertEquals(emptyList(), ids(run("--area", "app").stdout), "no ticket sets area")
+        assertEquals(listOf("closed"), ids(run("--tag", "registry,offline").stdout))
+        assertEquals(emptyList(), ids(run("--tag", "offline").stdout))
         // test() bypasses main, which maps usage errors to exit 2: checked on the binary.
         assertTrue(run("--status", "open").stderr.contains("invalid choice: open"))
     }
@@ -51,6 +54,7 @@ class ListTest {
         val tickets = Json.parseToJsonElement(r.stdout).jsonObject.getValue("tickets").jsonArray.map { it.jsonObject }
         val map = tickets.first { it.str("id") == "herd-locations-map" }
         assertEquals("tickets/herd-locations-map.md", map.str("file"))
+        assertEquals(emptyList(), map.getValue("tags").jsonArray.toList())
         assertEquals(listOf("herd-locations-model"), map.getValue("blockedBy").jsonArray.map { it.jsonPrimitive.content })
         assertEquals(emptyList(), map.getValue("openBlockers").jsonArray.toList())
         val model = tickets.first { it.str("id") == "herd-locations-model" }
