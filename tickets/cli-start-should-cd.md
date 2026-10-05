@@ -18,7 +18,7 @@ A child process can't change its parent shell's working directory, so this needs
 ## Acceptance Criteria
 
 - [x] `safanoria start <id> --print-path` prints only the directory to work in (the worktree, or this checkout once switched) on stdout; all other output goes to stderr
-- [x] The README and `safanoria start --help` give a bash/zsh shell function, `safanoria-start`, that starts a ticket and `cd`s into it
+- [x] The README and `safanoria --help` give a bash/zsh shell function, `safanoria-start`, that starts a ticket and `cd`s into it
 
 ## Work Log
 
@@ -27,3 +27,4 @@ A child process can't change its parent shell's working directory, so this needs
 - **2026-10-03** · status · review
 - **2026-10-05** · decision · The shell function is named `safanoria-start` (was `sstart`) and `start --help` prints it too, so it's found without the README. It is written over several lines: the help formatter re-wraps a long one-liner into something that doesn't parse.
 - **2026-10-05** · status · done
+- **2026-10-05** · decision · The function moved from `start --help` to the end of `safanoria --help`: that is where the user looked for it, and one place is enough. `start --help` no longer prints it.

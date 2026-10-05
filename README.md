@@ -216,7 +216,7 @@ already started (the branch exists), and children whose parent isn't started yet
 
 To land in the worktree, `--print-path` prints only the directory to work in (the worktree, or
 this checkout once switched) and sends everything else to stderr. A program can't change its
-shell's directory, so wrap it in a function in `~/.bashrc` or `~/.zshrc` (`safanoria start --help`
+shell's directory, so wrap it in a function in `~/.bashrc` or `~/.zshrc` (`safanoria --help`
 prints it too):
 
 ```sh
