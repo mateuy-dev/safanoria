@@ -2,7 +2,7 @@
 id: gui-detach-from-terminal
 type: feature
 title: safanoria keeps running when its terminal is closed
-status: backlog
+status: review
 priority: medium
 size: S
 created: 2026-10-05
@@ -30,11 +30,19 @@ Out of scope: a desktop entry (`.desktop` file, starting from the application me
 
 ## Acceptance Criteria
 
-- [ ] `safanoria` and `safanoria <dir>` give the prompt back at once, and the window stays open after the terminal is closed.
-- [ ] `safanoria --help`, `--version` and `safanoria <command>` (an old hook) still print in the terminal and return their exit status (0, 0, 2).
-- [ ] There is a way to run the app attached to the terminal, to see its output.
-- [ ] Opening a directory that is in no Safanoria project tells the user so, visibly.
-- [ ] The same holds for the launchers of `install.sh`, `make install` and `install.ps1`.
+- [x] `safanoria` and `safanoria <dir>` give the prompt back at once, and the window stays open after the terminal is closed.
+- [x] `safanoria --help`, `--version` and `safanoria <command>` (an old hook) still print in the terminal and return their exit status (0, 0, 2).
+- [x] There is a way to run the app attached to the terminal, to see its output.
+- [x] Opening a directory that is in no Safanoria project tells the user so, visibly.
+- [x] The same holds for the launchers of `install.sh`, `make install` and `install.ps1`.
 
 ## Work Log
 
+- **2026-10-05** · status · started
+- **2026-10-05** · decision · The launcher decides, not the app: one argument that is a directory (or none) is a window and is detached; anything else is `exec`ed in the foreground as before. Detached with `setsid … &` where there is a `setsid` (Linux), else `nohup … &` (macOS), output to `/dev/null`.
+- **2026-10-05** · decision · Staying attached is an environment variable, `SAFANORIA_FOREGROUND=1`, not a `--foreground` flag: the three launchers only test a variable, and the app has no argument to learn.
+- **2026-10-05** · decision · No project: the app opens a small window with the message (and still prints it and exits 2, for an attached run). Not when there is no display.
+- **2026-10-05** · decision · Windows keeps the console build, for `--help` and old hooks. For a window, `safanoria.cmd` starts the app through PowerShell with `CreateNoWindow` (no console, so nothing ties it to the terminal) in the directory to open. Rejected `Start-Process -WindowStyle Hidden`: the hidden state can be applied to the app's first window.
+- **2026-10-05** · decision · Found while testing: the packaged app's launcher leaves `_JPACKAGE_LAUNCHER` in its environment, and a terminal opened from the app inherits it; there `safanoria --version` printed Java's version and `safanoria validate` failed with "Could not find or load main class". The launchers unset it and the app no longer passes it to the terminals it opens.
+- **2026-10-05** · decision · Verified on Linux with the `make install` launcher (same text as `install.sh`'s): prompt back at once, the app survives the hangup of its terminal with `setsid` and with `nohup`, and dies when attached. Not run: macOS, and `install.ps1` (no Windows here); its launcher is written but untried.
+- **2026-10-05** · status · review

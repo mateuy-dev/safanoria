@@ -73,8 +73,19 @@ if [ -z "${SAFANORIA_CLI_ONLY:-}" ]; then
   cat > "$bin_dir/safanoria" <<LAUNCHER
 #!/bin/sh
 # $launcher_mark (install.sh): the desktop app, on the project of the working directory.
+app="$app_dir/$app_exe"
 [ \$# -eq 0 ] && set -- "\$PWD"
-exec "$app_dir/$app_exe" "\$@"
+# Set in a terminal the app opened; with it the app would take its arguments as the JVM's.
+unset _JPACKAGE_LAUNCHER
+# Opening a window (one directory): detached, so the prompt comes back and the window outlives
+# the terminal. SAFANORIA_FOREGROUND=1 keeps it attached, to see its output. Anything else
+# (--help, a command meant for safanoria-cli) prints here and returns its exit status.
+if [ \$# -eq 1 ] && [ -d "\$1" ] && [ -z "\${SAFANORIA_FOREGROUND:-}" ]; then
+  detach=nohup; command -v setsid >/dev/null 2>&1 && detach=setsid
+  \$detach "\$app" "\$@" </dev/null >/dev/null 2>&1 &
+  exit 0
+fi
+exec "\$app" "\$@"
 LAUNCHER
   chmod 755 "$bin_dir/safanoria"
   echo "Installed $bin_dir/safanoria: the desktop app ($("$bin_dir/safanoria" --version 2>/dev/null || echo "can't run it"), in $app_dir)"

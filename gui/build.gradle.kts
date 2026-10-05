@@ -49,7 +49,8 @@ compose.desktop {
             packageName = "safanoria"
             packageVersion = plain
             modules("java.instrument", "jdk.unsupported")
-            // A command typed in a terminal: its messages (no project here, usage) must show there.
+            // A command typed in a terminal: its messages (usage, the command is safanoria-cli now)
+            // must show there. To open a window, the launcher of install.ps1 starts it without one.
             windows { console = true }
             // macOS refuses a version whose first number is 0.
             macOS { packageVersion = plain.replace(Regex("^0\\."), "1.") }

@@ -24,6 +24,10 @@ class SystemTerminal(
         val command = command(directory.toString()) ?: return "no terminal found: set TERMINAL to the command that opens yours"
         return try {
             ProcessBuilder(command).directory(dir)
+                // The packaged app's launcher marks its own process with this; inherited, it makes
+                // any packaged Java app started from that terminal (`safanoria` too) take its
+                // arguments as the JVM's.
+                .apply { environment().remove("_JPACKAGE_LAUNCHER") }
                 .redirectOutput(ProcessBuilder.Redirect.DISCARD).redirectError(ProcessBuilder.Redirect.DISCARD)
                 .start()
             null

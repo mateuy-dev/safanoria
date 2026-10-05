@@ -203,7 +203,9 @@ safanoria                    # the project of the working directory
 safanoria /path/to/project   # or of another directory
 ```
 
-It stays in the terminal until its window is closed (`safanoria &` to keep the prompt).
+The prompt comes back at once and the window stays open when the terminal is closed. Nothing the
+app prints shows then: `SAFANORIA_FOREGROUND=1 safanoria` keeps it attached to the terminal, to
+see its output (a crash). In a directory that is in no Safanoria project, a window says so.
 
 - **Board**: a column per status, left to right as a ticket moves (Backlog, Ready, In progress,
   Review, Done, Won't fix). Every ticket is a card, children too, read from every local branch

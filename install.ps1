@@ -66,7 +66,24 @@ try {
         Set-Content -Path $launcher -Encoding ascii -Value @(
             "@echo off",
             "rem safanoria app launcher (install.ps1): the desktop app, on the project of the working directory.",
-            "`"$(Join-Path $appHome 'safanoria.exe')`" %*"
+            "setlocal",
+            "set `"SAFANORIA_EXE=$(Join-Path $appHome 'safanoria.exe')`"",
+            'set "SAFANORIA_DIR=%~f1"',
+            'if "%~1"=="" set "SAFANORIA_DIR=%CD%"',
+            "rem Set in a terminal the app opened; with it the app would take its arguments as the JVM's.",
+            'set "_JPACKAGE_LAUNCHER="',
+            "rem Opening a window (one directory): started without a console, so the prompt comes back and",
+            "rem the window outlives the terminal. SAFANORIA_FOREGROUND=1 keeps it attached, to see its output.",
+            "rem Anything else (--help, a command meant for safanoria-cli) prints here and returns its exit status.",
+            'if defined SAFANORIA_FOREGROUND goto foreground',
+            'if not "%~2"=="" goto foreground',
+            'if not exist "%SAFANORIA_DIR%\" goto foreground',
+            "rem In the directory instead of given it: no quoting of the path through cmd and PowerShell.",
+            'powershell -NoProfile -Command "$null = [Diagnostics.Process]::Start((New-Object Diagnostics.ProcessStartInfo $env:SAFANORIA_EXE -Property @{UseShellExecute=$false; CreateNoWindow=$true; WorkingDirectory=$env:SAFANORIA_DIR}))"',
+            'exit /b %ERRORLEVEL%',
+            ':foreground',
+            '"%SAFANORIA_EXE%" %*',
+            'exit /b %ERRORLEVEL%'
         )
         Write-Host "Installed ${launcher}: the desktop app ($(& $launcher --version), in $appDir)"
     }
