@@ -32,8 +32,8 @@ class UpdateTest {
 
     private fun write(path: String, text: String) = SystemFileSystem.write(work / path) { writeUtf8(text) }
     private fun read(path: String) = SystemFileSystem.read(work / path) { readUtf8() }
-    private fun run(vararg args: String, stdin: String = "", interactive: Boolean = false) =
-        cli().test(listOf("--root", work.toString(), "update") + args.toList(), stdin = stdin, inputInteractive = interactive)
+    private fun run(vararg args: String, prompts: Prompts? = null) =
+        cli(prompts).test(listOf("--root", work.toString(), "update") + args.toList())
 
     @Test
     fun replacesSkillKeepsTheProjectsFiles() {
@@ -59,11 +59,11 @@ class UpdateTest {
 
     @Test
     fun templatesOnlyWhenAgreed() {
-        val no = run(stdin = "n\n", interactive = true)
+        val no = run(prompts = ScriptedPrompts(false))
         assertTrue(no.stdout.contains("kept tickets/_TEMPLATE.md: it differs"), no.stdout)
         assertEquals(ownTemplate, read("tickets/_TEMPLATE.md"))
 
-        val yes = run(stdin = "y\n", interactive = true)
+        val yes = run(prompts = ScriptedPrompts(true))
         assertTrue(yes.stdout.contains("replace tickets/_TEMPLATE.md"), yes.stdout)
         assertEquals(Embedded.TICKET_TEMPLATE, read("tickets/_TEMPLATE.md"))
     }

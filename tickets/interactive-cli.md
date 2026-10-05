@@ -6,7 +6,7 @@ status: in-progress
 priority: medium
 size: S
 created: 2026-10-02
-updated: 2026-10-03
+updated: 2026-10-05
 related: [cli-all-actions]
 ---
 
@@ -25,6 +25,7 @@ Scripts and agents must keep working: the non-interactive behaviour stays the de
 - [x] `new` without a title asks for title, type and id, optionally priority, size, parent and objective, and off `mainBranch` whether the ticket goes there; with a title it asks only for a missing `area`.
 - [x] `start`, `finish` and `release` without an id or component offer a list of the tickets or components that fit.
 - [x] Without a terminal on stdin and stdout nothing is asked: a missing value is an error, and the bare command prints the help, as before.
+- [x] `init` and `update` ask through the same prompts: same terminal check, same lists, same cancelling.
 - [x] Ctrl-C cancels without changing anything.
 
 ## Plan
@@ -42,3 +43,4 @@ Scripts and agents must keep working: the non-interactive behaviour stays the de
 - **2026-10-03** · decision · `new` asks only when the title is missing; with a title, flags and defaults decide as in a script (except a missing `area`, which would be an error anyway). Keeps typed commands predictable.
 - **2026-10-03** · decision · The root menu runs the chosen command by parsing the root again with it: a subcommand parsed on its own has no parent context (`--root`, prompts).
 - **2026-10-03** · decision · `init` and `update` keep their own questions (`Setup.kt`, stdin-only check); moving them onto `Prompts` isn't needed for this ticket.
+- **2026-10-05** · decision · `init` and `update` moved onto `Prompts` after all, so every command asks the same way: they checked only stdin, took end of input as "no", and couldn't be scripted in tests. `init` now offers file or external as a list instead of a typed 'external'.

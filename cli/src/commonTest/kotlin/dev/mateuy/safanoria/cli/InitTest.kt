@@ -24,8 +24,8 @@ class InitTest {
         SystemFileSystem.createDirectories(work)
     }
 
-    private fun run(vararg args: String, stdin: String = "", interactive: Boolean = false) =
-        cli().test(listOf("--root", work.toString(), "init") + args.toList(), stdin = stdin, inputInteractive = interactive)
+    private fun run(vararg args: String, prompts: Prompts? = null) =
+        cli(prompts).test(listOf("--root", work.toString(), "init") + args.toList())
     private fun read(path: String) = SystemFileSystem.read(work / path) { readUtf8() }
     private fun exists(path: String) = SystemFileSystem.exists(work / path)
 
@@ -50,8 +50,8 @@ class InitTest {
 
     @Test
     fun asksForComponents() {
-        // Two names, then each one's source: the default, and external.
-        val r = run(stdin = "app, server\n\nexternal\n", interactive = true)
+        // Two names, then where each one's version is: a file (the default one), and external.
+        val r = run(prompts = ScriptedPrompts("app, server", "file", "", "external"))
         assertEquals(0, r.statusCode, r.output)
         val config = read("safanoria.yaml")
         assertTrue(config.contains("  app:\n    version: { file: gradle.properties, property: version }\n  server:\n    external: true\n"), config)
@@ -66,7 +66,7 @@ class InitTest {
         assertEquals("# Project\n\nBuild with gradle.\n", read("CLAUDE.md"))
 
         SystemFileSystem.delete(work / "safanoria.yaml")
-        val asked = run("--external", "web", stdin = "y\n", interactive = true)
+        val asked = run("--external", "web", prompts = ScriptedPrompts(true))
         assertEquals(0, asked.statusCode, asked.output)
         assertTrue(read("CLAUDE.md").startsWith("# Project\n\nBuild with gradle.\n\nWork is tracked as Safanoria tickets"), read("CLAUDE.md"))
     }

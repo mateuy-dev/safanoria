@@ -1,31 +1,18 @@
 package dev.mateuy.safanoria.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.core.terminal
-import com.github.ajalt.mordant.terminal.StringPrompt
-import com.github.ajalt.mordant.terminal.YesNoPrompt
 import dev.mateuy.safanoria.core.FileAction
 import dev.mateuy.safanoria.core.FileChange
 import dev.mateuy.safanoria.core.Install
 import dev.mateuy.safanoria.core.SystemFileSystem
 import okio.Path
 
-/** Shared by `init` and `update`: asking on the terminal and writing [FileChange]s. */
-internal val CliktCommand.interactive: Boolean get() = terminal.terminalInfo.inputInteractive
-
-/** A yes/no answer (default no); null without a terminal to ask. */
-internal fun CliktCommand.confirm(question: String): Boolean? =
-    if (!interactive) null else YesNoPrompt(question, terminal, default = false).ask() ?: false
-
-/** A line of input, [default] when empty; null without a terminal. */
-internal fun CliktCommand.ask(question: String, default: String? = null): String? =
-    if (!interactive) null else StringPrompt(question, terminal, default = default).ask()?.trim()
-
 /**
- * Writes what [changes] say: missing and managed files directly; a project's file that differs
- * only when [yes] or the user agrees. Prints one line per file.
+ * Shared by `init` and `update`. Writes what [changes] say: missing and managed files directly; a
+ * project's file that differs only when [yes] or the user agrees ([prompts]; null when nothing
+ * may be asked). Prints one line per file.
  */
-internal fun CliktCommand.applyChanges(root: Path, changes: List<FileChange>, yes: Boolean, dryRun: Boolean) {
+internal fun CliktCommand.applyChanges(root: Path, changes: List<FileChange>, yes: Boolean, dryRun: Boolean, prompts: Prompts?) {
     val would = if (dryRun) "would " else ""
     for (c in changes) {
         val shown = c.path.relativeTo(root).segments.joinToString("/")
@@ -54,7 +41,7 @@ internal fun CliktCommand.applyChanges(root: Path, changes: List<FileChange>, ye
                 val answer = when {
                     yes -> true
                     dryRun -> false
-                    else -> confirm("$shown $why. ${what.replaceFirstChar { it.uppercase() }}?")
+                    else -> prompts?.confirm("$shown $why. ${what.replaceFirstChar { it.uppercase() }}?", default = false)
                 }
                 when (answer) {
                     true -> { write(); echo("${would}${if (claude || settings) "update" else "replace"} $shown") }

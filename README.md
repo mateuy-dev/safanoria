@@ -99,8 +99,9 @@ run. `new` without a title asks for the title, the type and the id (enter keeps 
 optionally priority, size, parent and objective, and, on a branch other than `mainBranch`,
 whether the ticket goes on `mainBranch`; with a title it asks only for a missing `area`.
 `start`, `finish` and `release` without an id or component offer a list (backlog and ready
-tickets to start; in-progress ones to finish, or in review with `--done`). Ctrl-C cancels without
-changing anything. When stdin or stdout isn't a terminal (scripts, agents, CI), nothing is asked:
+tickets to start; in-progress ones to finish, or in review with `--done`). `init` asks for the
+components and where each one's version is, and `init` and `update` ask before changing a file
+of yours. Ctrl-C cancels without changing anything. When stdin or stdout isn't a terminal (scripts, agents, CI), nothing is asked:
 a missing value is an error, as before.
 
 **Which branch** (SPEC §14.2): a new top-level ticket belongs on `mainBranch`, even when you
