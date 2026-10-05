@@ -2,7 +2,7 @@
 id: gui-as-safanoria-command
 type: feature
 title: "safanoria opens the desktop app; the CLI becomes safanoria-cli"
-status: review
+status: done
 priority: medium
 size: M
 created: 2026-10-05
@@ -33,3 +33,4 @@ The rename reaches everything that calls or names the CLI: the build and install
 - **2026-10-05** · decision · `safanoria` runs in the foreground, so its messages (no project here) show in the terminal; on Windows the app is built with a console for the same reason. Detaching is left to the shell (`safanoria &`).
 - **2026-10-05** · decision · Not tried on a machine: the macOS and Windows packages and `install.ps1` (only Linux here). The `release` workflow's install test covers them when this branch is pushed.
 - **2026-10-05** · status · review
+- **2026-10-05** · status · done
