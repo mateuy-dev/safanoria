@@ -2,7 +2,7 @@
 id: release-notes
 type: feature
 title: Version to features
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-10-02
@@ -32,3 +32,4 @@ The tickets to include can be found with `resolvedIn.<component>` (SPEC §9).
 - **2026-10-05** · decision · The CLI doesn't write the notes: `safanoria notes` prints the tickets of the range (id, type, title, parent, Objective) and the skill has the rules to write the text. Wording for end users, and telling what they notice from what they don't, needs judgement the CLI has no way to apply; `type: maintenance` alone isn't enough, since a bug fix can be internal too.
 - **2026-10-05** · decision · `notes` reads the checkout, not every branch like `list`: stamps are made on `mainBranch` (§9), so the checkout has them wherever it branched from a release.
 - **2026-10-05** · decision · The range ends need not be stamped versions (a user may come from a version that shipped no ticket); an empty result exits 0 and lists the stamped versions on stderr.
+- **2026-10-05** · status · review
