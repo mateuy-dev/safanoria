@@ -2,7 +2,7 @@
 id: gui-detach-from-terminal
 type: feature
 title: safanoria keeps running when its terminal is closed
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-10-05
@@ -45,3 +45,4 @@ Out of scope: a desktop entry (`.desktop` file, starting from the application me
 - **2026-10-05** · decision · Windows keeps the console build, for `--help` and old hooks. For a window, `safanoria.cmd` starts the app through PowerShell with `CreateNoWindow` (no console, so nothing ties it to the terminal) in the directory to open. Rejected `Start-Process -WindowStyle Hidden`: the hidden state can be applied to the app's first window.
 - **2026-10-05** · decision · Found while testing: the packaged app's launcher leaves `_JPACKAGE_LAUNCHER` in its environment, and a terminal opened from the app inherits it; there `safanoria --version` printed Java's version and `safanoria validate` failed with "Could not find or load main class". The launchers unset it and the app no longer passes it to the terminals it opens.
 - **2026-10-05** · decision · Verified on Linux with the `make install` launcher (same text as `install.sh`'s): prompt back at once, the app survives the hangup of its terminal with `setsid` and with `nohup`, and dies when attached. Not run: macOS, and `install.ps1` (no Windows here); its launcher is written but untried.
+- **2026-10-05** · status · review
