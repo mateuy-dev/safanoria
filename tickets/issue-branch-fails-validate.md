@@ -7,7 +7,7 @@ priority: medium
 size: S
 created: 2026-10-06
 updated: 2026-10-06
-related: [new-crashes-ticket-directory]
+related: [new-crashes-ticket-directory, windows-gui-merge-test-fails]
 ---
 
 ## Objective
@@ -72,3 +72,5 @@ tickets/cyl.md:12:72: error[ref-unknown]: related: no ticket 'device-credentials
 - **2026-10-06** · decision · In a shallow clone, copies with no merge-base aren't reported as `id-created-twice`: tips without history can't tell a started ticket (main's copy and its branch's) from an id created twice, and the first try at fetching tips warned on every started ticket.
 - **2026-10-06** · decision · An unpushed `mainBranch` can't be fixed from CI, and `new --on` pushing would break "the CLI pushes nothing". So `validate` warns locally (`ref-unpushed`), where the pre-commit hook and the agent see it when the `related` is committed. Skipped when the clone has no remote-tracking branches (no remote to compare with).
 - **2026-10-06** · note · Found while reproducing: `new` crashes when the ticket directory doesn't exist → `new-crashes-ticket-directory`.
+- **2026-10-06** · decision · `ValidatorRepositoryTest` reads remote-tracking branches like `validate` does: with only local ones it failed in CI on this branch, which references a ticket on `main`. It ignores `ref-unpushed`, which is about the clone.
+- **2026-10-06** · note · The Windows `cli` job still fails on a gui test that already failed on `main` before this branch → `windows-gui-merge-test-fails`.
