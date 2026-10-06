@@ -2,7 +2,7 @@
 id: issue-branch-fails-validate
 type: bug
 title: Issue branch fails validate in CI with ref-unknown for a ticket created on main from it
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-10-06
@@ -76,3 +76,4 @@ tickets/cyl.md:12:72: error[ref-unknown]: related: no ticket 'device-credentials
 - **2026-10-06** · decision · `ValidatorRepositoryTest` reads remote-tracking branches like `validate` does: with only local ones it failed in CI on this branch, which references a ticket on `main`. It ignores `ref-unpushed`, which is about the clone.
 - **2026-10-06** · note · The Windows `cli` job still fails on a gui test that already failed on `main` before this branch → `windows-gui-merge-test-fails`.
 - **2026-10-06** · decision · `finish` refused this very ticket: it and `start` validated the branch's commit alone, so a `related` to a ticket created on `main` was `ref-unknown`. They now count ids on every branch as known, like `validate`; only the ids, since the other cross-branch warnings are about the current checkout, not the branch being committed to.
+- **2026-10-06** · status · review
