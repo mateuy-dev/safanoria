@@ -174,6 +174,13 @@ private fun Confirmation(action: TicketAction, id: String, onConfirm: (String) -
                 "has one configured (otherwise this checkout switches to the branch). Then opens a terminal there.",
             "Start",
         )
+        TicketAction.START_IN_CLAUDE -> Triple(
+            "Start $id in Claude?",
+            "Creates the branch $id with the ticket committed as in-progress, and its worktree when the project " +
+                "has one configured (otherwise this checkout switches to the branch). Then opens a terminal there " +
+                "running Claude Code, told to start working on the ticket.",
+            "Start in Claude",
+        )
         TicketAction.FINISH -> Triple(
             "Set $id to review?",
             "Sets the ticket to review, logs it, and commits only the ticket on its branch.",
@@ -224,6 +231,7 @@ private fun ActionBar(state: TicketViewState, onAction: (TicketAction) -> Unit) 
                 val onClick = { onAction(action) }
                 when (action) {
                     TicketAction.START -> Button(onClick, enabled = !state.busy) { Text("Start") }
+                    TicketAction.START_IN_CLAUDE -> OutlinedButton(onClick, enabled = !state.busy) { Text("Start in Claude") }
                     TicketAction.OPEN_TERMINAL -> OutlinedButton(onClick, enabled = !state.busy) { Text("Open terminal") }
                     TicketAction.FINISH -> Button(onClick, enabled = !state.busy) { Text("Finish: set to review") }
                     TicketAction.MERGE -> Button(onClick, enabled = !state.busy) { Text("Merge and finish") }

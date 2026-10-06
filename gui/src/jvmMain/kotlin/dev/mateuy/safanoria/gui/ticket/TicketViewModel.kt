@@ -36,6 +36,11 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
     /** The user asked for [action]: it runs now, or once confirmed ([confirm]) when it changes the repository. */
     fun request(action: TicketAction) {
         if (activity.value.busy) return
+        // Said before starting anything, rather than by a terminal that fails once the ticket is started.
+        if (action == TicketAction.START_IN_CLAUDE && !terminal.has(CLAUDE)) {
+            activity.value = Activity(notice = Notice("Claude Code isn't installed: no `$CLAUDE` command found. Start opens a plain terminal.", error = true))
+            return
+        }
         if (action.confirmed) activity.update { it.copy(confirming = action) } else run(action)
     }
 
@@ -50,19 +55,23 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
 
     private fun run(action: TicketAction, input: String = "") = when (action) {
         TicketAction.START -> start()
+        TicketAction.START_IN_CLAUDE -> start(
+            // Named after the ticket: Claude Code shows the session's name as the terminal's title.
+            command = listOf(CLAUDE, "--name", id, "Start working on ticket $id"),
+        )
         TicketAction.OPEN_TERMINAL -> openTerminal()
         TicketAction.FINISH -> finish()
         TicketAction.MERGE -> merge()
         TicketAction.REOPEN -> reopen(input)
     }
 
-    /** Starts the ticket and opens a terminal where it is to be worked on. */
-    private fun start() = act {
+    /** Starts the ticket and opens a terminal where it is to be worked on, running [command] when given. */
+    private fun start(command: List<String> = emptyList()) = act {
         when (val outcome = store.start(id)) {
             is StartOutcome.NotStarted -> Notice("Not started: ${outcome.reason}", error = true)
             is StartOutcome.Started -> when (val workspace = outcome.workspace) {
                 null -> Notice("Started, but ${outcome.note}", error = true)
-                else -> openTerminal(workspace, "Started in $workspace")
+                else -> openTerminal(workspace, "Started in $workspace", command)
             }
         }
     }
@@ -102,8 +111,8 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
         }
     }
 
-    private fun openTerminal(workspace: Path, done: String?): Notice? =
-        when (val problem = terminal.open(workspace)) {
+    private fun openTerminal(workspace: Path, done: String?, command: List<String> = emptyList()): Notice? =
+        when (val problem = terminal.open(workspace, command)) {
             null -> done?.let { Notice(it, error = false) }
             else -> Notice(listOfNotNull(done, "No terminal opened: $problem").joinToString(". "), error = true)
         }
@@ -113,6 +122,10 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
         if (activity.value.busy) return
         activity.value = Activity(busy = true)
         viewModelScope.launch { activity.value = Activity(notice = action()) }
+    }
+
+    private companion object {
+        const val CLAUDE = "claude"
     }
 }
 
@@ -144,7 +157,7 @@ internal fun ticketViewState(id: String, snapshot: TicketsSnapshot): TicketViewS
         blocks = graph.blocks(ticket).map(::link),
         body = body(ticket),
         actions = when (f?.status) {
-            Status.BACKLOG, Status.READY -> listOf(TicketAction.START)
+            Status.BACKLOG, Status.READY -> listOf(TicketAction.START, TicketAction.START_IN_CLAUDE)
             Status.IN_PROGRESS -> listOf(TicketAction.OPEN_TERMINAL, TicketAction.FINISH)
             Status.REVIEW -> listOf(TicketAction.OPEN_TERMINAL, TicketAction.MERGE, TicketAction.REOPEN)
             else -> emptyList()

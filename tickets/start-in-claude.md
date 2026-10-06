@@ -2,11 +2,11 @@
 id: start-in-claude
 type: feature
 title: "GUI: Start in Claude button on backlog tickets"
-status: backlog
+status: done
 priority: medium
 size: S
 created: 2026-10-05
-updated: 2026-10-05
+updated: 2026-10-06
 ---
 
 ## Objective
@@ -23,3 +23,9 @@ Start stays as it is, for those who don't use Claude Code or want a plain termin
 
 ## Work Log
 
+- **2026-10-06** · status · started
+- **2026-10-06** · decision · The tab title comes from naming the Claude session (`claude --name <id>`), not from the emulator: Claude Code sets the terminal title itself, to the session's name, so an emulator title flag would be overwritten, and this way is the same for every terminal. The name is the ticket id (also the branch), short enough for a tab.
+- **2026-10-06** · decision · On Linux the terminal runs `claude` followed by a shell, so the window stays (with any error) when Claude exits, instead of closing with it. `claude` is run by its full path and also looked for in `~/.local/bin`, where it installs itself: a desktop session's PATH may lack it.
+- **2026-10-06** · decision · The button is always offered; without `claude` installed, clicking it says so and starts nothing. Checking at click time keeps the view state a function of the tickets alone.
+- **2026-10-06** · status · review
+- **2026-10-06** · status · done
