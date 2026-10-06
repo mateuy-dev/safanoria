@@ -2,11 +2,11 @@
 id: start-in-claude
 type: feature
 title: "GUI: Start in Claude button on backlog tickets"
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-05
-updated: 2026-10-05
+updated: 2026-10-06
 ---
 
 ## Objective
@@ -23,3 +23,4 @@ Start stays as it is, for those who don't use Claude Code or want a plain termin
 
 ## Work Log
 
+- **2026-10-06** · status · started
