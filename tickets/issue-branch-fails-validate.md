@@ -2,7 +2,7 @@
 id: issue-branch-fails-validate
 type: bug
 title: Issue branch fails validate in CI with ref-unknown for a ticket created on main from it
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-06
@@ -53,3 +53,5 @@ tickets/cyl.md:12:72: error[ref-unknown]: related: no ticket 'device-credentials
 ## Acceptance Criteria
 
 ## Work Log
+
+- **2026-10-06** · status · started
