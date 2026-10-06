@@ -157,6 +157,9 @@ public class Branches private constructor(
          * to read across: not a git repository, or no [Config.mainBranch] branch (e.g. a CI
          * checkout of one detached commit). Callers then use the checkout as it is.
          */
+        /** The ids [read] finds on every branch, remote-tracking ones too: what `validate` counts as known (§14). */
+        public fun ids(repository: Repository): Set<String> = read(repository, remote = true)?.ids.orEmpty()
+
         public fun read(repository: Repository, remote: Boolean = false): Branches? {
             val git = repository.git
             val fs = repository.fileSystem

@@ -62,6 +62,7 @@ tickets/cyl.md:12:72: error[ref-unknown]: related: no ticket 'device-credentials
       a local branch no remote has; the warning goes once that branch is pushed.
 - [x] This repository's workflows validate with every branch fetched.
 - [x] README and skill describe both traps.
+- [x] `finish` and `start` accept a ticket that references one existing only on another branch.
 - [x] Seen passing on GitHub: the `release` workflow's Action test on this branch, which
       references a ticket that is only on `main`.
 
@@ -74,3 +75,4 @@ tickets/cyl.md:12:72: error[ref-unknown]: related: no ticket 'device-credentials
 - **2026-10-06** · note · Found while reproducing: `new` crashes when the ticket directory doesn't exist → `new-crashes-ticket-directory`.
 - **2026-10-06** · decision · `ValidatorRepositoryTest` reads remote-tracking branches like `validate` does: with only local ones it failed in CI on this branch, which references a ticket on `main`. It ignores `ref-unpushed`, which is about the clone.
 - **2026-10-06** · note · The Windows `cli` job still fails on a gui test that already failed on `main` before this branch → `windows-gui-merge-test-fails`.
+- **2026-10-06** · decision · `finish` refused this very ticket: it and `start` validated the branch's commit alone, so a `related` to a ticket created on `main` was `ref-unknown`. They now count ids on every branch as known, like `validate`; only the ids, since the other cross-branch warnings are about the current checkout, not the branch being committed to.

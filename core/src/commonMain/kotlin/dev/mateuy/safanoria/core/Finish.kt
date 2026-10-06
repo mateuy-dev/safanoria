@@ -127,7 +127,8 @@ public object Finish {
             }
             PlannedFile(ticket.path, text, isNew = false)
         }
-        val problems = Validator(view.withFiles(files)).validate(files.map { it.path })
+        // A reference to a ticket created on another branch meanwhile (new --on main) is fine, as in validate.
+        val problems = Validator(view.withFiles(files), otherIds = Branches.ids(repository)).validate(files.map { it.path })
         if (problems.isNotEmpty()) throw FinishException("the changed ticket wouldn't be valid", problems)
         return FinishCommit(branch, view.commit(files, message), message)
     }

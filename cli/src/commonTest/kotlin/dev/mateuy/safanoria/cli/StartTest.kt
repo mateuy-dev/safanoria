@@ -29,6 +29,16 @@ class StartTest {
     }
 
     @Test
+    fun startsATicketThatReferencesOneOnlyOnAnotherBranch() {
+        val repo = GitRepo.scenario("start-related")
+        repo.write("tickets/alpha.md", GitRepo.ticket("alpha", related = listOf("stray"))) // stray: only on feature
+        repo.commit("alpha relates to stray")
+        val r = run(repo, "start", "alpha")
+        assertEquals(0, r.statusCode, r.output)
+        assertTrue("status: in-progress\n" in repo.read("tickets/alpha.md"))
+    }
+
+    @Test
     fun withAWorktreeSettingAddsTheWorktreeAndLeavesThisCheckout() {
         val repo = GitRepo.scenario("start-worktree")
         repo.write("safanoria.yaml", GitRepo.CONFIG + "worktree: ../start-worktree--{id}\n")

@@ -11,9 +11,15 @@ internal data class Finding(val diagnostic: Diagnostic, val causes: Set<Path> = 
 /**
  * Checks a repository's checkout against SPEC §12. Codes are stable: tools and docs refer to
  * them. With [branches], ids on other branches count as known, and tickets created separately
- * on another branch are reported (SPEC §14.3).
+ * on another branch are reported (SPEC §14.3). [otherIds] alone only makes those ids known: for
+ * a commit made on a branch that isn't this checkout (start, finish), where the rest of what
+ * [branches] reports is about the wrong place.
  */
-public class Validator(private val repository: Repository, private val branches: Branches? = null) {
+public class Validator(
+    private val repository: Repository,
+    private val branches: Branches? = null,
+    private val otherIds: Set<String>? = null,
+) {
     private val config get() = repository.config
 
     /**
@@ -23,7 +29,7 @@ public class Validator(private val repository: Repository, private val branches:
     public fun validate(only: Collection<Path>? = null): List<Diagnostic> {
         val findings = repository.configResult.diagnostics.map { Finding(it) } +
             repository.tickets.flatMap { ticketFindings(it) } +
-            CrossTicketRules(repository.tickets, branches?.ids.orEmpty()) { branches?.onlyLocal(it) }.findings() +
+            CrossTicketRules(repository.tickets, otherIds ?: branches?.ids.orEmpty()) { branches?.onlyLocal(it) }.findings() +
             AttachmentRules(repository).findings() +
             createdTwice() +
             mergedInReview()

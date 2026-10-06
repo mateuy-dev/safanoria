@@ -87,7 +87,7 @@ public object Start {
             throw StartException(e.message ?: e.toString())
         }
         val file = PlannedFile(ticket.path, text, isNew = false)
-        val problems = Validator(view.withFiles(listOf(file))).validate(listOf(file.path))
+        val problems = Validator(view.withFiles(listOf(file)), otherIds = Branches.ids(repository)).validate(listOf(file.path))
         if (problems.isNotEmpty()) throw StartException("the started ticket wouldn't be valid", problems)
         return view.commit(listOf(file), "$id: start")
     }
