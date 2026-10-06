@@ -7,9 +7,11 @@ class ValidatorRepositoryTest {
     @Test
     fun thisRepositoryIsValid() {
         // Like `safanoria-cli validate`: ids on other branches are known (SPEC §12), e.g. a ticket
-        // created on main while working on a ticket branch.
+        // created on main while working on a ticket branch. Remote-tracking branches too: CI has
+        // no local main. ref-unpushed is about this clone (main not pushed yet), not the tickets.
         val repository = Repository(repoRoot)
-        assertEquals(emptyList(), Validator(repository, Branches.read(repository)).validate().map { it.toString() })
+        val diagnostics = Validator(repository, Branches.read(repository, remote = true)).validate().filter { it.code != "ref-unpushed" }
+        assertEquals(emptyList(), diagnostics.map { it.toString() })
     }
 
     @Test

@@ -62,7 +62,7 @@ tickets/cyl.md:12:72: error[ref-unknown]: related: no ticket 'device-credentials
       a local branch no remote has; the warning goes once that branch is pushed.
 - [x] This repository's workflows validate with every branch fetched.
 - [x] README and skill describe both traps.
-- [ ] Seen passing on GitHub: the `release` workflow's Action test on this branch, which
+- [x] Seen passing on GitHub: the `release` workflow's Action test on this branch, which
       references a ticket that is only on `main`.
 
 ## Work Log
