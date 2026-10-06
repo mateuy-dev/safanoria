@@ -3,8 +3,13 @@ package dev.mateuy.safanoria.core
 /**
  * SPEC §12 rules that need several tickets: ids, references and the parent/child structure.
  * [otherIds] are ids of tickets on other branches: references to them are not unknown (§14).
+ * [onlyLocal] names the local branch of one that no remote has ([Branches.onlyLocal]).
  */
-internal class CrossTicketRules(private val tickets: List<Ticket>, private val otherIds: Set<String> = emptySet()) {
+internal class CrossTicketRules(
+    private val tickets: List<Ticket>,
+    private val otherIds: Set<String> = emptySet(),
+    private val onlyLocal: (String) -> String? = { null },
+) {
     private val byId = tickets.associateBy { it.fileId }
 
     private fun known(id: String) = id in byId || id in otherIds
@@ -12,6 +17,15 @@ internal class CrossTicketRules(private val tickets: List<Ticket>, private val o
 
     private fun report(ticket: Ticket, line: Int?, code: String, message: String, causes: Collection<Ticket> = emptyList(), column: Int? = null) {
         out += Finding(Diagnostic(ticket.path, line, column, code, message), causes.map { it.path }.toSet())
+    }
+
+    /** A reference to [id] at [line]: unknown, or known only from a local branch that isn't pushed. */
+    private fun checkReference(ticket: Ticket, id: String, line: Int?, what: String, column: Int? = null) {
+        if (!known(id)) return report(ticket, line, "ref-unknown", "$what no ticket '$id'", column = column)
+        if (id in byId) return
+        val branch = onlyLocal(id) ?: return
+        out += Finding(Diagnostic(ticket.path, line, column, "ref-unpushed",
+            "$what '$id' is only on local branch '$branch', which isn't pushed with it: push '$branch' too, or it is unknown wherever this branch goes (CI)", Severity.WARNING))
     }
 
     private val Ticket.idLine: Int get() = frontmatter?.id?.line ?: 1
@@ -35,21 +49,17 @@ internal class CrossTicketRules(private val tickets: List<Ticket>, private val o
     private fun references() {
         for (t in tickets) {
             val f = t.frontmatter ?: continue
-            fun check(ref: Located<String>, field: String) {
-                if (!known(ref.value)) report(t, ref.line, "ref-unknown", "$field: no ticket '${ref.value}'", column = ref.column)
-            }
+            fun check(ref: Located<String>, field: String) = checkReference(t, ref.value, ref.line, "$field:", ref.column)
             f.parent?.let { check(it, "parent") }
             f.blockedBy.forEach { check(it, "blockedBy") }
             f.related.forEach { check(it, "related") }
             for (item in t.body.checklist("Plan")) {
                 val child = item.childId ?: continue
-                if (!known(child)) report(t, item.line, "ref-unknown", "Plan item names no ticket '$child'")
+                checkReference(t, child, item.line, "Plan item names")
             }
             for (l in t.body.learnings) {
                 val r = l.resolution
-                if (r is Resolution.NewTicket && r.id.isNotEmpty() && !known(r.id)) {
-                    report(t, l.resolutionLine, "ref-unknown", "Learning → new ticket: no ticket '${r.id}'")
-                }
+                if (r is Resolution.NewTicket && r.id.isNotEmpty()) checkReference(t, r.id, l.resolutionLine, "Learning → new ticket:")
             }
         }
     }

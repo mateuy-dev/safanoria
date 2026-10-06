@@ -11,7 +11,10 @@ jobs:
   validate:
     runs-on: ubuntu-24.04
     steps:
+      # Every branch: validate counts tickets on other branches as known ids.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

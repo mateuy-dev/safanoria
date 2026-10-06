@@ -33,6 +33,20 @@ class FinishTest {
     }
 
     @Test
+    fun reviewWithAReferenceToATicketCreatedOnMainMeanwhile() {
+        val repo = GitRepo.scenario("finish-related")
+        repo.write("tickets/late.md", GitRepo.ticket("late"))
+        repo.commit("late on main") // as `new --on main` from beta's branch: beta doesn't have the file
+        repo.checkout("beta")
+        repo.write("tickets/beta.md", GitRepo.ticket("beta", "in-progress", related = listOf("late")))
+        repo.commit("beta relates to late")
+
+        val r = run(repo, "finish", "beta")
+        assertEquals(0, r.statusCode, r.output)
+        assertTrue("status: review" in repo.read("tickets/beta.md"))
+    }
+
+    @Test
     fun doneOnlyOnceMergedAndChecksTheParent() {
         val repo = GitRepo.scenario("finish-done")
         repo.write("tickets/gamma.md", GitRepo.ticket("gamma").replace("updated: 2026-10-02\n", "updated: 2026-10-02\nchildrenMergeInto: main\n")
