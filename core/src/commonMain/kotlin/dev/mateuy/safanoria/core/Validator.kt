@@ -23,7 +23,7 @@ public class Validator(private val repository: Repository, private val branches:
     public fun validate(only: Collection<Path>? = null): List<Diagnostic> {
         val findings = repository.configResult.diagnostics.map { Finding(it) } +
             repository.tickets.flatMap { ticketFindings(it) } +
-            CrossTicketRules(repository.tickets, branches?.ids.orEmpty()).findings() +
+            CrossTicketRules(repository.tickets, branches?.ids.orEmpty()) { branches?.onlyLocal(it) }.findings() +
             AttachmentRules(repository).findings() +
             createdTwice() +
             mergedInReview()

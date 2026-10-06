@@ -45,6 +45,18 @@ runs:
         & "${{ github.action_path }}\install.ps1"
         Add-Content -Path $env:GITHUB_PATH -Value $env:SAFANORIA_BIN_DIR
 
+    # actions/checkout brings one commit of one branch. Tickets on the others count as known ids
+    # (a `related` to one created on main meanwhile), so get their tips; a deeper clone is left as it is.
+    - name: Fetch the other branches
+      shell: bash
+      run: |
+        depth=""
+        if [ "$(git rev-parse --is-shallow-repository 2>/dev/null)" = true ] && [ "$(git rev-list --count HEAD)" = 1 ]; then
+          depth="--depth=1"
+        fi
+        git fetch --quiet --no-tags $depth origin '+refs/heads/*:refs/remotes/origin/*' ||
+          echo "::warning::Safanoria could not fetch the other branches: tickets that are only on them are unknown here"
+
     - name: safanoria-cli ${{ inputs.args }}
       shell: bash
       run: safanoria-cli ${{ inputs.args }}

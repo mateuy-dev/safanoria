@@ -61,6 +61,63 @@ class AcrossBranchesTest {
         assertTrue("error[ref-unknown]: related: no ticket 'late'" in checkout.stdout, checkout.stdout)
     }
 
+    /** What actions/checkout does by default: one commit of one branch, and nothing of the others. */
+    private fun ciCheckout(name: String, origin: GitRepo, branch: String): GitRepo {
+        val ci = GitRepo(name)
+        ci.git("remote", "add", "origin", origin.root.toString())
+        ci.git("fetch", "-q", "--no-tags", "--depth=1", "origin", "+refs/heads/$branch:refs/remotes/origin/$branch")
+        ci.git("checkout", "-q", "-B", branch, "refs/remotes/origin/$branch")
+        return ci
+    }
+
+    @Test
+    fun validateInACiCheckoutNeedsTheOtherBranches() {
+        val repo = GitRepo.scenario("across-ci")
+        repo.write("tickets/late.md", GitRepo.ticket("late"))
+        repo.commit("late on main")
+        repo.checkout("feature")
+        repo.write("tickets/gamma.md", GitRepo.ticket("gamma", related = listOf("late")))
+        repo.commit("gamma")
+
+        val ci = ciCheckout("across-ci-runner", repo, "feature")
+        val alone = run(ci, "validate")
+        assertEquals(1, alone.statusCode, alone.output)
+        assertTrue("error[ref-unknown]: related: no ticket 'late'" in alone.stdout, alone.stdout)
+        assertTrue("note: this clone has no 'main' branch" in alone.stderr, alone.stderr)
+
+        // What the Action does: the tip of every branch. No history joins them, so beta's two
+        // copies (main's and its branch's) can't be told from an id created twice: not reported.
+        ci.git("fetch", "-q", "--no-tags", "--depth=1", "origin", "+refs/heads/*:refs/remotes/origin/*")
+        val fetched = run(ci, "validate")
+        assertEquals(0, fetched.statusCode, fetched.output)
+        assertEquals("ok: 4 tickets valid", fetched.stdout.trim())
+    }
+
+    @Test
+    fun validateWarnsAboutAReferenceToAnUnpushedTicket() {
+        val origin = GitRepo.scenario("across-unpushed-origin")
+        origin.git("config", "receive.denyCurrentBranch", "ignore")
+        val repo = GitRepo("across-unpushed")
+        repo.git("remote", "add", "origin", origin.root.toString())
+        repo.git("fetch", "-q", "origin")
+        repo.git("checkout", "-q", "-B", "main", "origin/main")
+        repo.write("tickets/late.md", GitRepo.ticket("late"))
+        repo.commit("late on main, not pushed")
+        repo.git("checkout", "-q", "-b", "gamma", "origin/main") // as after `new --on main` from a ticket's branch
+        repo.write("tickets/gamma.md", GitRepo.ticket("gamma", related = listOf("late", "stray")))
+
+        // stray is on origin/feature only: pushed. late is on local main only.
+        val r = run(repo, "validate")
+        assertEquals(0, r.statusCode, r.output)
+        val warnings = r.stdout.lines().filter { "warning[" in it }
+        assertEquals(1, warnings.size, r.stdout)
+        assertTrue("warning[ref-unpushed]: related: 'late' is only on local branch 'main'" in warnings[0], r.stdout)
+
+        repo.git("push", "-q", "origin", "main")
+        val pushed = run(repo, "validate")
+        assertEquals("ok: 3 tickets valid", pushed.stdout.trim(), pushed.output)
+    }
+
     @Test
     fun validateWarnsAboutAnIdCreatedTwice() {
         val repo = GitRepo.scenario("across-twice")

@@ -19,6 +19,8 @@ public class Branches private constructor(
     private val mainBranch: String,
     /** The repository root relative to the git top level (`""` when they are the same). */
     private val sub: String,
+    /** Remote-tracking refs by branch name (`main` → `origin/main`); empty when they weren't read. */
+    private val remoteRefs: Map<String, List<String>> = emptyMap(),
 ) {
     /**
      * One branch: [ref] is what git calls it (`main`, `origin/main`, `HEAD`). For a branch
@@ -115,10 +117,32 @@ public class Branches private constructor(
                 if (other == anchor || copy.text == anchorCopy.text) continue
                 val refs = sources.getValue(anchor).ref to sources.getValue(other).ref
                 val base = bases.getOrPut(refs) { git.mergeBase(refs.first, refs.second) }
+                // A shallow clone (CI) has branch tips without the history that joins them: can't tell.
+                if (base == null && shallow) continue
                 if (base == null || !hasPath(base, treePath(other, copy))) out += CreatedTwice(id, anchor, other)
             }
         }
         return out.sortedWith(compareBy({ it.id }, { it.otherBranch }))
+    }
+
+    private val shallow: Boolean by lazy { git.isShallow() }
+
+    /**
+     * The local branch that has ticket [id] when no remote does and this checkout doesn't either
+     * (e.g. created with `new --on main`, and `main` not pushed since): whoever gets this
+     * checkout's branch from the remote, CI first, won't find it. Null when it is pushed, here,
+     * unknown, or when there are no remote-tracking branches to compare with.
+     */
+    public fun onlyLocal(id: String): String? {
+        if (remoteRefs.isEmpty()) return null
+        val c = copies[id] ?: return null
+        val here = sources.keys.first()
+        if (here in c) return null
+        val pushed = c.any { (branch, copy) ->
+            val path = treePath(branch, copy)
+            sources.getValue(branch).ref != branch || remoteRefs[branch].orEmpty().any { git.hasPath(it, path) }
+        }
+        return if (pushed) null else c.keys.first()
     }
 
     private fun treePath(branch: String, copy: Ticket): String {
@@ -168,7 +192,8 @@ public class Branches private constructor(
                 if (worktree == null && name != mainBranch && ref in mergedIntoMain) continue
                 sources[name] = if (worktree != null) Source(ref, Repository(worktree, fs), lazy { committed(ref) }) else Source(ref, committed(ref))
             }
-            return Branches(repository, git, sources, mainBranch, sub.joinToString("/")).apply { merged[mainRef] = mergedIntoMain }
+            val remoteRefs = remotes.groupBy { it.substringAfter('/') }
+            return Branches(repository, git, sources, mainBranch, sub.joinToString("/"), remoteRefs).apply { merged[mainRef] = mergedIntoMain }
         }
 
         /**

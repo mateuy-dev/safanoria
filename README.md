@@ -356,7 +356,18 @@ print as `file:line:col: error[code]: message`.
 `validate` checks the files of this checkout: what you are about to commit or merge. Other
 branches, local and remote-tracking, only count as known ids. A `related` to a ticket that so
 far exists only on `main` (or on its own branch) isn't `ref-unknown`. `--checkout` turns that
-off. In CI, `actions/checkout` with `fetch-depth: 0` gives it every branch.
+off.
+
+That needs the other branches to be there. Two things can leave them out:
+
+- **A CI checkout** has one commit of one branch. The Action below fetches the tips of the
+  others itself. Running the CLI yourself, do it first: `git fetch --depth=1 origin
+  '+refs/heads/*:refs/remotes/origin/*'`, or `actions/checkout` with `fetch-depth: 0`.
+  Without them, `validate` says so next to the `ref-unknown`.
+- **A branch you haven't pushed.** `new --on main` commits to your local `main`. Push the
+  ticket's branch without it and nobody else has the new ticket. `validate` warns
+  (`ref-unpushed`) while a reference names a ticket that no remote-tracking branch has: push
+  that branch too.
 
 ### Before each commit
 
@@ -381,7 +392,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - uses: mateuy-dev/safanoria@v0.2.0      # installs the CLI, validates the tickets
+      - uses: mateuy-dev/safanoria@v0.2.0      # installs the CLI, fetches the other branches, validates the tickets
 ```
 
 Pin the version (`@v0.2.0`, or `with: version: 0.2.0`): a new Safanoria release then can't fail
@@ -402,6 +413,7 @@ Elsewhere, install with `SAFANORIA_CLI_ONLY=1` and `install.sh`, and run `safano
 | `quote-attribution`, `work-log-entry`, `learning-resolution` | Malformed quote attribution, Work Log entry or Learning `→` line (§7.3, §7.7, §7.6) |
 | `section-missing`, `section-order`, `section-duplicate`, `section-empty` | Sections (§7, §7.1); extra sections may go anywhere |
 | `ref-unknown` | `parent`, `blockedBy`, `related`, a Plan child item or a Learning names no ticket (§8) |
+| `ref-unpushed` (warning) | A reference to a ticket that is only on a local branch no remote has: push that branch too, or CI won't know it (§14.2) |
 | `blocked-by-cycle` | `blockedBy` cycle (§8.2) |
 | `parent-nested`, `research-parent` | Two levels of parents; research ticket with children (§8.1, §6.2) |
 | `parent-plan-missing-child`, `parent-plan-duplicate-child`, `plan-item-not-child`, `child-check-mismatch` | Parent Plan and children out of sync (§7.5, §8.1) |

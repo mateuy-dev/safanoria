@@ -43,6 +43,12 @@ planning or approval step, and a session works as the user directs it.
    - A top-level ticket goes on `mainBranch`. In a session on another branch, use `--on <mainBranch>`:
      it commits the ticket there without touching this checkout. If that fails (e.g. `main` is
      protected), create it on the current branch and tell the user it needs moving.
+     The commit is on the local `mainBranch` only. If this branch references the ticket
+     (`related`), tell the user to push `mainBranch` with it: until then `validate` warns
+     `ref-unpushed`, and CI on this branch fails with `ref-unknown`.
+     The commit is on the local `mainBranch` only. If this branch references the ticket
+     (`related`), tell the user to push `mainBranch` with it: until then `validate` warns
+     `ref-unpushed`, and CI on this branch fails with `ref-unknown`.
    - A child of the current ticket goes on this branch, without `--on`, and is committed here.
    - Don't edit, from another branch, a ticket you created on `mainBranch`: the file isn't there.
 4. From a user: add the `requests` entry and the verbatim quote in User Requests (SPEC §7.3).

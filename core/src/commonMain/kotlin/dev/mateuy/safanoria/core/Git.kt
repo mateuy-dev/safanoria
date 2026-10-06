@@ -171,6 +171,9 @@ public class Git(private val root: Path) {
     public fun mergeBase(a: String, b: String): String? =
         git("merge-base", a, b).takeIf { it.exitCode == 0 }?.output?.trim()
 
+    /** Whether this clone has only part of the history (`git clone --depth`, as CI checkouts do). */
+    public fun isShallow(): Boolean = git("rev-parse", "--is-shallow-repository").output.trim() == "true"
+
     /** Whether a local or remote-tracking branch is called [name] (SPEC §3: new ids shouldn't clash). */
     public fun branchExists(name: String): Boolean =
         gitOrThrow("branch", "-a", "--list", name, "*/$name").lines().any { it.isNotBlank() }

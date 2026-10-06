@@ -12,6 +12,7 @@ import com.github.ajalt.clikt.parameters.types.choice
 import dev.mateuy.safanoria.core.Branches
 import dev.mateuy.safanoria.core.CONFIG_FILE
 import dev.mateuy.safanoria.core.Diagnostic
+import dev.mateuy.safanoria.core.GitException
 import dev.mateuy.safanoria.core.Severity
 import dev.mateuy.safanoria.core.SystemFileSystem
 import dev.mateuy.safanoria.core.Validator
@@ -58,7 +59,21 @@ class Validate : RepositoryCommand(name = "validate") {
         val branches = if (checkout) null else Branches.read(repo, remote = true)
         val diagnostics = Validator(repo, branches).validate(only)
         val checked = only?.let { plural(it.size, "file") } ?: plural(repo.tickets.size, "ticket")
+        if (branches == null && !checkout && diagnostics.any { it.code == "ref-unknown" }) branchesNote()
         report(diagnostics, checked)
+    }
+
+    /** Why a reference may be unknown here and not on the author's machine: the usual CI checkout. */
+    private fun branchesNote() {
+        val repo = repository
+        try { repo.git.currentBranch() } catch (e: GitException) { return } // not a git repository
+        val main = repo.config.mainBranch
+        echo(
+            "note: this clone has no '$main' branch, so tickets on other branches are unknown here. " +
+                "In CI, fetch them before validating: `git fetch origin '+refs/heads/*:refs/remotes/origin/*'`, " +
+                "or actions/checkout with fetch-depth: 0 (the Safanoria Action fetches them itself)",
+            err = true,
+        )
     }
 
     private fun plural(n: Int, noun: String) = "$n $noun${if (n == 1) "" else "s"}"
