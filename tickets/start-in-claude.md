@@ -7,6 +7,8 @@ priority: medium
 size: S
 created: 2026-10-05
 updated: 2026-10-06
+resolvedIn:
+  safanoria: 0.3.0
 ---
 
 ## Objective
@@ -29,3 +31,4 @@ Start stays as it is, for those who don't use Claude Code or want a plain termin
 - **2026-10-06** · decision · The button is always offered; without `claude` installed, clicking it says so and starts nothing. Checking at click time keeps the view state a function of the tickets alone.
 - **2026-10-06** · status · review
 - **2026-10-06** · status · done
+- **2026-10-06** · release · safanoria 0.3.0

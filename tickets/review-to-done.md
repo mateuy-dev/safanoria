@@ -6,7 +6,9 @@ status: done
 priority: medium
 size: L
 created: 2026-10-05
-updated: 2026-10-05
+updated: 2026-10-06
+resolvedIn:
+  safanoria: 0.3.0
 ---
 
 ## Objective
@@ -95,3 +97,4 @@ Decided (see the Work Log): the commands are `merge` and `reopen`; `merge` takes
   were done in one session.
 - **2026-10-05** · status · review
 - **2026-10-05** · status · done
+- **2026-10-06** · release · safanoria 0.3.0

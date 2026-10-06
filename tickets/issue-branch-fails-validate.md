@@ -8,6 +8,8 @@ size: S
 created: 2026-10-06
 updated: 2026-10-06
 related: [new-crashes-ticket-directory, windows-gui-merge-test-fails]
+resolvedIn:
+  safanoria: 0.3.0
 ---
 
 ## Objective
@@ -78,3 +80,4 @@ tickets/cyl.md:12:72: error[ref-unknown]: related: no ticket 'device-credentials
 - **2026-10-06** · decision · `finish` refused this very ticket: it and `start` validated the branch's commit alone, so a `related` to a ticket created on `main` was `ref-unknown`. They now count ids on every branch as known, like `validate`; only the ids, since the other cross-branch warnings are about the current checkout, not the branch being committed to.
 - **2026-10-06** · status · review
 - **2026-10-06** · status · done
+- **2026-10-06** · release · safanoria 0.3.0
