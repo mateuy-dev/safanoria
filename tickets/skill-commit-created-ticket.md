@@ -2,7 +2,7 @@
 id: skill-commit-created-ticket
 type: feature
 title: "Skill: commit a created ticket automatically when no questions were asked"
-status: backlog
+status: in-progress
 priority: medium
 size: XS
 created: 2026-10-07
@@ -23,3 +23,4 @@ The change is expected in the skill's Create section (`skill/SKILL.md`), coverin
 
 ## Work Log
 
+- **2026-10-07** · status · started
