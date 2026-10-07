@@ -45,6 +45,8 @@ class TicketStoreActionsTest {
         // The commits Start makes need an identity too.
         git("config", "user.name", "Test")
         git("config", "user.email", "test@example.com")
+        // Git for Windows checks files out with CRLF by default; the tests compare file contents.
+        git("config", "core.autocrlf", "false")
         git("add", ".")
         git("commit", "-q", "-m", "tickets")
     }
