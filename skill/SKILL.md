@@ -46,12 +46,18 @@ planning or approval step, and a session works as the user directs it.
      The commit is on the local `mainBranch` only. If this branch references the ticket
      (`related`), tell the user to push `mainBranch` with it: until then `validate` warns
      `ref-unpushed`, and CI on this branch fails with `ref-unknown`.
-   - A child of the current ticket goes on this branch, without `--on`, and is committed here.
+   - A child of the current ticket goes on this branch, without `--on`.
    - Don't edit, from another branch, a ticket you created on `mainBranch`: the file isn't there.
 4. From a user: add the `requests` entry and the verbatim quote in User Requests (SPEC §7.3).
    With `--on`, edit and commit that where `mainBranch` is checked out (`git worktree list`;
    `git -C <worktree> commit -- <file>`), or ask the user.
 5. `safanoria-cli validate <file>`.
+6. **Commit it**, when it was created on this checkout (without `--on`, which commits by itself)
+   and you didn't have to ask the user anything to write it: `git add <files>`, then
+   `git commit -m "<id>: create" -- <files>`. The files are the ticket, with its `requests` entry
+   and quote, and for a child the parent, whose Plan got the item; nothing else that is
+   uncommitted here. If you asked something, its content is still under discussion: leave it
+   uncommitted and tell the user.
 
 Without the CLI: pick an id (SPEC §3) that no branch has used (`git rev-list --all -1 --
 '<dir>/<id>.md'` and `git branch -a --list '*<id>'` print nothing), copy the template (SPEC §6.2),
