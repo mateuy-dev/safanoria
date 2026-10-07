@@ -2,7 +2,7 @@
 id: gui-project-icon
 type: feature
 title: "GUI shows the project's icon instead of Safanoria's"
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-07
@@ -21,3 +21,4 @@ Open: where the project's icon comes from. `safanoria.yaml` has no setting for i
 
 ## Work Log
 
+- **2026-10-07** · status · started
