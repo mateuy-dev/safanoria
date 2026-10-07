@@ -20,6 +20,7 @@ class ContextTest {
         assertEquals(0, r.statusCode, r.output)
         assertTrue("works on the Safanoria ticket `beta`" in r.stdout, r.stdout)
         assertTrue("<ticket file=\"" in r.stdout && "status: in-progress" in r.stdout, r.stdout)
+        assertTrue("run `safanoria-cli finish beta` without being asked" in r.stdout, r.stdout)
 
         repo.checkout("feature")
         assertEquals("", run(repo).output, "a branch whose name has no ticket")

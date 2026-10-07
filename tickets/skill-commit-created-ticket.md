@@ -2,7 +2,7 @@
 id: skill-commit-created-ticket
 type: feature
 title: "Skill: commit a created ticket automatically when no questions were asked"
-status: backlog
+status: done
 priority: medium
 size: XS
 created: 2026-10-07
@@ -21,5 +21,13 @@ The change is expected in the skill's Create section (`skill/SKILL.md`), coverin
 
 ## Acceptance Criteria
 
+- [x] The skill's Create steps tell Claude to commit a ticket created on the current checkout, as `<id>: create`, when it asked the user nothing.
+- [x] The commit holds the ticket with its `requests` entry and quote, the parent's Plan for a child, and no other uncommitted work.
+- [x] A ticket Claude had to ask about is left uncommitted, and the user is told.
+
 ## Work Log
 
+- **2026-10-07** · status · started
+- **2026-10-07** · decision · Skill text only, as a last Create step after `validate`: the `requests` entry and quote are written after `new`, so a commit made by the CLI would miss them. The commit names its files (`git commit -- <files>`) so other uncommitted work on the checkout stays out.
+- **2026-10-07** · status · review
+- **2026-10-07** · status · done

@@ -278,7 +278,9 @@ Hook in `.claude/settings.json`, if you set it up by hand:
 { "hooks": { "SessionStart": [ { "hooks": [ { "type": "command", "command": "safanoria-cli context 2>/dev/null || true" } ] } ] } }
 ```
 
-**Finish.** Tell the session the work is done, or run `finish`. It sets `status: review`, logs
+**Finish.** The session runs `finish` on its own when it considers the implementation complete
+(everything committed, tests passing, no question open for you), and tells you; so a ticket in
+`review` is one that waits for you. You can also run it yourself. It sets `status: review`, logs
 it and commits only the ticket, on the branch that has its real copy: in the worktree when the
 branch is checked out there, otherwise on the branch itself, without checking it out. First it
 checks that the branch is what a reviewer should see. It refuses when the worktree has
@@ -299,7 +301,9 @@ is to review (the diff stat against the target) and the next command.
   wouldn't validate, or the target is checked out with changes in the way. It only takes
   tickets in `review`: run `finish` first. `--dry-run` checks without merging. It needs git 2.38.
 - `reopen <id> --reason "…"` sends it back to `in-progress` and logs the reason, on the same
-  branch and worktree.
+  branch and worktree. It is for a review that sends the ticket back to work. A small change
+  you ask for is committed on the branch while the ticket stays in `review`; `merge` takes the
+  branch as it is then.
 
 **Merges made elsewhere.** When the branch is merged by a pull request or by hand, the target
 has the ticket in `review`. `finish --done` without an id sets every such ticket `done` (one

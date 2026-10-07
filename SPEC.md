@@ -146,9 +146,11 @@ A request is:
 - A ticket starts work only when a human says so. Tools and agents MUST NOT move a ticket to
   `in-progress` on their own initiative.
 - Moving forward MAY skip statuses (e.g. `backlog` → `in-progress` for a direct fix).
-- Moving backward (for example `review` → `in-progress` when the review finds something to
-  change), and reopening a `done` or `wontfix` ticket to `backlog`, MUST add a Work Log entry
-  with the reason.
+- A ticket in `review` MAY still get commits on its branch: the changes its review asks for. It
+  stays in `review` while it waits on the reviewer, and goes back to `in-progress` when the
+  review sends it back to work.
+- Moving backward (for example `review` → `in-progress`), and reopening a `done` or `wontfix`
+  ticket to `backlog`, MUST add a Work Log entry with the reason.
 - `done` means merged, so it SHOULD be set in the merge itself (§11.5). A ticket in `review` on
   its target is merged: its `done` is only missing.
 - Content required by status is defined in §7.1.
@@ -376,9 +378,12 @@ what was decided; they do not script the work. Working on a ticket is an ordinar
 4. **Finish.** Set `status: review` when the work is complete: committed on branch `<id>`, which
    has what its target has. Tools SHOULD refuse otherwise, and list pending Learnings and
    unchecked Acceptance Criteria without blocking on them (§7.6). Until here tools commit only
-   ticket files. Never set `resolvedIn`.
-5. **Land** — only when the human says so, after the review. Either merge branch `<id>` into
-   its target and set `done`, or go back to `in-progress` with the reason logged (§6.1). A tool
+   ticket files. Never set `resolvedIn`. An agent MAY finish without being asked, and SHOULD
+   when it considers the work complete and has no question open for the human: `review` is how
+   the human sees that the ticket waits for them. It then says so, and what is still open.
+5. **Land** — only when the human says so, after the review. Changes the review asks for MAY be
+   committed on the branch while the ticket stays in `review` (§6.1). Either merge branch `<id>`
+   into its target and set `done`, or go back to `in-progress` with the reason logged (§6.1). A tool
    MAY do the merge: with a merge commit that also sets `done`, logs it and checks the item in
    the parent's Plan, so the status and the merge can't differ. It MUST change nothing when the
    branch has uncommitted work, the merge conflicts or the tickets wouldn't validate, and MUST
