@@ -7,6 +7,8 @@ priority: medium
 size: S
 created: 2026-10-06
 updated: 2026-10-07
+resolvedIn:
+  safanoria: 0.4.0
 ---
 
 ## Objective
@@ -38,3 +40,4 @@ The `cli` workflow fails on `windows-2022` since 2026-10-06 (first seen on `main
 - **2026-10-07** · decision · The test was wrong, not the merge: Git for Windows has `core.autocrlf=true`, so `code.txt` lands in the main checkout as `work\r\n` and the comparison with `work\n` fails (reproduced on Linux with a global `core.autocrlf=true`). The test repository now sets `core.autocrlf=false`, as core's `GitFixture` does. The app is left alone: which line endings a checkout gets is the user's git setting.
 - **2026-10-07** · status · review
 - **2026-10-07** · status · done
+- **2026-10-07** · release · safanoria 0.4.0

@@ -7,6 +7,8 @@ priority: medium
 size: S
 created: 2026-10-07
 updated: 2026-10-07
+resolvedIn:
+  safanoria: 0.4.0
 ---
 
 ## Objective
@@ -43,3 +45,4 @@ To decide while doing it:
 - **2026-10-07** · decision · The SessionStart text (`context`) also tells an in-progress session to finish on its own: the skill's Finish section is far from where the session reads at the moment it stops, the hook text is always in front of it.
 - **2026-10-07** · status · review
 - **2026-10-07** · status · done
+- **2026-10-07** · release · safanoria 0.4.0

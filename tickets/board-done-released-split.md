@@ -7,6 +7,8 @@ priority: medium
 size: S
 created: 2026-10-07
 updated: 2026-10-07
+resolvedIn:
+  safanoria: 0.4.0
 ---
 
 ## Objective
@@ -47,3 +49,4 @@ Not decided: showing the version on the tickets of the released column. Fine to 
 - **2026-10-07** · decision · Added the versions (`app 4.3.0`) on released tickets, on the CLI board and the GUI cards: it came cheap. To release has its own colour in the GUI; released keeps done's.
 - **2026-10-07** · status · review
 - **2026-10-07** · status · done
+- **2026-10-07** · release · safanoria 0.4.0
