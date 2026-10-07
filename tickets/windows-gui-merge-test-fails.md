@@ -2,11 +2,11 @@
 id: windows-gui-merge-test-fails
 type: bug
 title: "Windows CI: gui merge test fails"
-status: backlog
+status: done
 priority: medium
 size: S
 created: 2026-10-06
-updated: 2026-10-06
+updated: 2026-10-07
 ---
 
 ## Objective
@@ -26,16 +26,15 @@ The `cli` workflow fails on `windows-2022` since 2026-10-06 (first seen on `main
 
 `TicketStoreActionsTest[jvm] > mergeLandsATicketInReviewAndRemovesItsWorktreeAndBranch[jvm] FAILED`.
 
-### Steps to reproduce
-
-1.
-
-### Expected
-
-### Actual
-
 <!-- Error messages, refs (e.g. sentry) and the version where it happens. Screenshots and logs: attachments/<id>/ (SPEC §7.8), without personal data. -->
 
 ## Acceptance Criteria
 
+- [ ] The `windows-2022` job of the `cli` workflow passes `./gradlew allTests`.
+
 ## Work Log
+
+- **2026-10-07** · status · started
+- **2026-10-07** · decision · The test was wrong, not the merge: Git for Windows has `core.autocrlf=true`, so `code.txt` lands in the main checkout as `work\r\n` and the comparison with `work\n` fails (reproduced on Linux with a global `core.autocrlf=true`). The test repository now sets `core.autocrlf=false`, as core's `GitFixture` does. The app is left alone: which line endings a checkout gets is the user's git setting.
+- **2026-10-07** · status · review
+- **2026-10-07** · status · done
