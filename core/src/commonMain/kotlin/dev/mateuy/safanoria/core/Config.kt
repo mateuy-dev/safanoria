@@ -43,6 +43,8 @@ public data class Config(
     val userRef: String? = null,
     val refs: Map<String, RefSystem> = emptyMap(),
     val learningTargets: List<String> = emptyList(),
+    /** The project's icon, an image file relative to the repository root. */
+    val icon: String? = null,
     /** File line of each top-level key, for diagnostics. */
     val keyLines: Map<String, Int> = emptyMap(),
 ) {
@@ -105,6 +107,7 @@ public object ConfigLoader {
             userRef = root.get("userRef").text(),
             refs = refs,
             learningTargets = root.get("learningTargets").textList() ?: emptyList(),
+            icon = root.get("icon").text(),
             keyLines = root.mapEntries().associate { (key, _) -> key.content to block.lineOf(key) },
         )
         val schemaDiagnostics = SchemaValidator.configErrors(block).map { SchemaValidator.toDiagnostic(block, it) }

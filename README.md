@@ -210,6 +210,10 @@ The prompt comes back at once and the window stays open when the terminal is clo
 app prints shows then: `SAFANORIA_FOREGROUND=1 safanoria` keeps it attached to the terminal, to
 see its output (a crash). In a directory that is in no Safanoria project, a window says so.
 
+The window has the project's icon when `safanoria.yaml` names one (`icon: design/app.svg`, an
+SVG or PNG file in the repository), so that the windows of several projects can be told apart
+in the taskbar. Without it, or when the file can't be read, it has Safanoria's.
+
 - **Board**: a column per status, left to right as a ticket moves (Backlog, Ready, In progress,
   Review, To release, Released, Won't fix). Done tickets are in two columns: To release is what
   the next version brings, Released what a version already has. Every ticket is a card, children
