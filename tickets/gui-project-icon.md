@@ -2,7 +2,7 @@
 id: gui-project-icon
 type: feature
 title: "GUI shows the project's icon instead of Safanoria's"
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-10-07
@@ -29,3 +29,4 @@ The project's icon comes from a new optional key of `safanoria.yaml`, `icon`: th
 - **2026-10-07** · decision · The icon comes from a new optional `icon` key in `safanoria.yaml` (the user's choice) rather than a conventional location: projects keep their icon where it already is. An optional key old tools ignore, so the spec version stays 1 (§13).
 - **2026-10-07** · decision · An `icon` that can't be read or decoded is not a `validate` problem: the app falls back to Safanoria's icon silently. The spec says so, so that a tool that doesn't support a format isn't wrong.
 - **2026-10-07** · decision · The icon is read once at launch, from this checkout's file; changing it needs the app reopened. SVG is chosen by the `.svg` extension, anything else is decoded as a raster image.
+- **2026-10-07** · status · review
