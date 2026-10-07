@@ -471,14 +471,19 @@ python3 tools/bench.py cli/build/bin/linuxX64/releaseExecutable/safanoria.kexe  
 
 ### Releasing Safanoria
 
-1. On `main`, with `gradle.properties` `version` set to the release (e.g. `0.2.0`): stamp this
-   repository's tickets, `safanoria-cli release safanoria`, and commit.
-2. Tag and push: `git tag v0.2.0 && git push origin v0.2.0`. The `release` workflow checks the
+`./release.sh` releases the `version` in `gradle.properties`, from `main` with nothing
+uncommitted. It shows what it will do and asks first (`-y` to skip), then:
+
+1. Runs the tests (`./gradlew allTests`), and stops there if they fail. Then stamps this
+   repository's tickets (`safanoria-cli release safanoria`), moves the version
+   pinned in this README's Action example, and commits `Release Safanoria X.Y.Z`.
+2. Tags it `vX.Y.Z`. The `release` workflow checks the
    tag equals `version`, builds the CLI binaries and the app archives for the three systems
    with `-Prelease`, and publishes them with `SHA256SUMS` as a GitHub release, which the install
    scripts download. The CLI assets are named `safanoria-<os>` without "cli": install scripts
    and Actions pinned to a version from before the app download the latest release by those names.
-3. Set `version` to the next one (e.g. `0.3.0`) for development.
+3. Sets `version` to the next one for development (the next minor, or `./release.sh 1.0.0`),
+   commits `Start X.Y.Z`, and pushes `main` and the tag.
 
 Changing `.github/workflows/release.yml`, the install scripts or `action.yml` on any branch runs
 the workflow without publishing: it builds the binaries and the app, and runs both install scripts and the
