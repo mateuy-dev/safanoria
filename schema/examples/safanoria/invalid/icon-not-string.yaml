@@ -1,0 +1,6 @@
+# expect: type /icon
+safanoria: 1
+components:
+  app:
+    version: { file: gradle.properties, property: appVersionName }
+icon: [app.svg, app.png]

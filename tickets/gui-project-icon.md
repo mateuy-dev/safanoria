@@ -15,10 +15,17 @@ The GUI always shows Safanoria's own icon (window, taskbar, title bar): `remembe
 
 Safanoria's icon stays as the fallback when the project has none.
 
-Open: where the project's icon comes from. `safanoria.yaml` has no setting for it today (SPEC §2); candidates are a new optional key pointing at an image file in the repository, or a conventional location. A new key is a spec and schema change.
+The project's icon comes from a new optional key of `safanoria.yaml`, `icon`: the path of an image file (SVG or PNG) relative to the repository root (SPEC §2, schema).
 
 ## Acceptance Criteria
+
+- [x] `icon` is in SPEC §2 and the schema, and read into `Config`
+- [x] With `icon` set, the window (taskbar, window switcher) and the board's bar show that image, SVG or PNG
+- [x] Without `icon`, or when the file is missing or isn't an image, the app shows Safanoria's icon
 
 ## Work Log
 
 - **2026-10-07** · status · started
+- **2026-10-07** · decision · The icon comes from a new optional `icon` key in `safanoria.yaml` (the user's choice) rather than a conventional location: projects keep their icon where it already is. An optional key old tools ignore, so the spec version stays 1 (§13).
+- **2026-10-07** · decision · An `icon` that can't be read or decoded is not a `validate` problem: the app falls back to Safanoria's icon silently. The spec says so, so that a tool that doesn't support a format isn't wrong.
+- **2026-10-07** · decision · The icon is read once at launch, from this checkout's file; changing it needs the app reopened. SVG is chosen by the `.svg` extension, anything else is decoded as a raster image.

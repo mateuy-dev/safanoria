@@ -8,6 +8,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.DpSize
@@ -18,6 +19,7 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import dev.mateuy.safanoria.core.Repository
 import dev.mateuy.safanoria.core.SPEC_VERSION
+import dev.mateuy.safanoria.gui.theme.LocalProjectIcon
 import dev.mateuy.safanoria.gui.theme.SafanoriaTheme
 import dev.mateuy.safanoria.gui.theme.rememberAppIcon
 import okio.Path.Companion.toPath
@@ -97,13 +99,16 @@ fun main(args: Array<String>) {
     }
     val container = AppContainer(repository)
     application {
-        Window(
-            onCloseRequest = ::exitApplication,
-            title = "Safanoria · ${repository.root.name}",
-            state = rememberWindowState(size = DpSize(1400.dp, 900.dp)),
-            icon = rememberAppIcon(),
-        ) {
-            App(container)
+        // Around the window, not inside it: its own icon is the project's too.
+        CompositionLocalProvider(LocalProjectIcon provides container.projectIcon) {
+            Window(
+                onCloseRequest = ::exitApplication,
+                title = "Safanoria · ${repository.root.name}",
+                state = rememberWindowState(size = DpSize(1400.dp, 900.dp)),
+                icon = rememberAppIcon(),
+            ) {
+                App(container)
+            }
         }
     }
 }

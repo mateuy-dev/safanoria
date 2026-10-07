@@ -18,3 +18,4 @@ userRef: VacApp user id
 refs:
   sentry: { url: "https://example.sentry.io/issues/?query={id}" }
 learningTargets: [CLAUDE.md, docs/, .claude/skills/, code comment]
+icon: composeApp/icons/app.svg

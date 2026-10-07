@@ -45,6 +45,7 @@ userRef: VacApp user id               # what requests[].user refers to (document
 refs:                                 # external systems tickets may reference (§5, refs)
   sentry: { url: "https://example.sentry.io/issues/?query={id}" }
 learningTargets: [CLAUDE.md, docs/, .claude/skills/, code comment]   # optional hint (§7.6)
+icon: composeApp/icons/app.svg        # optional; the project's icon, for tools that show one
 ```
 
 - `components` names are slugs (`^[a-z][a-z0-9-]*$`). They are the allowed values of `area`
@@ -59,6 +60,9 @@ learningTargets: [CLAUDE.md, docs/, .claude/skills/, code comment]   # optional 
   is what whoever creates a ticket decides from. Keep the list short: a theme groups tickets
   that are otherwise independent, across components and over time. It is not for what `type`
   or `area` already say, nor for a bounded piece of work (that is a parent, §8.1).
+- `icon` is the path of an image file (SVG or PNG), relative to the repository root. Tools that
+  show the project (the desktop app's windows) use it to tell projects apart. A tool that can't
+  read it shows its own icon instead; that is not an error.
 - Unknown keys MUST be preserved by tools and MAY be ignored.
 - [`schema/safanoria.schema.json`](schema/safanoria.schema.json) is the JSON Schema for this file.
 

@@ -33,6 +33,7 @@ class ConfigTest {
             refs:
               sentry: { url: "https://example.sentry.io/issues/?query={id}" }
             learningTargets: [CLAUDE.md, docs/]
+            icon: design/app.svg
             unknownKey: kept
         """.trimIndent()
         val result = ConfigLoader.parse(path, text)
@@ -51,7 +52,8 @@ class ConfigTest {
         assertEquals(listOf("whatsapp", "email"), config.channels)
         assertEquals("https://example.sentry.io/issues/?query={id}", config.refs["sentry"]?.url)
         assertEquals(listOf("CLAUDE.md", "docs/"), config.learningTargets)
-        assertEquals(20, config.keyLines["unknownKey"])
+        assertEquals("design/app.svg", config.icon)
+        assertEquals(21, config.keyLines["unknownKey"])
     }
 
     @Test
@@ -60,6 +62,7 @@ class ConfigTest {
         assertEquals("tickets", config.dir)
         assertEquals("main", config.mainBranch)
         assertNull(config.worktree)
+        assertNull(config.icon)
         assertEquals(Config.DEFAULT_CHANNELS, config.channels)
     }
 
