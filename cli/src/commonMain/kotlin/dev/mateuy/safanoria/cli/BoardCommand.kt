@@ -11,7 +11,8 @@ import okio.Path.Companion.toPath
 class BoardCommand : AcrossBranchesCommand(name = "board") {
     override fun help(context: Context) =
         "Print a markdown board: a section per status, parents with their children and progress, " +
-            "blocked tickets marked. No dates in it, so a committed board only changes when tickets do."
+            "blocked tickets marked. Done tickets are in two sections: to release (a component of their area " +
+            "has no resolvedIn yet) and released. No dates in it, so a committed board only changes when tickets do."
 
     private val output by option("--output", "-o", help = "Write to this file; links are relative to it (default: stdout, links relative to the root)")
 
@@ -19,12 +20,12 @@ class BoardCommand : AcrossBranchesCommand(name = "board") {
         val repo = repository
         val file = output?.toPath()
         if (file == null) {
-            echo(Board.markdown(graph, repo.root), trailingNewline = false)
+            echo(Board.markdown(graph, repo.config, repo.root), trailingNewline = false)
             return
         }
         val dir = file.parent ?: ".".toPath()
         if (!SystemFileSystem.exists(dir)) throw PrintMessage("No such directory: $dir", 2, true)
-        val markdown = Board.markdown(graph, SystemFileSystem.canonicalize(dir))
+        val markdown = Board.markdown(graph, repo.config, SystemFileSystem.canonicalize(dir))
         SystemFileSystem.write(file) { writeUtf8(markdown) }
         echo("wrote ${displayPath(SystemFileSystem.canonicalize(file))}")
     }

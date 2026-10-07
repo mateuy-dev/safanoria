@@ -6,6 +6,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import dev.mateuy.safanoria.core.BoardGroup
 import dev.mateuy.safanoria.core.Priority
 import dev.mateuy.safanoria.core.Status
 
@@ -29,6 +30,10 @@ val Status.color: Color
         Status.DONE -> Color(0xFF5C6B5E)
         Status.WONTFIX -> Color(0xFFA0766B)
     }
+
+/** A board column's: its status's, but for what is to release, which is the one to look at. */
+val BoardGroup.color: Color
+    get() = if (this == BoardGroup.TO_RELEASE) Color(0xFF1F9AA8) else status.color
 
 val Status.label: String
     get() = when (this) {

@@ -1,9 +1,9 @@
 package dev.mateuy.safanoria.gui
 
+import dev.mateuy.safanoria.core.BoardGroup
 import dev.mateuy.safanoria.core.Diagnostic
 import dev.mateuy.safanoria.core.Progress
 import dev.mateuy.safanoria.core.Severity
-import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.core.TicketFilter
 import dev.mateuy.safanoria.core.TicketType
 import dev.mateuy.safanoria.gui.board.BoardViewState
@@ -17,7 +17,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class BoardViewStateTest {
-    private fun BoardViewState.ids(status: Status?) = columns.single { it.status == status }.cards.map { it.id }
+    private fun BoardViewState.ids(group: BoardGroup?) = columns.single { it.group == group }.cards.map { it.id }
     private fun BoardViewState.card(id: String) = columns.flatMap { it.cards }.single { it.id == id }
 
     @Test
@@ -34,26 +34,29 @@ class BoardViewStateTest {
     }
 
     @Test
-    fun everyStatusHasAColumnInWorkflowOrder() {
+    fun everyGroupHasAColumnInWorkflowOrder() {
         val state = boardViewState(snapshotOf(ticket("one-ticket", status = "ready")))
         assertEquals(
-            listOf(Status.BACKLOG, Status.READY, Status.IN_PROGRESS, Status.REVIEW, Status.DONE, Status.WONTFIX),
-            state.columns.map { it.status },
+            listOf(
+                BoardGroup.BACKLOG, BoardGroup.READY, BoardGroup.IN_PROGRESS, BoardGroup.REVIEW,
+                BoardGroup.TO_RELEASE, BoardGroup.RELEASED, BoardGroup.WONTFIX,
+            ),
+            state.columns.map { it.group },
         )
-        assertEquals(listOf("one-ticket"), state.ids(Status.READY))
+        assertEquals(listOf("one-ticket"), state.ids(BoardGroup.READY))
         assertEquals(1, state.ticketCount)
     }
 
     @Test
     fun cardsAreInPriorityThenIdOrder() {
         val state = boardViewState(snapshotOf(ticket("bbb"), ticket("aaa"), ticket("zzz", priority = "urgent")))
-        assertEquals(listOf("zzz", "aaa", "bbb"), state.ids(Status.BACKLOG))
+        assertEquals(listOf("zzz", "aaa", "bbb"), state.ids(BoardGroup.BACKLOG))
     }
 
     @Test
     fun anUnreadableStatusGetsItsOwnLastColumn() {
         val state = boardViewState(snapshotOf(ticket("odd-one", status = "paused")))
-        assertNull(state.columns.last().status)
+        assertNull(state.columns.last().group)
         assertEquals(listOf("odd-one"), state.ids(null))
     }
 
@@ -68,7 +71,7 @@ class BoardViewStateTest {
         )
         assertEquals(Progress(1, 2), state.card("parent-one").progress)
         assertEquals("parent-one", state.card("child-open").parentId)
-        assertEquals(listOf("child-done"), state.ids(Status.DONE))
+        assertEquals(listOf("child-done"), state.ids(BoardGroup.RELEASED))
         assertNull(state.card("child-open").progress)
     }
 
@@ -93,9 +96,27 @@ class BoardViewStateTest {
 
     @Test
     fun collapsedColumnsKeepTheirCards() {
-        val state = boardViewState(snapshotOf(ticket("closed", status = "done")), collapsed = setOf(Status.DONE))
-        assertEquals(listOf(Status.DONE), state.columns.filter { it.collapsed }.map { it.status })
-        assertEquals(listOf("closed"), state.ids(Status.DONE))
+        val state = boardViewState(snapshotOf(ticket("closed", status = "done")), collapsed = setOf(BoardGroup.RELEASED))
+        assertEquals(listOf(BoardGroup.RELEASED), state.columns.filter { it.collapsed }.map { it.group })
+        assertEquals(listOf("closed"), state.ids(BoardGroup.RELEASED))
+    }
+
+    @Test
+    fun doneIsToReleaseUntilReleased() {
+        val state = boardViewState(
+            snapshotOf(
+                ticket("waiting", status = "done", extra = "area: [app]"),
+                ticket("half", status = "done", extra = "area: [app, web]\nresolvedIn:\n  app: 4.3.0"),
+                ticket("shipped", status = "done", extra = "area: [app]\nresolvedIn:\n  app: 4.3.0"),
+                ticket("study", status = "done", type = "research", extra = "area: [app]"),
+                ticket("nowhere", status = "done"),
+                components = listOf("app", "web"),
+            ),
+        )
+        assertEquals(listOf("half", "waiting"), state.ids(BoardGroup.TO_RELEASE))
+        assertEquals(listOf("nowhere", "shipped", "study"), state.ids(BoardGroup.RELEASED))
+        assertEquals("app 4.3.0", state.card("shipped").versions)
+        assertNull(state.card("waiting").versions)
     }
 
     @Test
@@ -120,7 +141,7 @@ class BoardViewStateTest {
         assertEquals(listOf("app", "web"), state.areas)
         assertEquals(listOf("registry"), state.tags)
         assertEquals(listOf("registry"), boardViewState(snapshot).card("a-feature").tags)
-        assertEquals(6, state.columns.size)
+        assertEquals(7, state.columns.size)
     }
 
     @Test

@@ -2,6 +2,7 @@ package dev.mateuy.safanoria.gui.data
 
 import dev.mateuy.safanoria.core.BranchView
 import dev.mateuy.safanoria.core.Branches
+import dev.mateuy.safanoria.core.Config
 import dev.mateuy.safanoria.core.Diagnostic
 import dev.mateuy.safanoria.core.Finish
 import dev.mateuy.safanoria.core.FinishException
@@ -64,6 +65,8 @@ sealed interface ReopenOutcome {
 /** The project's tickets as last read, and whether a read is running or failed. */
 data class TicketsSnapshot(
     val graph: TicketGraph? = null,
+    /** `safanoria.yaml` of this checkout; null until the first read, as [graph]. */
+    val config: Config? = null,
     /** `validate`'s problems by ticket id, for the tickets shown as they are in this checkout. */
     val diagnostics: Map<String, List<Diagnostic>> = emptyMap(),
     /** Problems that belong to no shown ticket: `safanoria.yaml`, attachments. */
@@ -214,7 +217,7 @@ class TicketStore(val root: Path) {
                 val graph = branches?.graph ?: repository.graph
                 // Parse now, off the UI thread: tickets parse lazily.
                 graph.tickets.forEach { it.frontmatter; it.body }
-                snapshot(graph, Validator(repository, branches).validate(), repository.ticketDir, branches?.branches?.firstOrNull())
+                snapshot(graph, repository.config, Validator(repository, branches).validate(), repository.ticketDir, branches?.branches?.firstOrNull())
             }
         }
         state.update {
@@ -231,12 +234,13 @@ class TicketStore(val root: Path) {
  * ([checkoutBranch]), while the graph may show a ticket's copy from another branch: a problem is
  * only attached to a ticket when the copy shown is the one checked, and dropped otherwise.
  */
-internal fun snapshot(graph: TicketGraph, diagnostics: List<Diagnostic>, ticketDir: Path, checkoutBranch: String?): TicketsSnapshot {
+internal fun snapshot(graph: TicketGraph, config: Config, diagnostics: List<Diagnostic>, ticketDir: Path, checkoutBranch: String?): TicketsSnapshot {
     fun ticketId(d: Diagnostic): String? = d.file?.takeIf { it.parent == ticketDir && it.name.endsWith(".md") }?.name?.removeSuffix(".md")
     val (ofTickets, ofProject) = diagnostics.partition { d -> ticketId(d)?.let { graph.ticket(it) } != null }
     val shownAsChecked = graph.tickets.filter { it.branch == null || it.branch == checkoutBranch }.map { it.fileId }.toSet()
     return TicketsSnapshot(
         graph = graph,
+        config = config,
         diagnostics = ofTickets.groupBy { ticketId(it)!! }.filterKeys { it in shownAsChecked },
         projectDiagnostics = ofProject,
     )

@@ -2,9 +2,10 @@ package dev.mateuy.safanoria.gui.board
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.mateuy.safanoria.core.Board
+import dev.mateuy.safanoria.core.BoardGroup
 import dev.mateuy.safanoria.core.Diagnostic
 import dev.mateuy.safanoria.core.Severity
-import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.core.Ticket
 import dev.mateuy.safanoria.core.TicketFilter
 import dev.mateuy.safanoria.core.TicketGraph
@@ -20,17 +21,20 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class BoardViewModel(private val store: TicketStore) : ViewModel() {
-    /** Closed work is collapsed until asked for: it is most of the tickets and rarely what is looked for. */
-    private val collapsed = MutableStateFlow<Set<Status?>>(setOf(Status.DONE, Status.WONTFIX))
+    /**
+     * Closed work is collapsed until asked for: it is most of the tickets and rarely what is looked
+     * for. Not what is to release: that is what the next version brings.
+     */
+    private val collapsed = MutableStateFlow<Set<BoardGroup?>>(setOf(BoardGroup.RELEASED, BoardGroup.WONTFIX))
 
     private val filter = MutableStateFlow(TicketFilter())
 
     val state: StateFlow<BoardViewState> = combine(store.snapshot, collapsed, filter, ::boardViewState)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BoardViewState())
 
-    /** Collapses the column of [status], or expands it when collapsed. */
-    fun toggleColumn(status: Status?) {
-        collapsed.update { if (status in it) it - status else it + status }
+    /** Collapses the column of [group], or expands it when collapsed. */
+    fun toggleColumn(group: BoardGroup?) {
+        collapsed.update { if (group in it) it - group else it + group }
     }
 
     fun toggleType(type: TicketType) {
@@ -65,26 +69,31 @@ class BoardViewModel(private val store: TicketStore) : ViewModel() {
  * Columns left to right, the way a ticket moves. Not core's `TicketGraph.STATUS_ORDER`, which
  * puts work in hand first for lists read from the top.
  */
-internal val COLUMN_ORDER: List<Status> =
-    listOf(Status.BACKLOG, Status.READY, Status.IN_PROGRESS, Status.REVIEW, Status.DONE, Status.WONTFIX)
+internal val COLUMN_ORDER: List<BoardGroup> = listOf(
+    BoardGroup.BACKLOG, BoardGroup.READY, BoardGroup.IN_PROGRESS, BoardGroup.REVIEW,
+    BoardGroup.TO_RELEASE, BoardGroup.RELEASED, BoardGroup.WONTFIX,
+)
 
 /**
- * Every ticket that passes [filter] as a card in its status column; every status has a column,
- * even when empty. Within a column, cards keep the graph's order (priority, then id).
+ * Every ticket that passes [filter] as a card in the column of its group: its status, with `done`
+ * in two columns, to release and released. Every group has a column, even when empty. Within a
+ * column, cards keep the graph's order (priority, then id).
  */
 internal fun boardViewState(
     snapshot: TicketsSnapshot,
-    collapsed: Set<Status?> = emptySet(),
+    collapsed: Set<BoardGroup?> = emptySet(),
     filter: TicketFilter = TicketFilter(),
 ): BoardViewState {
-    val graph = snapshot.graph ?: return BoardViewState(loading = snapshot.loading || snapshot.error == null, error = snapshot.error, filter = filter)
+    val graph = snapshot.graph
+    val config = snapshot.config
+    if (graph == null || config == null) return BoardViewState(loading = snapshot.loading || snapshot.error == null, error = snapshot.error, filter = filter)
     val shown = graph.tickets.filter { filter.matches(graph, it) }
-    val byStatus = shown.groupBy { it.frontmatter?.status }
+    val byGroup = shown.groupBy { BoardGroup.of(it, config) }
     fun card(ticket: Ticket) = card(graph, ticket, snapshot.diagnostics[ticket.fileId].orEmpty())
     // The column for unreadable statuses only exists when there are such tickets.
     val columns = (COLUMN_ORDER + listOf(null))
-        .filter { it != null || null in byStatus }
-        .map { status -> BoardColumn(status, byStatus[status].orEmpty().map(::card), status in collapsed) }
+        .filter { it != null || null in byGroup }
+        .map { group -> BoardColumn(group, byGroup[group].orEmpty().map(::card), group in collapsed) }
     return BoardViewState(
         columns = columns,
         ticketCount = graph.tickets.size,
@@ -111,6 +120,7 @@ private fun card(graph: TicketGraph, ticket: Ticket, diagnostics: List<Diagnosti
         progress = graph.progress(ticket)?.takeIf { graph.children(ticket).isNotEmpty() },
         openBlockers = graph.openBlockers(ticket),
         onlyOnBranch = ticket.branch?.takeIf { ticket.onlyOnBranch },
+        versions = Board.versions(ticket),
         errors = diagnostics.count { it.severity == Severity.ERROR },
         warnings = diagnostics.count { it.severity == Severity.WARNING },
     )

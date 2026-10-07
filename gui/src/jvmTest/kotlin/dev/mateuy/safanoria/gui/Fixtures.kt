@@ -1,5 +1,7 @@
 package dev.mateuy.safanoria.gui
 
+import dev.mateuy.safanoria.core.Component
+import dev.mateuy.safanoria.core.Config
 import dev.mateuy.safanoria.core.Diagnostic
 import dev.mateuy.safanoria.core.Severity
 import dev.mateuy.safanoria.core.Ticket
@@ -34,5 +36,16 @@ internal fun ticket(
 internal fun problem(id: String, code: String, severity: Severity = Severity.ERROR, line: Int? = 3) =
     Diagnostic(TICKET_DIR / "$id.md", line, null, code, "message of $code", severity)
 
-internal fun snapshotOf(vararg tickets: Ticket, diagnostics: List<Diagnostic> = emptyList(), checkoutBranch: String? = null): TicketsSnapshot =
-    snapshot(TicketGraph(tickets.toList()), diagnostics, TICKET_DIR, checkoutBranch)
+/** [components] are the project's, as in `safanoria.yaml`. */
+internal fun snapshotOf(
+    vararg tickets: Ticket,
+    diagnostics: List<Diagnostic> = emptyList(),
+    checkoutBranch: String? = null,
+    components: List<String> = emptyList(),
+): TicketsSnapshot {
+    val config = Config(
+        "/project/safanoria.yaml".toPath(), specVersion = 1,
+        components = components.associateWith { Component(it, version = null, external = false, line = 1) },
+    )
+    return snapshot(TicketGraph(tickets.toList()), config, diagnostics, TICKET_DIR, checkoutBranch)
+}
