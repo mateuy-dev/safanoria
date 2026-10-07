@@ -2,7 +2,7 @@
 id: gui-versions-screen-listing
 type: feature
 title: "GUI: versions screen listing the tickets of each version"
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-10-07
@@ -38,3 +38,4 @@ Decided (2026-10-07, with the user):
 - **2026-10-07** · decision · The grouping is a function of the GUI (`versionsViewState`), not core's `ReleaseNotes.collect`: that one reads the checkout's files and one version range, while the screen shows the store's tickets, the same ones as the board, so both screens agree and refresh together.
 - **2026-10-07** · decision · Unreleased is exactly the board's *to release* for the component (`Release.pending`), so `research` tickets and tickets without the component in their area are in no group. Within a version tickets are in id order, as `safanoria-cli notes` lists them; children in the parent's Plan order.
 - **2026-10-07** · decision · Reached from a "Versions" button in the board's top bar, as a screen on the back stack like a ticket: two screens don't justify tabs or a navigation rail.
+- **2026-10-07** · status · review
