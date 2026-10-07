@@ -17,10 +17,13 @@ Keep it simple: just a list of versions, newest first, with under each version t
 
 The data is already there: `done` tickets are stamped with `resolvedIn.<component>: <version>` by `safanoria-cli release` (SPEC §9), so the screen is a view grouping tickets by `resolvedIn`, with the versions ordered as versions (0.10.0 after 0.9.0), not as text.
 
+Decided (2026-10-07, with the user):
+
+- **Several components**: a component selector; the list shows the versions of the selected component. With a single component, as in this project, there is nothing to select.
+- **Unreleased on top**: `done` tickets not yet stamped for the component appear first, above the newest version, as the next, unreleased version (the same tickets as the board's *to release* column, see `board-done-released-split`).
+
 Open, to decide when working on it:
 
-- Several components: one list per component, or a component selector. This project has a single component.
-- Whether `done` tickets not yet stamped appear on top as the next, unreleased version (the board's *to release* column already shows them, see `board-done-released-split`).
 - How a parent and its children are shown (SPEC §9: the feature as a whole shipped at the highest version among them).
 
 ## Acceptance Criteria
