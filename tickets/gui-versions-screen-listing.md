@@ -25,6 +25,16 @@ Decided (2026-10-07, with the user):
 
 ## Acceptance Criteria
 
+- [x] The board has a way to the versions screen, and the screen a way back.
+- [x] Versions are listed newest first, ordered as versions (0.10.0 above 0.9.0), each with the tickets stamped with it for the component.
+- [x] `done` tickets still to release in the component are on top, as Unreleased; no such group when there are none.
+- [x] With several components a selector chooses which one is shown; with one there is no selector.
+- [x] Children are nested under their parent when both are in the same version; a child in an earlier version is a row there, labelled with its parent.
+- [x] A ticket row opens the ticket.
+
 ## Work Log
 
 - **2026-10-07** · status · started
+- **2026-10-07** · decision · The grouping is a function of the GUI (`versionsViewState`), not core's `ReleaseNotes.collect`: that one reads the checkout's files and one version range, while the screen shows the store's tickets, the same ones as the board, so both screens agree and refresh together.
+- **2026-10-07** · decision · Unreleased is exactly the board's *to release* for the component (`Release.pending`), so `research` tickets and tickets without the component in their area are in no group. Within a version tickets are in id order, as `safanoria-cli notes` lists them; children in the parent's Plan order.
+- **2026-10-07** · decision · Reached from a "Versions" button in the board's top bar, as a screen on the back stack like a ticket: two screens don't justify tabs or a navigation rail.

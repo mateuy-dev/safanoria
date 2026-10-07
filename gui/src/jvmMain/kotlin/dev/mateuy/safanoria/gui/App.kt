@@ -15,9 +15,12 @@ import dev.mateuy.safanoria.gui.board.BoardViewModel
 import dev.mateuy.safanoria.gui.navigation.BoardRoute
 import dev.mateuy.safanoria.gui.navigation.Route
 import dev.mateuy.safanoria.gui.navigation.TicketRoute
+import dev.mateuy.safanoria.gui.navigation.VersionsRoute
 import dev.mateuy.safanoria.gui.theme.SafanoriaTheme
 import dev.mateuy.safanoria.gui.ticket.TicketScreen
 import dev.mateuy.safanoria.gui.ticket.TicketViewModel
+import dev.mateuy.safanoria.gui.versions.VersionsScreen
+import dev.mateuy.safanoria.gui.versions.VersionsViewModel
 
 /** The app: the theme and the navigation between screens. Each back stack entry owns its ViewModel. */
 @Composable
@@ -42,6 +45,14 @@ fun App(container: AppContainer) {
                     BoardScreen(
                         viewModel = viewModel { BoardViewModel(container.ticketStore) },
                         onOpenTicket = { backStack.add(TicketRoute(it)) },
+                        onOpenVersions = { backStack.add(VersionsRoute) },
+                    )
+                }
+                entry<VersionsRoute> {
+                    VersionsScreen(
+                        viewModel = viewModel { VersionsViewModel(container.ticketStore) },
+                        onOpenTicket = { backStack.add(TicketRoute(it)) },
+                        onBack = { if (backStack.size > 1) backStack.removeLast() },
                     )
                 }
                 entry<TicketRoute> { route ->

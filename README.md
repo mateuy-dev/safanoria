@@ -216,6 +216,11 @@ see its output (a crash). In a directory that is in no Safanoria project, a wind
   too, read from every local branch as `list` does. Released and Won't fix start collapsed: click
   a column's header to collapse or open it. Chips filter by type, area, tag and blocked. A card shows its parent, its tags, a parent's
   `done/total` Plan items, open blockers, and how many problems `validate` finds in it.
+- **Versions**, from the board's bar: what each version brought. The versions of a component,
+  newest first and ordered as versions, each with the tickets released in it (`resolvedIn`); on
+  top, as Unreleased, the done tickets its next version brings. Children are under their parent
+  when both are in the same version; a child released earlier is in its own version, marked with
+  its parent. With several components, chips choose which one.
 - **Ticket**: the body as rendered markdown, its fields, links to its parent, children and
   blockers, and its `validate` problems. Problems are those of this checkout's files, so a
   ticket shown from another branch shows none.
