@@ -21,10 +21,7 @@ Decided (2026-10-07, with the user):
 
 - **Several components**: a component selector; the list shows the versions of the selected component. With a single component, as in this project, there is nothing to select.
 - **Unreleased on top**: `done` tickets not yet stamped for the component appear first, above the newest version, as the next, unreleased version (the same tickets as the board's *to release* column, see `board-done-released-split`).
-
-Open, to decide when working on it:
-
-- How a parent and its children are shown (SPEC §9: the feature as a whole shipped at the highest version among them).
+- **Parent and children nested**: children are shown indented under their parent when both are in the same version. A child that shipped in an earlier version than its parent (SPEC §9 never allows a later one) stays as a row in its own version, labelled with its parent. Each version shows exactly what it shipped; no ticket is moved to its parent's version.
 
 ## Acceptance Criteria
 
