@@ -2,7 +2,7 @@
 id: skill-commit-created-ticket
 type: feature
 title: "Skill: commit a created ticket automatically when no questions were asked"
-status: in-progress
+status: review
 priority: medium
 size: XS
 created: 2026-10-07
@@ -29,3 +29,4 @@ The change is expected in the skill's Create section (`skill/SKILL.md`), coverin
 
 - **2026-10-07** · status · started
 - **2026-10-07** · decision · Skill text only, as a last Create step after `validate`: the `requests` entry and quote are written after `new`, so a commit made by the CLI would miss them. The commit names its files (`git commit -- <files>`) so other uncommitted work on the checkout stays out.
+- **2026-10-07** · status · review
