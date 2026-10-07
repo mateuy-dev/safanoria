@@ -56,7 +56,7 @@ import dev.mateuy.safanoria.gui.theme.color
 import dev.mateuy.safanoria.gui.theme.rememberAppIcon
 
 @Composable
-fun BoardScreen(viewModel: BoardViewModel, onOpenTicket: (String) -> Unit) {
+fun BoardScreen(viewModel: BoardViewModel, onOpenTicket: (String) -> Unit, onOpenVersions: () -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     BoardContent(
         state,
@@ -69,6 +69,7 @@ fun BoardScreen(viewModel: BoardViewModel, onOpenTicket: (String) -> Unit) {
             toggleBlocked = viewModel::toggleBlocked,
             clearFilter = viewModel::clearFilter,
             openTicket = onOpenTicket,
+            openVersions = onOpenVersions,
         ),
     )
 }
@@ -83,6 +84,7 @@ class BoardActions(
     val toggleBlocked: () -> Unit,
     val clearFilter: () -> Unit,
     val openTicket: (String) -> Unit,
+    val openVersions: () -> Unit,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -96,6 +98,7 @@ fun BoardContent(state: BoardViewState, actions: BoardActions) {
                 title = { Text("Board · " + (if (filtered) "${state.shownCount} of " else "") + "${state.ticketCount} tickets") },
                 actions = {
                     if (state.loading) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                    TextButton(onClick = actions.openVersions) { Text("Versions") }
                     TextButton(onClick = actions.refresh, enabled = !state.loading) { Text("Refresh") }
                 },
             )

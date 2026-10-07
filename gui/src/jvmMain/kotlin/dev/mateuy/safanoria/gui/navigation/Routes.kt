@@ -5,4 +5,6 @@ sealed interface Route
 
 data object BoardRoute : Route
 
+data object VersionsRoute : Route
+
 data class TicketRoute(val id: String) : Route
