@@ -20,6 +20,7 @@ planning or approval step, and a session works as the user directs it.
 - **Never start a ticket.** The user starts tickets with `safanoria-cli start <id>` and opens a
   session in the worktree. Don't create ticket branches or worktrees, don't switch the session
   into another worktree, and don't set `in-progress` yourself.
+- **Never land a ticket unasked.** Merging is the user's call. Setting `review` is yours (Finish).
 - Set `updated` to today on every change. Keep frontmatter field order. Preserve unknown fields and sections.
 - User Requests and Work Log are append-only.
 - **Never set `resolvedIn`.** The project's release process does that (`safanoria-cli release`).
@@ -76,11 +77,20 @@ Along the way:
 
 ## Finish
 
-When the user says the work is done: resolve pending Learnings if you can, check the Acceptance
-Criteria that are met, run the project's tests and commit everything. Then `safanoria-cli finish
-<id>` (or set `status: review`, log `status · review` yourself, and commit). It refuses on
-uncommitted changes and on a branch behind its target: commit, or merge the target in, and run
-it again. It lists what the ticket still has open; tell the user.
+Finish on your own, without being asked, as soon as you consider the implementation complete:
+`review` is how the user sees, across their worktrees, which tickets wait for them. A ticket
+left `in-progress` says you are still working. All of these must hold:
+
+- everything is committed, and the project's tests pass;
+- the Acceptance Criteria you can check are met and checked, and pending Learnings are resolved
+  where you can;
+- you have no question open for the user.
+
+Then `safanoria-cli finish <id>` (or set `status: review`, log `status · review` yourself, and
+commit). It refuses on uncommitted changes and on a branch behind its target: commit, or merge
+the target in, and run it again. Tell the user the ticket is in review and what `finish` listed
+as still open. If one of the conditions doesn't hold (a test fails, you need an answer), leave
+the ticket `in-progress` and say which. Also finish when the user says the work is done.
 
 The user reviews. What comes next is theirs to say, never yours to start:
 
@@ -88,8 +98,13 @@ The user reviews. What comes next is theirs to say, never yours to start:
   ticket `done` in it and the parent's Plan item checked; then it removes this worktree and
   deletes the branch, so it is the last thing the session does. It pushes nothing. If it
   refuses (a conflict, uncommitted changes), fix that on the branch and tell the user.
-- **The review found something**: `safanoria-cli reopen <id> --reason "<what>"`, then work on it
-  here as before.
+- **The review asks for a change**: make it, run the tests and commit it on the branch; the
+  ticket stays in `review`, with no `reopen` and no second `finish`. That is for a fix made in
+  the same exchange, after which the ticket waits on the user again. Log it only if it is a
+  decision.
+- **The review sends it back to work** (new scope, a different approach, or work that won't be
+  finished in this exchange): `safanoria-cli reopen <id> --reason "<what>"`, work on it here as
+  before, and finish again when it is complete.
 - **Merged elsewhere** (a pull request): `safanoria-cli finish --done` sets `done` on every ticket
   merged but still in review, and removes their worktrees and branches.
 
