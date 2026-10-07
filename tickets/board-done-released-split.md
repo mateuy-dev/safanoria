@@ -30,14 +30,14 @@ Not decided: showing the version on the tickets of the released column. Fine to 
 
 ## Acceptance Criteria
 
-- [ ] The GUI board shows *to release* and *released* where it showed `done`; no ticket status is added or changed.
-- [ ] A `done` ticket with a component of its `area` not in `resolvedIn` is in *to release*; with all of them stamped, in *released*.
-- [ ] A ticket with `area: [a, b]` stamped for `a` only is in *to release*.
-- [ ] A `done` `research` ticket, and a `done` ticket with no `area` in a project with several components (or none), are in *released*.
-- [ ] In a project with one component, a `done` ticket with no `area` is in *to release* until that component is stamped.
-- [ ] *Released* is collapsed by default and *to release* is open; `wontfix` behaves as before.
-- [ ] `safanoria-cli board` prints the same two groups instead of one `done` section, with the same rule.
-- [ ] After `safanoria-cli release`, the tickets it stamped move from *to release* to *released*.
+- [x] The GUI board shows *to release* and *released* where it showed `done`; no ticket status is added or changed.
+- [x] A `done` ticket with a component of its `area` not in `resolvedIn` is in *to release*; with all of them stamped, in *released*.
+- [x] A ticket with `area: [a, b]` stamped for `a` only is in *to release*.
+- [x] A `done` `research` ticket, and a `done` ticket with no `area` in a project with several components (or none), are in *released*.
+- [x] In a project with one component, a `done` ticket with no `area` is in *to release* until that component is stamped.
+- [x] *Released* is collapsed by default and *to release* is open; `wontfix` behaves as before.
+- [x] `safanoria-cli board` prints the same two groups instead of one `done` section, with the same rule.
+- [x] After `safanoria-cli release`, the tickets it stamped move from *to release* to *released*.
 
 ## Work Log
 
