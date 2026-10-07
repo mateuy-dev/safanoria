@@ -2,7 +2,7 @@
 id: agent-sets-review
 type: feature
 title: The agent sets review itself when the implementation is finished
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-07
@@ -37,3 +37,4 @@ To decide while doing it:
 
 ## Work Log
 
+- **2026-10-07** · status · started
