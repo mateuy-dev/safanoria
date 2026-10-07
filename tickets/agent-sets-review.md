@@ -2,7 +2,7 @@
 id: agent-sets-review
 type: feature
 title: The agent sets review itself when the implementation is finished
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-10-07
@@ -41,3 +41,4 @@ To decide while doing it:
 - **2026-10-07** · decision · `merge` doesn't run `finish`'s checks again. Uncommitted work it already refuses. "Behind its target" would refuse most merges for nothing: with several tickets open the target moves after every review, and what matters then (a conflict, tickets that wouldn't validate) `merge` checks on the merged tree. Commits after `review` need no check a tool can make: a test covers that `merge` takes them.
 - **2026-10-07** · decision · The spec says who sets `review` (§11.4: an agent MAY without being asked, SHOULD when the work is complete and no question is open), not only the skill. Start and Land carry "only when the human says so"; Finish said nothing, and the skill read that as "wait to be told". Other skills following the spec would do the same.
 - **2026-10-07** · decision · The SessionStart text (`context`) also tells an in-progress session to finish on its own: the skill's Finish section is far from where the session reads at the moment it stops, the hook text is always in front of it.
+- **2026-10-07** · status · review
