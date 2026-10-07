@@ -36,7 +36,7 @@ content. `safanoria-cli --help` lists its commands; each is described below.
 |---|---|
 | `init`, `update` | Set up a project; install or update the skill, SPEC.md and templates |
 | `new` | Create a ticket from a title: id, template, parent's Plan |
-| `list`, `board` | One line per ticket; a markdown board by status |
+| `list`, `board` | One line per ticket; a markdown board by status, done split in to release and released |
 | `start`, `finish` | Start a ticket (branch, worktree, `in-progress`); set it `review` when the work is complete |
 | `merge`, `reopen` | Land a ticket in review (merged, `done`, worktree and branch removed); or send it back to `in-progress` |
 | `context` | The current branch's ticket, for the agent session (SessionStart hook) |
@@ -179,8 +179,10 @@ read the checkout as it is.
 
 `list` and `board` show tickets in the same order: status (in-progress, review, ready, backlog,
 done, wontfix), then priority, then id. In `board`, children appear under their parent with
-the parent's `done/total` Plan items (children and own steps). The board has no dates, so a
-committed one only changes when tickets do. For example:
+the parent's `done/total` Plan items (children and own steps). Done tickets are in two sections:
+**To release**, those `release` would stamp (a component of their `area` has no `resolvedIn`
+yet), and **Released**, with their versions. The board has no dates, so a committed one only
+changes when tickets do. For example:
 
 ```markdown
 ## In progress (1)
@@ -209,9 +211,10 @@ app prints shows then: `SAFANORIA_FOREGROUND=1 safanoria` keeps it attached to t
 see its output (a crash). In a directory that is in no Safanoria project, a window says so.
 
 - **Board**: a column per status, left to right as a ticket moves (Backlog, Ready, In progress,
-  Review, Done, Won't fix). Every ticket is a card, children too, read from every local branch
-  as `list` does. Done and Won't fix start collapsed: click a column's header to collapse or
-  open it. Chips filter by type, area, tag and blocked. A card shows its parent, its tags, a parent's
+  Review, To release, Released, Won't fix). Done tickets are in two columns: To release is what
+  the next version brings, Released what a version already has. Every ticket is a card, children
+  too, read from every local branch as `list` does. Released and Won't fix start collapsed: click
+  a column's header to collapse or open it. Chips filter by type, area, tag and blocked. A card shows its parent, its tags, a parent's
   `done/total` Plan items, open blockers, and how many problems `validate` finds in it.
 - **Ticket**: the body as rendered markdown, its fields, links to its parent, children and
   blockers, and its `validate` problems. Problems are those of this checkout's files, so a

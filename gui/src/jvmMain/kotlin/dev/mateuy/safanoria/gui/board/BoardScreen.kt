@@ -47,14 +47,13 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.mateuy.safanoria.core.Priority
-import dev.mateuy.safanoria.core.Status
+import dev.mateuy.safanoria.core.BoardGroup
 import dev.mateuy.safanoria.core.TicketFilter
 import dev.mateuy.safanoria.core.TicketType
 import dev.mateuy.safanoria.core.text
 import dev.mateuy.safanoria.gui.theme.WarningColor
 import dev.mateuy.safanoria.gui.theme.color
 import dev.mateuy.safanoria.gui.theme.rememberAppIcon
-import dev.mateuy.safanoria.gui.theme.label
 
 @Composable
 fun BoardScreen(viewModel: BoardViewModel, onOpenTicket: (String) -> Unit) {
@@ -77,7 +76,7 @@ fun BoardScreen(viewModel: BoardViewModel, onOpenTicket: (String) -> Unit) {
 /** What the user can do on the board. */
 class BoardActions(
     val refresh: () -> Unit,
-    val toggleColumn: (Status?) -> Unit,
+    val toggleColumn: (BoardGroup?) -> Unit,
     val toggleType: (TicketType) -> Unit,
     val toggleArea: (String) -> Unit,
     val toggleTag: (String) -> Unit,
@@ -116,7 +115,7 @@ fun BoardContent(state: BoardViewState, actions: BoardActions) {
             ) {
                 // Open columns share the width; collapsed ones are a strip.
                 state.columns.forEach { column ->
-                    val onToggle = { actions.toggleColumn(column.status) }
+                    val onToggle = { actions.toggleColumn(column.group) }
                     if (column.collapsed) CollapsedColumnView(column, onToggle)
                     else BoardColumnView(column, onToggle, actions.openTicket, Modifier.weight(1f))
                 }
@@ -169,7 +168,7 @@ private fun BoardColumnView(column: BoardColumn, onToggle: () -> Unit, onOpenTic
         ) {
             StatusDot(column)
             Text(
-                column.status.columnLabel,
+                column.group.columnLabel,
                 Modifier.weight(1f, fill = false),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
@@ -202,7 +201,7 @@ private fun CollapsedColumnView(column: BoardColumn, onToggle: () -> Unit) {
         StatusDot(column)
         Text("${column.cards.size}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(
-            column.status.columnLabel,
+            column.group.columnLabel,
             Modifier.vertical().rotate(90f),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
@@ -213,10 +212,10 @@ private fun CollapsedColumnView(column: BoardColumn, onToggle: () -> Unit) {
 
 @Composable
 private fun StatusDot(column: BoardColumn) {
-    Box(Modifier.size(10.dp).clip(CircleShape).background(column.status?.color ?: MaterialTheme.colorScheme.error))
+    Box(Modifier.size(10.dp).clip(CircleShape).background(column.group?.color ?: MaterialTheme.colorScheme.error))
 }
 
-private val Status?.columnLabel: String get() = this?.label ?: "Unreadable status"
+private val BoardGroup?.columnLabel: String get() = this?.heading ?: "Unreadable status"
 
 /** Takes the space of the content turned a quarter, so a following `rotate(90f)` fits its layout. */
 private fun Modifier.vertical() = layout { measurable, _ ->
@@ -260,6 +259,7 @@ private fun TicketCardView(card: TicketCard, onClick: () -> Unit) {
                 card.size?.text,
                 card.parentId?.let { "↑ $it" },
                 card.onlyOnBranch?.let { "only on $it" },
+                card.versions,
             ) + card.tags.map { "#$it" }
             if (facts.isNotEmpty()) {
                 Text(

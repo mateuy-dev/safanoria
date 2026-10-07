@@ -114,12 +114,27 @@ public object Release {
         return ReleaseResult.Ready(c, version, request.version == null, tickets.map { it.fileId }, files, warnings)
     }
 
+    /**
+     * The components a `done` [ticket] is still to be released in: those stamping would give it a
+     * version for (§9). Empty when it is released everywhere, and when it never gets a version:
+     * not `done`, `research`, or no component of the project.
+     */
+    public fun pending(ticket: Ticket, config: Config): List<String> {
+        val f = ticket.frontmatter ?: return emptyList()
+        if (f.status != Status.DONE || f.type == TicketType.RESEARCH) return emptyList()
+        return area(f, config).filter { it in config.components && f.resolvedIn?.get(it)?.value == null }
+    }
+
+    /** The `area`, or the project's component when it has only one and the ticket names none. */
+    private fun area(f: Frontmatter, config: Config): List<String> =
+        f.area.map { it.value }.ifEmpty { config.components.keys.toList().takeIf { it.size == 1 } ?: emptyList() }
+
     /** Null when [ticket] gets `resolvedIn.<component>` in this release (§9), else why not. */
     private fun reasonNotEligible(ticket: Ticket, component: String, config: Config): String? {
         val f = ticket.frontmatter ?: return "its frontmatter can't be read"
         if (f.status != Status.DONE) return "it is ${f.status?.text ?: "not done"}, not done"
         if (f.type == TicketType.RESEARCH) return "research tickets never get resolvedIn"
-        val area = f.area.map { it.value }.ifEmpty { config.components.keys.toList().takeIf { it.size == 1 } ?: emptyList() }
+        val area = area(f, config)
         if (component !in area) return "'$component' is not in its area (${area.joinToString().ifEmpty { "none" }})"
         f.resolvedIn?.get(component)?.value?.let { return "it already has $component $it" }
         return null

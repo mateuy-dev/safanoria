@@ -54,6 +54,15 @@ class ReleaseTest {
     }
 
     @Test
+    fun aStampedTicketMovesFromToReleaseToReleasedOnTheBoard() {
+        fun board() = cli().test(listOf("--root", work.toString(), "board", "--checkout")).stdout
+        assertTrue(board().contains("## To release (1)\n\n- [photo-upload](tickets/photo-upload.md) Photo upload\n"), board())
+        assertEquals(0, run("app", "--any-branch").statusCode)
+        assertTrue(!board().contains("## To release"), board())
+        assertTrue(board().contains("- [photo-upload](tickets/photo-upload.md) Photo upload · app 1.1.0\n"), board())
+    }
+
+    @Test
     fun stampsFromTheVersionSource() {
         val dry = run("app", "--any-branch", "--dry-run")
         assertEquals(0, dry.statusCode, dry.output)
