@@ -2,11 +2,11 @@
 id: windows-gui-merge-test-fails
 type: bug
 title: "Windows CI: gui merge test fails"
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-06
-updated: 2026-10-06
+updated: 2026-10-07
 ---
 
 ## Objective
@@ -39,3 +39,5 @@ The `cli` workflow fails on `windows-2022` since 2026-10-06 (first seen on `main
 ## Acceptance Criteria
 
 ## Work Log
+
+- **2026-10-07** · status · started
