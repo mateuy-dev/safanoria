@@ -2,7 +2,7 @@
 id: board-done-released-split
 type: feature
 title: "Board: split done into to-release and released"
-status: ready
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-07
@@ -40,3 +40,4 @@ Not decided: showing the version on the tickets of the released column. Fine to 
 
 ## Work Log
 
+- **2026-10-07** · status · started
