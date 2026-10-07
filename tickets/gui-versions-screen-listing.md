@@ -2,7 +2,7 @@
 id: gui-versions-screen-listing
 type: feature
 title: "GUI: versions screen listing the tickets of each version"
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-07
@@ -27,3 +27,4 @@ Decided (2026-10-07, with the user):
 
 ## Work Log
 
+- **2026-10-07** · status · started
