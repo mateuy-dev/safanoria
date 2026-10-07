@@ -2,7 +2,7 @@
 id: board-done-released-split
 type: feature
 title: "Board: split done into to-release and released"
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-10-07
@@ -45,3 +45,4 @@ Not decided: showing the version on the tickets of the released column. Fine to 
 - **2026-10-07** · decision · The rule is "what `release` would still stamp" (`Release.pending`, shared with stamping), not "an `area` entry without `resolvedIn`". So with one component a ticket with no `area` is to release: `release` stamps those, and this repository's tickets have no `area`, so the literal rule would have shown everything as released. An `area` entry that is not a component is never stamped, so it doesn't hold a ticket in to release.
 - **2026-10-07** · decision · The two groups are `BoardGroup` in core, used by the CLI board and the GUI columns, so both have the same rule and names. The status set, `list` and its order are untouched.
 - **2026-10-07** · decision · Added the versions (`app 4.3.0`) on released tickets, on the CLI board and the GUI cards: it came cheap. To release has its own colour in the GUI; released keeps done's.
+- **2026-10-07** · status · review
