@@ -53,6 +53,20 @@ class MergeTest {
         assertTrue("this directory was its worktree and is gone" in r.stdout, r.stdout)
     }
 
+    /** A change the review asks for is committed while the ticket stays in review (SPEC §6.1): merge takes it. */
+    @Test
+    fun mergeTakesCommitsMadeAfterReview() {
+        val (repo, wt) = inReview("merge-review-fix")
+        repo.write("code.txt", "beta, fixed\n", at = wt)
+        repo.commit("review fix", at = wt)
+        assertTrue("status: review\n" in repo.read("tickets/beta.md", at = wt))
+
+        val r = run(repo, "merge", "beta")
+        assertEquals(0, r.statusCode, r.output)
+        assertEquals("beta, fixed\n", repo.read("code.txt"))
+        assertTrue("status: done\n" in repo.read("tickets/beta.md"))
+    }
+
     @Test
     fun withoutAWorktreeTheCheckoutGoesBackToTheTarget() {
         val repo = GitRepo.scenario("merge-switch")

@@ -2,6 +2,7 @@ package dev.mateuy.safanoria.cli
 
 import com.github.ajalt.clikt.core.Context
 import dev.mateuy.safanoria.core.Repository
+import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.core.isValidId
 import dev.mateuy.safanoria.core.CONFIG_FILE
 import dev.mateuy.safanoria.core.Install
@@ -31,7 +32,12 @@ class ContextCommand : RepositoryCommand(name = "context") {
             append("This session works on the Safanoria ticket `$branch`: this checkout is its branch, and the ticket is $file ")
             append("(format: ${Install.SKILL_DIR}/SPEC.md, settings: $CONFIG_FILE). Work as the user directs; there is no planning ")
             append("or approval step. Keep the ticket current with the `safanoria` skill: a short Work Log entry for each decision ")
-            append("(what and why, not progress), committed together with the code it explains.\n\n")
+            append("(what and why, not progress), committed together with the code it explains.")
+            if (ticket.frontmatter?.status == Status.IN_PROGRESS) {
+                append(" When you consider the implementation complete, run `safanoria-cli finish $branch` without being asked, ")
+                append("so the ticket shows that it waits for review.")
+            }
+            append("\n\n")
             append("<ticket file=\"$file\">\n")
             append(ticket.text.trimEnd('\n'))
             append("\n</ticket>\n")

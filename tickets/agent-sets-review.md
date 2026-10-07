@@ -30,11 +30,14 @@ To decide while doing it:
 
 ## Acceptance Criteria
 
-- [ ] The skill tells the session to run `finish` on its own when the implementation is complete, with the conditions for it, and to report what is still open.
-- [ ] The skill says when a review change stays in `review` and when it needs `reopen`.
-- [ ] SPEC §6.1 and §11 allow commits on the branch of a ticket in `review`, and still require the logged reason when it goes back to `in-progress`.
-- [ ] The two open questions in the Objective are decided and logged.
+- [x] The skill tells the session to run `finish` on its own when the implementation is complete, with the conditions for it, and to report what is still open.
+- [x] The skill says when a review change stays in `review` and when it needs `reopen`.
+- [x] SPEC §6.1 and §11 allow commits on the branch of a ticket in `review`, and still require the logged reason when it goes back to `in-progress`.
+- [x] The two open questions in the Objective are decided and logged.
 
 ## Work Log
 
 - **2026-10-07** · status · started
+- **2026-10-07** · decision · `merge` doesn't run `finish`'s checks again. Uncommitted work it already refuses. "Behind its target" would refuse most merges for nothing: with several tickets open the target moves after every review, and what matters then (a conflict, tickets that wouldn't validate) `merge` checks on the merged tree. Commits after `review` need no check a tool can make: a test covers that `merge` takes them.
+- **2026-10-07** · decision · The spec says who sets `review` (§11.4: an agent MAY without being asked, SHOULD when the work is complete and no question is open), not only the skill. Start and Land carry "only when the human says so"; Finish said nothing, and the skill read that as "wait to be told". Other skills following the spec would do the same.
+- **2026-10-07** · decision · The SessionStart text (`context`) also tells an in-progress session to finish on its own: the skill's Finish section is far from where the session reads at the moment it stops, the hook text is always in front of it.
