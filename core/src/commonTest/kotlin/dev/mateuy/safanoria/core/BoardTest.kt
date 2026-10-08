@@ -12,7 +12,7 @@ class BoardTest {
     )
 
     private fun config(vararg components: String) = Config(
-        "/r/safanoria.yaml".toPath(), specVersion = 1,
+        "/r/safanoria.yaml".toPath(), specVersion = 1, worktree = "../r--{id}",
         components = components.associateWith { Component(it, version = null, external = false, line = 1) },
     )
 

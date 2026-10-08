@@ -22,7 +22,7 @@ class UpdateTest {
         SystemFileSystem.deleteRecursively(work)
         SystemFileSystem.createDirectories(work / ".claude" / "skills" / "safanoria")
         SystemFileSystem.createDirectories(work / "tickets")
-        write("safanoria.yaml", "safanoria: 1\ncomponents:\n  app:\n    external: true\n")
+        write("safanoria.yaml", "safanoria: 1\nworktree: ../project--{id}\ncomponents:\n  app:\n    external: true\n")
         write(".claude/skills/safanoria/SKILL.md", "old skill\n")
         write(".claude/skills/safanoria/SPEC.md", "old spec\n")
         write("tickets/_TEMPLATE.md", ownTemplate)

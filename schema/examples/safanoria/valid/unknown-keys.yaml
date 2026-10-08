@@ -1,5 +1,6 @@
 # Unknown keys are allowed and must be preserved (§2).
 safanoria: 1
+worktree: ../project--{id}
 components:
   app:
     version: { file: gradle.properties, property: appVersionName }

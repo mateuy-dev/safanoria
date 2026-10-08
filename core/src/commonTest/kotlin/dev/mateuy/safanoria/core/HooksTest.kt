@@ -12,7 +12,7 @@ class HooksTest {
         SystemFileSystem.createDirectories(root / ".git" / "objects")
         SystemFileSystem.createDirectories(root / ".git" / "refs")
         SystemFileSystem.write(root / ".git" / "HEAD") { writeUtf8("ref: refs/heads/main\n") }
-        SystemFileSystem.write(root / CONFIG_FILE) { writeUtf8("safanoria: 1\ncomponents:\n  app:\n    external: true\n") }
+        SystemFileSystem.write(root / CONFIG_FILE) { writeUtf8("safanoria: 1\nworktree: ../project--{id}\ncomponents:\n  app:\n    external: true\n") }
         return Repository(SystemFileSystem.canonicalize(root))
     }
 

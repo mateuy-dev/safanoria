@@ -82,7 +82,8 @@ safanoria-cli init --component app=composeApp/gradle.properties:appVersionName -
 safanoria-cli update                    # later: this version's skill and spec, and any new templates
 ```
 
-`init` writes `safanoria.yaml`, the ticket directory (`_TEMPLATE.md`, `_TEMPLATE.bug.md`,
+`init` writes `safanoria.yaml` (with `worktree: ../<this directory>--{id}`, where each ticket's
+worktree goes; `--worktree` to choose another place), the ticket directory (`_TEMPLATE.md`, `_TEMPLATE.bug.md`,
 `_TEMPLATE.research.md`, `README.md`), the skill and SPEC.md in `.claude/skills/safanoria/`,
 the paragraph that points agents to the skill in `CLAUDE.md`, and the SessionStart hook in
 `.claude/settings.json` (see "Working on a ticket"). The skill and spec are Safanoria's and end
@@ -252,14 +253,13 @@ safanoria-cli reopen herd-photos --reason "…"   # or: the review found somethi
 
 **Start.** `start` creates the branch `<id>` from the parent's branch (when the parent has
 `childrenMergeInto: parent`, the default) or from `mainBranch`, sets `status: in-progress`, logs
-`status · started` and commits that on the new branch as `<id>: start`. With `worktree` in
-`safanoria.yaml` (e.g. `worktree: ../VacAppKMP--{id}`) it adds the worktree there and leaves this
-checkout alone; without it, it switches this checkout to the branch (not when it has uncommitted
-changes; `--no-switch` to never). It refuses tickets that aren't `backlog` or `ready`, tickets
+`status · started` and commits that on the new branch as `<id>: start`. Then it adds the ticket's worktree
+where `worktree` in `safanoria.yaml` says (e.g. `worktree: ../VacAppKMP--{id}`) and leaves this
+checkout alone: a ticket is always worked on in its own worktree. It refuses tickets that aren't `backlog` or `ready`, tickets
 already started (the branch exists), and children whose parent isn't started yet.
 
-To land in the worktree, `--print-path` prints only the directory to work in (the worktree, or
-this checkout once switched) and sends everything else to stderr. A program can't change its
+To land in the worktree, `--print-path` prints only the worktree's path and sends everything
+else to stderr. A program can't change its
 shell's directory, so wrap it in a function in `~/.bashrc` or `~/.zshrc` (`safanoria-cli --help`
 prints it too):
 
@@ -303,8 +303,7 @@ is to review (the diff stat against the target) and the next command.
 - `merge <id>` lands it. It merges the branch into its target (`main`, or the parent's branch)
   with one merge commit, `<id>: merge (done)`, that also sets `status: done`, logs it and checks
   the ticket's item in its parent's Plan: `done` and the merge are the same commit. Then it
-  removes the worktree and deletes the branch (without a `worktree` setting, it switches the
-  checkout back to the target). It pushes nothing, so `git reset --hard HEAD~1` on the target
+  removes the worktree and deletes the branch. It pushes nothing, so `git reset --hard HEAD~1` on the target
   undoes it. It refuses, changing nothing, when the worktree has uncommitted changes, the merge
   conflicts (merge the target into the branch, solve it there, `merge` again), the tickets
   wouldn't validate, or the target is checked out with changes in the way. It only takes
@@ -420,6 +419,7 @@ Elsewhere, install with `SAFANORIA_CLI_ONLY=1` and `install.sh`, and run `safano
 | Code | Problem (SPEC section) |
 |---|---|
 | `yaml-syntax`, `frontmatter-missing`, `config-missing` | The file can't be read (§2, §4) |
+| `config-worktree` | `safanoria.yaml` has no `worktree`: it isn't loaded until it says where a ticket's worktree goes (§2) |
 | `schema-<keyword>` | A frontmatter or config rule of `schema/` (§2, §5): `schema-required`, `schema-enum`, `schema-pattern`… |
 | `id-mismatch`, `id-duplicate` | id differs from the filename, or is used twice (§3) |
 | `area-required`, `area-unknown-component` | `area` missing with several components, or not a component (§5) |

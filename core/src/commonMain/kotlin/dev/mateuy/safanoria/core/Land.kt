@@ -129,9 +129,8 @@ public object Land {
     /**
      * After the merge: removes the worktree of branch [id] and deletes the branch, and says what
      * it did. What it can't do safely it leaves, saying why: a worktree with uncommitted changes
-     * (nothing of the user's is thrown away), a branch that isn't merged into [target]. When the
-     * branch is checked out in the main checkout (no `worktree` setting), that one is switched
-     * to [target] instead.
+     * (nothing of the user's is thrown away), a branch that isn't merged into [target], a branch
+     * checked out in the main checkout (which is never a ticket's worktree).
      */
     public fun cleanUp(repository: Repository, id: String, target: String): List<String> {
         val out = mutableListOf<String>()
@@ -143,7 +142,7 @@ public object Land {
             val worktree = worktrees.firstOrNull { it.branch == id }
             var free = worktree == null
             if (worktree != null) free = try {
-                freeBranch(git, worktree, isMain = worktree == main, worktrees, target, out)
+                freeBranch(git, worktree, isMain = worktree == main, out)
             } catch (e: GitException) {
                 out += "kept ${worktree.path}: ${e.message}"
                 false
@@ -163,23 +162,18 @@ public object Land {
     }
 
     /** Makes [worktree] stop holding its branch; true when it did. */
-    private fun freeBranch(git: Git, worktree: Worktree, isMain: Boolean, all: List<Worktree>, target: String, out: MutableList<String>): Boolean {
+    private fun freeBranch(git: Git, worktree: Worktree, isMain: Boolean, out: MutableList<String>): Boolean {
         val path: Path = worktree.path
         if (SystemFileSystem.exists(path) && Git(path).uncommitted().isNotEmpty()) {
             out += "kept $path and its branch: it has uncommitted changes"
             return false
         }
-        if (!isMain) {
-            git.run("worktree", "remove", path.toString())
-            out += "removed the worktree $path"
-            return true
-        }
-        if (all.any { it.branch == target }) {
-            out += "kept the branch '${worktree.branch}': it is checked out in $path"
+        if (isMain) {
+            out += "kept the branch '${worktree.branch}': it is checked out in the main checkout $path"
             return false
         }
-        git.run("switch", "-q", target)
-        out += "switched $path to $target"
+        git.run("worktree", "remove", path.toString())
+        out += "removed the worktree $path"
         return true
     }
 

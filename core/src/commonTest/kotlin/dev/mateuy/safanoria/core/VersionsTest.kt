@@ -10,7 +10,7 @@ import kotlin.test.assertTrue
 class VersionsTest {
     private val fs = FakeFileSystem().apply {
         createDirectories("/repo/composeApp".toPath())
-        write("/repo/safanoria.yaml".toPath()) { writeUtf8("safanoria: 1\ncomponents:\n  app:\n    external: true\n") }
+        write("/repo/safanoria.yaml".toPath()) { writeUtf8("safanoria: 1\nworktree: ../project--{id}\ncomponents:\n  app:\n    external: true\n") }
         write("/repo/composeApp/gradle.properties".toPath()) {
             writeUtf8("# appVersionName=0.0.1\nkotlin.code.style=official\nappVersionName = 4.3.0\nappVersionCode=430\n")
         }

@@ -89,8 +89,7 @@ class TicketStore(val root: Path) {
 
     /**
      * Starts ticket [id] as `safanoria-cli start` does (SPEC §11.2): branch `<id>` with the ticket
-     * `in-progress` on it, then the worktree when `safanoria.yaml` has one, else this checkout
-     * switched to the branch. The tickets are read again afterwards.
+     * `in-progress` on it, then its worktree. The tickets are read again afterwards.
      */
     suspend fun start(id: String, today: String = LocalDate.now().toString()): StartOutcome {
         val outcome = withContext(Dispatchers.IO) {
@@ -107,16 +106,11 @@ class TicketStore(val root: Path) {
                 } catch (e: StartException) {
                     return@withContext StartOutcome.NotStarted((listOf(e.message) + e.problems.map { "${it.code}: ${it.message}" }).joinToString("\n"))
                 }
-                if (ready.worktree != null) {
-                    try {
-                        Start.addWorktree(repository, ready)
-                        StartOutcome.Started(ready.worktree)
-                    } catch (e: GitException) {
-                        StartOutcome.Started(null, "the worktree wasn't added: ${e.message}\nAdd it with: git worktree add ${ready.worktree} $id")
-                    }
-                } else {
-                    val note = Start.switchCheckout(repository, id)
-                    StartOutcome.Started(root.takeIf { note == null }, note)
+                try {
+                    Start.addWorktree(repository, ready)
+                    StartOutcome.Started(ready.worktree)
+                } catch (e: GitException) {
+                    StartOutcome.Started(null, "the worktree wasn't added: ${e.message}\nAdd it with: git worktree add ${ready.worktree} $id")
                 }
             } catch (e: Exception) {
                 StartOutcome.NotStarted(e.message ?: e.toString())
@@ -201,7 +195,7 @@ class TicketStore(val root: Path) {
         return outcome
     }
 
-    /** The directory where ticket [id]'s branch is checked out (its worktree, or this checkout), or null. */
+    /** The directory where ticket [id]'s branch is checked out (its worktree), or null. */
     suspend fun workspace(id: String): Path? = withContext(Dispatchers.IO) {
         runCatching { BranchView.open(Repository(root), id)?.worktree }.getOrNull()
     }

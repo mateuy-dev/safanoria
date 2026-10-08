@@ -68,8 +68,8 @@ class MergeTest {
     }
 
     @Test
-    fun withoutAWorktreeTheCheckoutGoesBackToTheTarget() {
-        val repo = GitRepo.scenario("merge-switch")
+    fun aBranchSwitchedToInTheMainCheckoutIsMergedAndKept() {
+        val repo = GitRepo.scenario("merge-main-checkout")
         repo.checkout("beta")
         repo.write("code.txt", "beta\n")
         repo.commit("beta work")
@@ -77,9 +77,9 @@ class MergeTest {
 
         val r = run(repo, "merge", "beta")
         assertEquals(0, r.statusCode, r.output)
-        assertEquals("main", repo.git("branch", "--show-current").trim())
-        assertTrue("status: done" in repo.read("tickets/beta.md") && repo.read("code.txt") == "beta\n")
-        assertEquals("", repo.git("branch", "--list", "beta").trim())
+        assertTrue("kept the branch 'beta': it is checked out in the main checkout" in r.stdout, r.stdout)
+        assertEquals("beta", repo.git("branch", "--show-current").trim())
+        assertTrue("status: done" in repo.git("show", "main:tickets/beta.md"))
         assertEquals("", repo.git("status", "--porcelain").trim())
     }
 

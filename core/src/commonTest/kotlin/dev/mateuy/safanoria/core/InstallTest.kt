@@ -112,10 +112,11 @@ class InstallTest {
         val text = Install.config("tickets", listOf(
             ComponentSpec("app", VersionSource.Property("composeApp/gradle.properties", "appVersionName")),
             ComponentSpec("rails", null),
-        ))
+        ), worktree = "../project--{id}")
         val result = ConfigLoader.parse(root / CONFIG_FILE, text)
         assertEquals(emptyList(), result.diagnostics)
         val config = result.config!!
+        assertEquals("../project--{id}", config.worktree)
         assertEquals(listOf("app", "rails"), config.components.keys.toList())
         assertEquals(VersionSource.Property("composeApp/gradle.properties", "appVersionName"), config.components.getValue("app").version)
         assertTrue(config.components.getValue("rails").external)

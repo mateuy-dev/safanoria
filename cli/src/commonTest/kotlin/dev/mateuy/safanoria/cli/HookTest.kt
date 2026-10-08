@@ -23,7 +23,7 @@ class HookTest {
         SystemFileSystem.createDirectories(work / ".git" / "objects")
         SystemFileSystem.createDirectories(work / ".git" / "refs")
         SystemFileSystem.write(work / ".git" / "HEAD") { writeUtf8("ref: refs/heads/main\n") }
-        SystemFileSystem.write(work / "safanoria.yaml") { writeUtf8("safanoria: 1\ncomponents:\n  app:\n    external: true\n") }
+        SystemFileSystem.write(work / "safanoria.yaml") { writeUtf8("safanoria: 1\nworktree: ../project--{id}\ncomponents:\n  app:\n    external: true\n") }
     }
 
     private fun run(vararg args: String) = cli().test(listOf("--root", work.toString(), "hook") + args.toList())

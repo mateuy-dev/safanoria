@@ -29,6 +29,7 @@ class Init : CliktCommand(name = "init") {
     private val cli by requireObject<CliContext>()
     private val dir by option("--dir", help = "Ticket directory").default("tickets")
     private val mainBranch by option("--main-branch", help = "Branch releases are made from").default("main")
+    private val worktree by option("--worktree", help = "Where a ticket's worktree goes, with {id} for the ticket id (default: ../<this directory>--{id})")
     private val components by option("--component", help = "NAME=FILE:PROPERTY, e.g. app=gradle.properties:version (repeatable)").multiple()
     private val externals by option("--external", help = "Component released from another repository (repeatable)").multiple()
     private val yes by option("--yes", help = "Change the project's existing files (e.g. CLAUDE.md) without asking").flag()
@@ -40,11 +41,13 @@ class Init : CliktCommand(name = "init") {
             throw PrintMessage("$CONFIG_FILE already exists in $root: use `safanoria-cli update`", 1, true)
         }
         if (dir.startsWith("/") || ".." in dir.split('/')) throw usage("--dir must be a path inside the project", "--dir")
+        val worktree = worktree ?: "../${root.name}--{id}"
+        if ("{id}" !in worktree) throw usage("--worktree must contain {id}, replaced by the ticket id", "--worktree")
         val specs = components.map(::parseComponent) + externals.map { ComponentSpec(checkName(it, "--external"), null) }
         val chosen = specs.ifEmpty { askComponents() }
         chosen.groupBy { it.name }.filterValues { it.size > 1 }.keys.firstOrNull()?.let { throw usage("component '$it' given twice") }
 
-        val config = FileChange(root / CONFIG_FILE, Install.config(dir, chosen, mainBranch), FileAction.CREATE, managed = false)
+        val config = FileChange(root / CONFIG_FILE, Install.config(dir, chosen, worktree, mainBranch), FileAction.CREATE, managed = false)
         applyChanges(root, listOf(config) + Install.plan(SystemFileSystem, root, dir), yes, dryRun, cli.prompts)
         if (dryRun) return
 

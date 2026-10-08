@@ -20,7 +20,7 @@ class NewTicketTest {
     private fun repo(components: String = "  app:\n    external: true\n", template: String? = null): Pair<FakeFileSystem, Repository> {
         val fs = FakeFileSystem()
         fs.createDirectories(root / "tickets")
-        fs.write(root / "safanoria.yaml") { writeUtf8("safanoria: 1\ncomponents:\n$components") }
+        fs.write(root / "safanoria.yaml") { writeUtf8("safanoria: 1\nworktree: ../project--{id}\ncomponents:\n$components") }
         fs.write(root / "tickets" / "herd-locations.md") { writeUtf8(ticket("herd-locations", plan = "- [ ] Own step.\n      Detail.")) }
         fs.write(root / "tickets" / "empty-plan.md") { writeUtf8(ticket("empty-plan")) }
         fs.write(root / "tickets" / "study.md") { writeUtf8(ticket("study").replace("type: feature", "type: research")) }

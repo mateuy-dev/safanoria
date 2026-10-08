@@ -11,7 +11,7 @@ class AttachmentRulesTest {
         val fs = FakeFileSystem()
         val dir = "/repo/tickets".toPath()
         fs.createDirectories(dir / "attachments" / "crash-on-save")
-        fs.write("/repo/safanoria.yaml".toPath()) { writeUtf8("safanoria: 1\ncomponents:\n  app:\n    external: true\n") }
+        fs.write("/repo/safanoria.yaml".toPath()) { writeUtf8("safanoria: 1\nworktree: ../project--{id}\ncomponents:\n  app:\n    external: true\n") }
         fs.write(dir / "crash-on-save.md") {
             writeUtf8("---\nid: crash-on-save\ntype: bug\ntitle: Crash\nstatus: backlog\npriority: medium\nsize: S\n" +
                 "created: 2026-10-01\nupdated: 2026-10-01\n---\n\n## Objective\n\n![v](attachments/crash-on-save/video.mp4)\n\n" +

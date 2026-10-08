@@ -35,7 +35,8 @@ public data class Config(
     val specVersion: Int?,
     val dir: String = "tickets",
     val mainBranch: String = "main",
-    val worktree: String? = null,
+    /** Where `start` adds a ticket's worktree; `{id}` is replaced by the ticket id. */
+    val worktree: String,
     val components: Map<String, Component> = emptyMap(),
     val channels: List<String> = DEFAULT_CHANNELS,
     /** Themes tickets can be tagged with: name to its one-line description. */
@@ -56,6 +57,9 @@ public data class Config(
 public class ConfigResult(public val config: Config?, public val diagnostics: List<Diagnostic>)
 
 public object ConfigLoader {
+    private const val WORKTREE_MISSING =
+        "`worktree` is required: add where a ticket's worktree goes, e.g. `worktree: ../<project>--{id}` ({id} is replaced by the ticket id)"
+
     /** Finds the repository root: [start] or the nearest parent containing `safanoria.yaml`. */
     public fun findRoot(fileSystem: FileSystem, start: Path): Path? {
         var dir: Path? = start
@@ -95,12 +99,20 @@ public object ConfigLoader {
             value.get("url").text()?.let { key.content to RefSystem(key.content, it) }
         }.toMap()
         val tags = root.get("tags").mapEntries().associate { (key, value) -> key.content to value.text().orEmpty() }
+        val schemaDiagnostics = SchemaValidator.configErrors(block).map { SchemaValidator.toDiagnostic(block, it) }
+        // No default to fall back to: without it the configuration isn't loaded. The message says
+        // what to add, in place of the schema's "missing required properties: [worktree]".
+        val worktree = root.get("worktree").text() ?: return ConfigResult(
+            null,
+            schemaDiagnostics.filterNot { it.code == "schema-required" && it.message.endsWith(": [worktree]") } +
+                Diagnostic(path, 1, null, "config-worktree", WORKTREE_MISSING),
+        )
         val config = Config(
             path = path,
             specVersion = root.get("safanoria").text()?.toIntOrNull(),
             dir = root.get("dir").text() ?: "tickets",
             mainBranch = root.get("mainBranch").text() ?: "main",
-            worktree = root.get("worktree").text(),
+            worktree = worktree,
             components = components,
             channels = root.get("channels").textList() ?: Config.DEFAULT_CHANNELS,
             tags = tags,
@@ -110,7 +122,6 @@ public object ConfigLoader {
             icon = root.get("icon").text(),
             keyLines = root.mapEntries().associate { (key, _) -> key.content to block.lineOf(key) },
         )
-        val schemaDiagnostics = SchemaValidator.configErrors(block).map { SchemaValidator.toDiagnostic(block, it) }
         return ConfigResult(config, schemaDiagnostics)
     }
 }

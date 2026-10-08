@@ -44,7 +44,7 @@ internal fun snapshotOf(
     components: List<String> = emptyList(),
 ): TicketsSnapshot {
     val config = Config(
-        "/project/safanoria.yaml".toPath(), specVersion = 1,
+        "/project/safanoria.yaml".toPath(), specVersion = 1, worktree = "../project--{id}",
         components = components.associateWith { Component(it, version = null, external = false, line = 1) },
     )
     return snapshot(TicketGraph(tickets.toList()), config, diagnostics, TICKET_DIR, checkoutBranch)

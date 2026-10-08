@@ -58,12 +58,20 @@ class ConfigTest {
 
     @Test
     fun defaults() {
-        val config = assertNotNull(ConfigLoader.parse(path, "safanoria: 1\ncomponents:\n  app:\n    external: true\n").config)
+        val config = assertNotNull(ConfigLoader.parse(path, "safanoria: 1\nworktree: ../p--{id}\ncomponents:\n  app:\n    external: true\n").config)
         assertEquals("tickets", config.dir)
         assertEquals("main", config.mainBranch)
-        assertNull(config.worktree)
         assertNull(config.icon)
         assertEquals(Config.DEFAULT_CHANNELS, config.channels)
+    }
+
+    @Test
+    fun withoutWorktreeItIsNotLoadedAndSaysWhatToAdd() {
+        val result = ConfigLoader.parse(path, "safanoria: 1\ncomponents:\n  app:\n    external: true\n")
+        assertNull(result.config)
+        val missing = result.diagnostics.single()
+        assertEquals("config-worktree", missing.code)
+        assertTrue("worktree: ../<project>--{id}" in missing.message, missing.message)
     }
 
     @Test

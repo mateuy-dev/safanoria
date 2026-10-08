@@ -1,4 +1,5 @@
 safanoria: 1
+worktree: ../project--{id}
 components:
   app:
     version: { file: gradle.properties, property: version }

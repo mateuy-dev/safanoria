@@ -1,5 +1,6 @@
 # expect: pattern /components
 safanoria: 1
+worktree: ../project--{id}
 components:
   App:
     external: true

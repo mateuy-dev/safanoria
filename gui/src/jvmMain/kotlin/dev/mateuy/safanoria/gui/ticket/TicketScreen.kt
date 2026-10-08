@@ -170,15 +170,14 @@ private fun Confirmation(action: TicketAction, id: String, onConfirm: (String) -
     val (title, text, confirm) = when (action) {
         TicketAction.START -> Triple(
             "Start $id?",
-            "Creates the branch $id with the ticket committed as in-progress, and its worktree when the project " +
-                "has one configured (otherwise this checkout switches to the branch). Then opens a terminal there.",
+            "Creates the branch $id with the ticket committed as in-progress, and its worktree. " +
+                "Then opens a terminal there.",
             "Start",
         )
         TicketAction.START_IN_CLAUDE -> Triple(
             "Start $id in Claude?",
-            "Creates the branch $id with the ticket committed as in-progress, and its worktree when the project " +
-                "has one configured (otherwise this checkout switches to the branch). Then opens a terminal there " +
-                "running Claude Code, told to start working on the ticket.",
+            "Creates the branch $id with the ticket committed as in-progress, and its worktree. " +
+                "Then opens a terminal there running Claude Code, told to start working on the ticket.",
             "Start in Claude",
         )
         TicketAction.FINISH -> Triple(

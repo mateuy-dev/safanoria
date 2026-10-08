@@ -79,7 +79,7 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
     /** Opens a terminal where the ticket's branch is checked out. */
     private fun openTerminal() = act {
         when (val workspace = store.workspace(id)) {
-            null -> Notice("Branch '$id' isn't checked out anywhere: add a worktree for it, or switch to it.", error = true)
+            null -> Notice("Branch '$id' isn't checked out anywhere: add a worktree for it (git worktree add).", error = true)
             else -> openTerminal(workspace, done = null)
         }
     }

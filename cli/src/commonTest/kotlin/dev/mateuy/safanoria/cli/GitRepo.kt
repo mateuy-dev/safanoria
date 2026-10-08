@@ -61,6 +61,9 @@ class GitRepo(name: String) {
     companion object {
         const val CONFIG: String = "safanoria: 1\ncomponents:\n  app:\n    external: true\n"
 
+        /** [CONFIG] with ticket worktrees next to repository [name], where [worktree] adds them too. */
+        fun config(name: String): String = CONFIG + "worktree: ../$name--{id}\n"
+
         fun ticket(id: String, status: String = "backlog", related: List<String> = emptyList()): String = buildString {
             append("---\nid: $id\ntype: feature\ntitle: Ticket $id\nstatus: $status\npriority: medium\nsize: S\n")
             append("created: 2026-10-02\nupdated: 2026-10-02\n")
@@ -71,7 +74,7 @@ class GitRepo(name: String) {
         /** main: alpha, beta; beta started on its branch; stray only on feature. */
         fun scenario(name: String): GitRepo {
             val r = GitRepo(name)
-            r.write("safanoria.yaml", CONFIG)
+            r.write("safanoria.yaml", config(name))
             r.write("tickets/alpha.md", ticket("alpha"))
             r.write("tickets/beta.md", ticket("beta"))
             r.commit("tickets")

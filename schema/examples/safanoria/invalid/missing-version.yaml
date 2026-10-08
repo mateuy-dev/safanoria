@@ -2,3 +2,4 @@
 components:
   app:
     version: { file: gradle.properties, property: appVersionName }
+worktree: ../project--{id}

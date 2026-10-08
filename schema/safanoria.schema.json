@@ -4,7 +4,7 @@
   "title": "Safanoria project configuration (safanoria.yaml)",
   "description": "Project configuration (SPEC.md §2), spec version 1. Unknown keys are allowed and must be preserved by tools.",
   "type": "object",
-  "required": ["safanoria", "components"],
+  "required": ["safanoria", "worktree", "components"],
   "properties": {
     "safanoria": { "const": 1, "description": "Spec version." },
     "dir": { "type": "string", "minLength": 1, "default": "tickets", "description": "Ticket directory." },
