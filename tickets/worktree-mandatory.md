@@ -2,7 +2,7 @@
 id: worktree-mandatory
 type: maintenance
 title: Make the worktree setting mandatory
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-10-08
@@ -38,3 +38,4 @@ Existing projects without the key stop loading until they add it. That is accept
 - **2026-10-08** · decision · Only `start` refuses on a config that didn't load. The other commands keep running on the defaults, as they already do for a `safanoria.yaml` with a syntax error, and `validate` reports the problem. `Repository.config` therefore still needs a stand-in value (`../<directory>--{id}`), which nothing uses to create a worktree. Refusing every command was left out as a wider change than this ticket.
 - **2026-10-08** · decision · `init` writes `worktree: ../<project directory>--{id}`, the convention the three projects use, and takes `--worktree` to choose another place. It doesn't ask: the default suits a sibling directory in any project.
 - **2026-10-08** · decision · When the ticket's branch is checked out in the main checkout (by hand), `merge` still merges and sets `done`, and keeps the branch with a line saying where it is checked out. Refusing the merge was the alternative; keeping it mirrors what clean-up already does for a worktree it can't remove.
+- **2026-10-08** · status · review
