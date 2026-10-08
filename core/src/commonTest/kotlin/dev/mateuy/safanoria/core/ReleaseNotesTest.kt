@@ -18,7 +18,7 @@ class ReleaseNotesTest {
 
     private val fs = FakeFileSystem().apply {
         createDirectories(root / "tickets")
-        write(root / "safanoria.yaml") { writeUtf8("safanoria: 1\ncomponents:\n  app:\n    external: true\n  ktor:\n    external: true\n") }
+        write(root / "safanoria.yaml") { writeUtf8("safanoria: 1\nworktree: ../project--{id}\ncomponents:\n  app:\n    external: true\n  ktor:\n    external: true\n") }
         mapOf(
             "old" to ticket("old", "area: [app]\nresolvedIn:\n  app: 4.1.0\n"),
             "map" to ticket("map", "area: [app]\nresolvedIn:\n  app: 4.2.0\n"),

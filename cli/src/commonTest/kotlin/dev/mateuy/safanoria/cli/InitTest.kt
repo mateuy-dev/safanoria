@@ -34,6 +34,7 @@ class InitTest {
         val r = run("--component", "app=composeApp/gradle.properties:appVersionName", "--external", "rails", "--dir", "issues")
         assertEquals(0, r.statusCode, r.output)
         val config = read("safanoria.yaml")
+        assertTrue(config.contains("worktree: ../init--{id}\n"), config)
         assertTrue(config.contains("dir: issues\n") && config.contains("    version: { file: composeApp/gradle.properties, property: appVersionName }\n") &&
             config.contains("  rails:\n    external: true\n"), config)
         for (f in listOf("issues/_TEMPLATE.md", "issues/_TEMPLATE.bug.md", "issues/_TEMPLATE.research.md", "issues/README.md", "CLAUDE.md")) {

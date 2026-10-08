@@ -69,7 +69,7 @@ class NewOnBranchTest {
     @Test
     fun aProjectInASubdirectory() {
         val repo = GitRepo("new-on-subdir")
-        repo.write("app/safanoria.yaml", GitRepo.CONFIG)
+        repo.write("app/safanoria.yaml", GitRepo.config("app"))
         repo.write("app/tickets/alpha.md", GitRepo.ticket("alpha"))
         repo.write("README.md", "root\n")
         repo.commit("init")

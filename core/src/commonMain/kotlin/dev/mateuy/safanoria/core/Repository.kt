@@ -17,7 +17,7 @@ public class Repository(public val root: Path, public val fileSystem: FileSystem
     public val configResult: ConfigResult by lazy { ConfigLoader.load(fileSystem, root) }
 
     /** The config, or the defaults when `safanoria.yaml` can't be read ([configResult] says why). */
-    public val config: Config get() = configResult.config ?: Config(root / CONFIG_FILE, specVersion = null)
+    public val config: Config get() = configResult.config ?: Config(root / CONFIG_FILE, specVersion = null, worktree = "../${root.name}--{id}")
 
     public val ticketDir: Path get() = root / config.dir
 

@@ -21,22 +21,21 @@ import kotlin.time.Clock
 /**
  * `safanoria-cli start <id>`: SPEC §11.2 Start. Creates branch `<id>`, commits the ticket started on
  * it (without checking it out, so nothing in this checkout changes until the branch is ready),
- * then adds the worktree when configured, else switches this checkout to the branch.
+ * then adds its worktree.
  *
- * A process can't change its shell's directory, so `--print-path` prints only the directory to work
- * in (the rest goes to stderr) for a shell function to `cd` to; see `safanoria-cli --help` and the README.
+ * A process can't change its shell's directory, so `--print-path` prints only the worktree's
+ * path (the rest goes to stderr) for a shell function to `cd` to; see `safanoria-cli --help` and the README.
  */
 class StartCommand : RepositoryCommand(name = "start") {
     override fun help(context: Context) =
         "Start a ticket: create branch <id> (from the parent's branch when its children merge into it, " +
-            "else from mainBranch), set status: in-progress and log it in a commit on that branch, then add the " +
-            "worktree when safanoria.yaml has one, else switch to the branch."
+            "else from mainBranch), set status: in-progress and log it in a commit on that branch, then add its " +
+            "worktree where safanoria.yaml says (worktree)."
 
     private val idArgument by argument(name = "id", help = "Ticket id (on a terminal: asks, from the backlog and ready tickets)").optional()
-    private val noSwitch by option("--no-switch", help = "Without a worktree setting: create the branch but don't switch this checkout to it").flag()
     private val printPath by option(
         "--print-path",
-        help = "Print only the directory to work in (the worktree, or this checkout once switched) on stdout, everything else on stderr: dir=\$(safanoria-cli start <id> --print-path) && cd \"\$dir\"",
+        help = "Print only the worktree's path on stdout, everything else on stderr: dir=\$(safanoria-cli start <id> --print-path) && cd \"\$dir\"",
     ).flag()
     private val dryRun by option("--dry-run", help = "Show what would be done, change nothing").flag()
     private val date by option("--date", hidden = true, help = "Today's date (tests)")
@@ -47,7 +46,6 @@ class StartCommand : RepositoryCommand(name = "start") {
     private fun say(message: String) = echo(message, err = printPath)
 
     override fun run() {
-        if (printPath && noSwitch) throw PrintMessage("--print-path and --no-switch don't go together: with --no-switch there's no directory to go to.", 2, true)
         val repo = repository
         val today = date ?: Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
         val branches = Branches.read(repo) ?: throw PrintMessage(
@@ -61,10 +59,7 @@ class StartCommand : RepositoryCommand(name = "start") {
         val verb = if (dryRun) "would " else ""
         say("${verb}create branch $id from ${ready.base}")
         say("${verb}set status: in-progress and log 'status · started', committed on $id")
-        when {
-            ready.worktree != null -> say("${verb}add worktree ${ready.worktree}")
-            !noSwitch -> say("${verb}switch this checkout to $id")
-        }
+        say("${verb}add worktree ${ready.worktree}")
         if (dryRun) return
 
         val commit = try { Start.begin(repo, ready, today) } catch (e: StartException) {
@@ -74,18 +69,11 @@ class StartCommand : RepositoryCommand(name = "start") {
         }
         say("committed ${commit.take(7)} on $id: $id: start")
 
-        if (ready.worktree != null) {
-            try { Start.addWorktree(repo, ready) } catch (e: GitException) {
-                throw PrintMessage("Started, but the worktree wasn't added: ${e.message}\nAdd it with: git worktree add ${ready.worktree} $id", 1, true)
-            }
-            say("worktree ${ready.worktree}: open a session there (cd ${ready.worktree} && claude)")
-            if (printPath) echo(ready.worktree.toString())
-        } else if (!noSwitch) {
-            // Not switched (uncommitted changes) still prints this checkout: the note on stderr says why.
-            val note = Start.switchCheckout(repo, id)
-            if (note == null) say("switched to $id") else echo("note: $note", err = true)
-            if (printPath) echo(repo.root.toString())
+        try { Start.addWorktree(repo, ready) } catch (e: GitException) {
+            throw PrintMessage("Started, but the worktree wasn't added: ${e.message}\nAdd it with: git worktree add ${ready.worktree} $id", 1, true)
         }
+        say("worktree ${ready.worktree}: open a session there (cd ${ready.worktree} && claude)")
+        if (printPath) echo(ready.worktree.toString())
     }
 }
 

@@ -1,5 +1,6 @@
 # expect: const /safanoria
 safanoria: 2
+worktree: ../project--{id}
 components:
   app:
     version: { file: gradle.properties, property: appVersionName }

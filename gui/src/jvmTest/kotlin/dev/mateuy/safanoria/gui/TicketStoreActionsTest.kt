@@ -37,8 +37,8 @@ class TicketStoreActionsTest {
         return output.trim()
     }
 
-    private fun repository(worktree: Boolean, vararg tickets: Pair<String, String>) {
-        File(project, "safanoria.yaml").writeText("safanoria: 1\ndir: tickets\nmainBranch: main\n" + if (worktree) "worktree: ../project--{id}\n" else "")
+    private fun repository(vararg tickets: Pair<String, String>) {
+        File(project, "safanoria.yaml").writeText("safanoria: 1\ndir: tickets\nmainBranch: main\nworktree: ../project--{id}\n")
         File(project, "tickets").mkdirs()
         tickets.forEach { (id, status) -> File(project, "tickets/$id.md").writeText(ticket(id, status = status).text) }
         git("init", "-q", "-b", "main")
@@ -55,7 +55,7 @@ class TicketStoreActionsTest {
 
     @Test
     fun startCreatesTheBranchAndWorktreeAndTheTicketIsInProgressThere() = runBlocking<Unit> {
-        repository(worktree = true, "first-one" to "backlog")
+        repository("first-one" to "backlog")
         val store = TicketStore(root)
 
         val outcome = store.start("first-one", today = "2026-10-05")
@@ -73,20 +73,8 @@ class TicketStoreActionsTest {
     }
 
     @Test
-    fun withoutAWorktreeSettingThisCheckoutSwitchesToTheBranch() = runBlocking<Unit> {
-        repository(worktree = false, "first-one" to "ready")
-        val store = TicketStore(root)
-
-        assertEquals(StartOutcome.Started(root), store.start("first-one", today = "2026-10-05"))
-
-        assertEquals("first-one", git("rev-parse", "--abbrev-ref", "HEAD"))
-        assertEquals(Status.IN_PROGRESS, store.status("first-one"))
-        assertEquals(root, store.workspace("first-one"))
-    }
-
-    @Test
     fun aTicketThatCannotBeStartedSaysWhyAndChangesNothing() = runBlocking<Unit> {
-        repository(worktree = true, "closed-one" to "done")
+        repository("closed-one" to "done")
         val store = TicketStore(root)
 
         val outcome = assertIs<StartOutcome.NotStarted>(store.start("closed-one"))
@@ -98,7 +86,7 @@ class TicketStoreActionsTest {
 
     @Test
     fun finishSetsTheStartedTicketToReviewInItsWorktree() = runBlocking<Unit> {
-        repository(worktree = true, "first-one" to "backlog")
+        repository("first-one" to "backlog")
         val store = TicketStore(root)
         store.start("first-one", today = "2026-10-05")
 
@@ -113,7 +101,7 @@ class TicketStoreActionsTest {
 
     @Test
     fun finishRefusesUncommittedWorkInTheWorktree() = runBlocking<Unit> {
-        repository(worktree = true, "first-one" to "backlog")
+        repository("first-one" to "backlog")
         val store = TicketStore(root)
         store.start("first-one", today = "2026-10-05")
         File(base, "project--first-one/code.txt").writeText("work\n")
@@ -126,7 +114,7 @@ class TicketStoreActionsTest {
 
     @Test
     fun mergeLandsATicketInReviewAndRemovesItsWorktreeAndBranch() = runBlocking<Unit> {
-        repository(worktree = true, "first-one" to "backlog")
+        repository("first-one" to "backlog")
         val store = TicketStore(root)
         store.start("first-one", today = "2026-10-05")
         val workspace = File(base, "project--first-one")
@@ -149,7 +137,7 @@ class TicketStoreActionsTest {
 
     @Test
     fun reopenSendsATicketInReviewBackWithTheReason() = runBlocking<Unit> {
-        repository(worktree = true, "first-one" to "backlog")
+        repository("first-one" to "backlog")
         val store = TicketStore(root)
         store.start("first-one", today = "2026-10-05")
         store.finish("first-one", today = "2026-10-06")
@@ -164,7 +152,7 @@ class TicketStoreActionsTest {
 
     @Test
     fun aTicketThatIsNotInProgressCannotBeFinished() = runBlocking<Unit> {
-        repository(worktree = true, "first-one" to "backlog")
+        repository("first-one" to "backlog")
         val outcome = assertIs<FinishOutcome.NotFinished>(TicketStore(root).finish("first-one"))
         assertEquals("'first-one' is backlog; review needs in-progress", outcome.reason)
         assertEquals("tickets", git("log", "-1", "--format=%s"))
@@ -172,7 +160,7 @@ class TicketStoreActionsTest {
 
     @Test
     fun aBranchNotCheckedOutHasNoWorkspace() = runBlocking<Unit> {
-        repository(worktree = true, "first-one" to "backlog")
+        repository("first-one" to "backlog")
         git("branch", "first-one")
         assertNull(TicketStore(root).workspace("first-one"))
         assertNull(TicketStore(root).workspace("no-such-branch"))

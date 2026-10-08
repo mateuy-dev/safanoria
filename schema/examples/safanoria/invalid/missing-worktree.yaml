@@ -1,7 +1,5 @@
-# expect: type /icon
+# expect: required /
 safanoria: 1
-worktree: ../project--{id}
 components:
   app:
     version: { file: gradle.properties, property: appVersionName }
-icon: [app.svg, app.png]

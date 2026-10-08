@@ -30,7 +30,7 @@ valid ticket id (§3). Every other file is ignored. Subdirectories other than `a
 safanoria: 1                          # spec version, required
 dir: tickets                          # ticket directory, default "tickets"
 mainBranch: master                    # branch that releases are made from, default "main"
-worktree: ../VacAppKMP--{id}          # optional; where `start` creates a ticket's worktree
+worktree: ../VacAppKMP--{id}          # required; where `start` creates a ticket's worktree
 components:                           # required, at least one
   app:
     version: { file: composeApp/gradle.properties, property: appVersionName }
@@ -48,6 +48,9 @@ learningTargets: [CLAUDE.md, docs/, .claude/skills/, code comment]   # optional 
 icon: composeApp/icons/app.svg        # optional; the project's icon, for tools that show one
 ```
 
+- `worktree` is the path of a ticket's worktree, relative to the repository root or absolute.
+  It MUST contain `{id}`, which is replaced by the ticket id. A ticket is worked on in its own
+  worktree, never in the main checkout (§11).
 - `components` names are slugs (`^[a-z][a-z0-9-]*$`). They are the allowed values of `area`
   and the allowed keys of `resolvedIn`.
 - `version` tells tools where the component's current version is read from. Supported forms:
@@ -371,9 +374,9 @@ what was decided; they do not script the work. Working on a ticket is an ordinar
    current one. The id need not be confirmed first: it can be renamed while the ticket is
    only on one branch.
 2. **Start** — only when the human says so. Create the branch `<id>` (from the parent's branch if
-   `childrenMergeInto: parent`, else from `mainBranch`) and, if configured, the worktree. Set
+   `childrenMergeInto: parent`, else from `mainBranch`) and its worktree (§2). Set
    `status: in-progress` and log it.
-3. **Work** happens on branch `<id>` (in its worktree, if configured), in a session opened there.
+3. **Work** happens on branch `<id>`, in its worktree, in a session opened there.
    The session knows its ticket from the branch name. It works as the human directs and keeps
    the ticket current: decisions go into the Work Log (§7.7), committed with the code they
    explain; Objective and Acceptance Criteria are updated when the goal changes. Out-of-scope

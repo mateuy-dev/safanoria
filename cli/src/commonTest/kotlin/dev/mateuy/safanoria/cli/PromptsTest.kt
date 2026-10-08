@@ -82,7 +82,7 @@ class PromptsTest {
         val r = run(repo, prompts, "start", "--date", "2026-10-03")
         assertEquals(0, r.statusCode, r.output)
         assertEquals(listOf("alpha", "stray"), prompts.asked.single().second) // beta is in progress
-        assertEquals("alpha", repo.git("branch", "--show-current").trim())
+        assertTrue("status: in-progress" in repo.git("show", "alpha:tickets/alpha.md"))
     }
 
     @Test
@@ -145,7 +145,7 @@ class PromptsTest {
     @Test
     fun newWithATitleAsksOnlyForAMissingArea() {
         val repo = GitRepo.scenario("prompts-new-area")
-        repo.write("safanoria.yaml", "safanoria: 1\ncomponents:\n  app:\n    external: true\n  server:\n    external: true\n")
+        repo.write("safanoria.yaml", "safanoria: 1\nworktree: ../project--{id}\ncomponents:\n  app:\n    external: true\n  server:\n    external: true\n")
         repo.commit("two components")
         val prompts = ScriptedPrompts(listOf("server"))
         val r = run(repo, prompts, "new", "Herd photos", "--date", "2026-10-03")

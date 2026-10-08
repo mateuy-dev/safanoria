@@ -1,3 +1,4 @@
 # expect: minProperties /components
 safanoria: 1
+worktree: ../project--{id}
 components: {}

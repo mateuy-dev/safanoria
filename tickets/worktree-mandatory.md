@@ -2,7 +2,7 @@
 id: worktree-mandatory
 type: maintenance
 title: Make the worktree setting mandatory
-status: backlog
+status: done
 priority: medium
 size: S
 created: 2026-10-08
@@ -25,5 +25,18 @@ Existing projects without the key stop loading until they add it. That is accept
 
 ## Acceptance Criteria
 
+- [x] SPEC §2 and the schema require `worktree`; §11 no longer says "if configured".
+- [x] A `safanoria.yaml` without `worktree` isn't loaded, `validate` reports it with a message that says what to add, and `start` refuses with that message.
+- [x] `init` writes `worktree` in new projects.
+- [x] `start` always adds the worktree and never touches the main checkout; `--no-switch` is gone and `--print-path` prints only the worktree.
+- [x] `merge` no longer switches a main checkout that is on the ticket's branch: it merges and keeps the branch, saying why.
+
 ## Work Log
 
+- **2026-10-08** · status · started
+- **2026-10-08** · decision · A missing `worktree` makes `ConfigLoader` return no config with one `config-worktree` diagnostic, which replaces the schema's "missing required properties: [worktree]" because that one doesn't say what to add. Other schema errors still load the config with defaults; this key has no default to fall back to.
+- **2026-10-08** · decision · Only `start` refuses on a config that didn't load. The other commands keep running on the defaults, as they already do for a `safanoria.yaml` with a syntax error, and `validate` reports the problem. `Repository.config` therefore still needs a stand-in value (`../<directory>--{id}`), which nothing uses to create a worktree. Refusing every command was left out as a wider change than this ticket.
+- **2026-10-08** · decision · `init` writes `worktree: ../<project directory>--{id}`, the convention the three projects use, and takes `--worktree` to choose another place. It doesn't ask: the default suits a sibling directory in any project.
+- **2026-10-08** · decision · When the ticket's branch is checked out in the main checkout (by hand), `merge` still merges and sets `done`, and keeps the branch with a line saying where it is checked out. Refusing the merge was the alternative; keeping it mirrors what clean-up already does for a worktree it can't remove.
+- **2026-10-08** · status · review
+- **2026-10-08** · status · done

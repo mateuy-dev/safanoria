@@ -16,7 +16,7 @@ class RepositoryTest {
         val fs = FakeFileSystem()
         val tickets = "/repo/issues".toPath()
         fs.createDirectories(tickets / "attachments" / "map-input")
-        fs.write("/repo/safanoria.yaml".toPath()) { writeUtf8("safanoria: 1\ndir: issues\ncomponents:\n  app:\n    external: true\n") }
+        fs.write("/repo/safanoria.yaml".toPath()) { writeUtf8("safanoria: 1\nworktree: ../project--{id}\ndir: issues\ncomponents:\n  app:\n    external: true\n") }
         for (name in listOf("map-input.md", "README.md", "_TEMPLATE.md", "Bad.md", "a--b.md", "ab.md", "notes.txt")) {
             fs.write(tickets / name) { writeUtf8("---\nid: x\n---\n") }
         }

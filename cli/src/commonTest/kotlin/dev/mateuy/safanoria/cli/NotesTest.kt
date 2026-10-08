@@ -23,7 +23,7 @@ class NotesTest {
     fun writeRepository() {
         SystemFileSystem.deleteRecursively(work)
         SystemFileSystem.createDirectories(work / "tickets")
-        SystemFileSystem.write(work / "safanoria.yaml") { writeUtf8(GitRepo.CONFIG) }
+        SystemFileSystem.write(work / "safanoria.yaml") { writeUtf8(GitRepo.config("notes")) }
         mapOf(
             "herd-map" to ticket("herd-map", "feature", "1.1.0"),
             "herd-map-tiles" to ticket("herd-map-tiles", "feature", "1.1.0", front = "parent: herd-map\n"),

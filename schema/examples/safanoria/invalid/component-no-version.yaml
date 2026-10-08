@@ -1,4 +1,5 @@
 # expect: anyOf /components/app
 safanoria: 1
+worktree: ../project--{id}
 components:
   app: {}

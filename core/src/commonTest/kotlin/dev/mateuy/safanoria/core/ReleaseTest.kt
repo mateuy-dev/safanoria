@@ -24,7 +24,7 @@ class ReleaseTest {
         createDirectories(root / "server")
         write(root / "safanoria.yaml") {
             writeUtf8(
-                "safanoria: 1\ncomponents:\n" +
+                "safanoria: 1\nworktree: ../project--{id}\ncomponents:\n" +
                     "  app:\n    version: { file: gradle.properties, property: appVersionName }\n" +
                     "  ktor:\n    version: { file: server/build.gradle.kts, regex: 'version = \"([^\"]+)\"' }\n" +
                     "  rails:\n    external: true\n",

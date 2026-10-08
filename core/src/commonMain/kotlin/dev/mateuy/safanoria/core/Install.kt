@@ -103,11 +103,12 @@ public object Install {
     }
 
     /** A new `safanoria.yaml`. */
-    public fun config(dir: String, components: List<ComponentSpec>, mainBranch: String = "main"): String = buildString {
+    public fun config(dir: String, components: List<ComponentSpec>, worktree: String, mainBranch: String = "main"): String = buildString {
         append("# yaml-language-server: \$schema=https://raw.githubusercontent.com/mateuy-dev/safanoria/main/schema/safanoria.schema.json\n")
         append("safanoria: $SPEC_VERSION\n")
         append("dir: $dir\n")
         append("mainBranch: $mainBranch\n")
+        append("worktree: $worktree\n")
         append("components:\n")
         for (c in components) {
             append("  ${c.name}:\n")

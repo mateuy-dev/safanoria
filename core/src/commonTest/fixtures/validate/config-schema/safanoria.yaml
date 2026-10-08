@@ -1,2 +1,3 @@
 safanoria: 1
 components: {}
+worktree: ../project--{id}

@@ -1,5 +1,6 @@
 # expect: required /components/app/version
 safanoria: 1
+worktree: ../project--{id}
 components:
   app:
     version: { property: v }

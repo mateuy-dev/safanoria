@@ -1,5 +1,6 @@
 # Only the required keys.
 safanoria: 1
+worktree: ../project--{id}
 components:
   app:
     version: { file: gradle.properties, property: appVersionName }
