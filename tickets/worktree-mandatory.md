@@ -19,9 +19,9 @@ What this touches:
 - `schema/safanoria.schema.json`: `worktree` in `required` (it already must contain `{id}`).
 - `Config`: `worktree` non-null; a `safanoria.yaml` without it is a configuration error with a message that says what to add. `init` writes it in new projects.
 - The no-worktree path goes away: `Start.switchCheckout` and the nullable `Ready.worktree`, `start --no-switch`, the `--print-path` fallback to the checkout root, the GUI's "else this checkout" branch in `TicketStore` and the "when the project has one" wording in `TicketScreen`, and the README passages on working without a `worktree` setting.
-- `Land.cleanUp` handles a ticket branch checked out in the main checkout ("no `worktree` setting"). That can still happen by hand (`git switch <id>`), so decide whether it stays as it is.
+- `Land.cleanUp` handles a ticket branch checked out in the main checkout ("no `worktree` setting"). That handling goes too: a ticket branch in the main checkout is no longer a supported state, even though `git switch <id>` can still produce it by hand.
 
-Existing projects without the key stop loading until they add it. Decide whether that is acceptable within spec version 1, or needs a note for those upgrading.
+Existing projects without the key stop loading until they add it. That is acceptable within spec version 1, with no upgrade note: Safanoria is used in three projects and all of them define `worktree`.
 
 ## Acceptance Criteria
 
