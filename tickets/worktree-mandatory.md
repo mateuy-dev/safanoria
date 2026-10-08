@@ -2,7 +2,7 @@
 id: worktree-mandatory
 type: maintenance
 title: Make the worktree setting mandatory
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-08
@@ -27,3 +27,4 @@ Existing projects without the key stop loading until they add it. That is accept
 
 ## Work Log
 
+- **2026-10-08** · status · started
