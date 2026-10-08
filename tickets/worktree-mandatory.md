@@ -7,6 +7,8 @@ priority: medium
 size: S
 created: 2026-10-08
 updated: 2026-10-08
+resolvedIn:
+  safanoria: 0.5.0
 ---
 
 ## Objective
@@ -40,3 +42,4 @@ Existing projects without the key stop loading until they add it. That is accept
 - **2026-10-08** · decision · When the ticket's branch is checked out in the main checkout (by hand), `merge` still merges and sets `done`, and keeps the branch with a line saying where it is checked out. Refusing the merge was the alternative; keeping it mirrors what clean-up already does for a worktree it can't remove.
 - **2026-10-08** · status · review
 - **2026-10-08** · status · done
+- **2026-10-08** · release · safanoria 0.5.0

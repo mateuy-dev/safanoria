@@ -6,7 +6,9 @@ status: done
 priority: medium
 size: S
 created: 2026-10-07
-updated: 2026-10-07
+updated: 2026-10-08
+resolvedIn:
+  safanoria: 0.5.0
 ---
 
 ## Objective
@@ -31,3 +33,4 @@ The project's icon comes from a new optional key of `safanoria.yaml`, `icon`: th
 - **2026-10-07** · decision · The icon is read once at launch, from this checkout's file; changing it needs the app reopened. SVG is chosen by the `.svg` extension, anything else is decoded as a raster image.
 - **2026-10-07** · status · review
 - **2026-10-07** · status · done
+- **2026-10-08** · release · safanoria 0.5.0
