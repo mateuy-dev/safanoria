@@ -2,7 +2,7 @@
 id: gui-parent-children-board
 type: feature
 title: "GUI: kanban of the children on a parent ticket's screen"
-status: backlog
+status: in-progress
 priority: medium
 size: S
 area: [safanoria]
@@ -18,3 +18,4 @@ When a parent ticket is open in the GUI, the status of its children is hard to s
 
 ## Work Log
 
+- **2026-10-13** · status · started
