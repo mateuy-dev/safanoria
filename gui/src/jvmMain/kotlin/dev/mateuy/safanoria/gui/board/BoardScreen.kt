@@ -8,6 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -39,7 +40,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
+import androidx.compose.ui.layout.LayoutModifier
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -152,20 +158,41 @@ private fun FilterBar(state: BoardViewState, filtered: Boolean, actions: BoardAc
     }
 }
 
+/**
+ * The children of a ticket as a board, on the ticket's screen: as tall as its cards, to scroll
+ * with what is around it. Its columns aren't toggled: the empty ones come collapsed.
+ */
+@Composable
+fun ChildrenBoard(columns: List<BoardColumn>, onOpenTicket: (String) -> Unit, modifier: Modifier = Modifier) {
+    Row(modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        columns.forEach { column ->
+            if (column.collapsed) CollapsedColumnView(column, onToggle = null)
+            else BoardColumnView(column, onToggle = null, onOpenTicket, Modifier.weight(1f), scrolls = false)
+        }
+    }
+}
+
 @Composable
 private fun FilterGap() {
     VerticalDivider(Modifier.height(24.dp).padding(horizontal = 4.dp))
 }
 
+/** [onToggle] is null for a column that can't be collapsed. Without [scrolls], it is as tall as its cards. */
 @Composable
-private fun BoardColumnView(column: BoardColumn, onToggle: () -> Unit, onOpenTicket: (String) -> Unit, modifier: Modifier = Modifier) {
+private fun BoardColumnView(
+    column: BoardColumn,
+    onToggle: (() -> Unit)?,
+    onOpenTicket: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    scrolls: Boolean = true,
+) {
     Column(
         modifier.fillMaxHeight()
             .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surfaceContainer),
     ) {
         Row(
-            Modifier.fillMaxWidth().clickable(onClick = onToggle).padding(12.dp),
+            Modifier.fillMaxWidth().toggles(onToggle).padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -180,23 +207,29 @@ private fun BoardColumnView(column: BoardColumn, onToggle: () -> Unit, onOpenTic
             )
             Text("${column.cards.size}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        LazyColumn(
-            contentPadding = PaddingValues(start = 8.dp, end = 8.dp, bottom = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            items(column.cards, key = { it.id }) { card -> TicketCardView(card, onClick = { onOpenTicket(card.id) }) }
+        if (scrolls) {
+            LazyColumn(
+                contentPadding = PaddingValues(start = 8.dp, end = 8.dp, bottom = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(column.cards, key = { it.id }) { card -> TicketCardView(card, onClick = { onOpenTicket(card.id) }) }
+            }
+        } else {
+            Column(Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                column.cards.forEach { card -> TicketCardView(card, onClick = { onOpenTicket(card.id) }) }
+            }
         }
     }
 }
 
-/** A collapsed column: a strip with the count and the name written downwards. Click to open it. */
+/** A collapsed column: a strip with the count and the name written downwards. Click to open it, when [onToggle] is given. */
 @Composable
-private fun CollapsedColumnView(column: BoardColumn, onToggle: () -> Unit) {
+private fun CollapsedColumnView(column: BoardColumn, onToggle: (() -> Unit)?) {
     Column(
         Modifier.width(44.dp).fillMaxHeight()
             .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surfaceContainer)
-            .clickable(onClick = onToggle)
+            .toggles(onToggle)
             .padding(vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -218,14 +251,26 @@ private fun StatusDot(column: BoardColumn) {
     Box(Modifier.size(10.dp).clip(CircleShape).background(column.group?.color ?: MaterialTheme.colorScheme.error))
 }
 
+private fun Modifier.toggles(onToggle: (() -> Unit)?) = if (onToggle == null) this else clickable(onClick = onToggle)
+
 private val BoardGroup?.columnLabel: String get() = this?.heading ?: "Unreadable status"
 
 /** Takes the space of the content turned a quarter, so a following `rotate(90f)` fits its layout. */
-private fun Modifier.vertical() = layout { measurable, _ ->
-    val placeable = measurable.measure(Constraints())
-    layout(placeable.height, placeable.width) {
-        placeable.place(x = -(placeable.width - placeable.height) / 2, y = -(placeable.height - placeable.width) / 2)
+private fun Modifier.vertical() = this then Vertical
+
+private object Vertical : LayoutModifier {
+    override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
+        val placeable = measurable.measure(Constraints())
+        return layout(placeable.height, placeable.width) {
+            placeable.place(x = -(placeable.width - placeable.height) / 2, y = -(placeable.height - placeable.width) / 2)
+        }
     }
+
+    // Asked by a board as tall as its content: the turned text is as tall as it is long.
+    override fun IntrinsicMeasureScope.minIntrinsicHeight(measurable: IntrinsicMeasurable, width: Int) = measurable.maxIntrinsicWidth(Constraints.Infinity)
+    override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurable: IntrinsicMeasurable, width: Int) = measurable.maxIntrinsicWidth(Constraints.Infinity)
+    override fun IntrinsicMeasureScope.minIntrinsicWidth(measurable: IntrinsicMeasurable, height: Int) = measurable.maxIntrinsicHeight(Constraints.Infinity)
+    override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurable: IntrinsicMeasurable, height: Int) = measurable.maxIntrinsicHeight(Constraints.Infinity)
 }
 
 @Composable

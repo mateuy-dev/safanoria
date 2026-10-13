@@ -1,5 +1,6 @@
 package dev.mateuy.safanoria.gui
 
+import dev.mateuy.safanoria.core.BoardGroup
 import dev.mateuy.safanoria.core.Severity
 import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.gui.data.TicketsSnapshot
@@ -66,6 +67,39 @@ class TicketViewStateTest {
             second.blockedBy,
         )
         assertEquals(listOf("second"), ticketViewState("first", snapshot).blocks.map { it.id })
+    }
+
+    @Test
+    fun aParentShowsItsChildrenAsABoard() {
+        val snapshot = snapshotOf(
+            ticket("parent-one", plan = "- [ ] `second`: later\n- [x] `first`: sooner\n- [ ] `third`: last"),
+            ticket("first", status = "done", extra = "parent: parent-one"),
+            ticket("second", extra = "parent: parent-one"),
+            ticket("third", extra = "parent: parent-one"),
+            ticket("stranger", status = "review"),
+        )
+        val board = ticketViewState("parent-one", snapshot).childrenBoard
+        // The columns of the board, each with the children in that status, in the Plan's order.
+        assertEquals(
+            listOf(
+                BoardGroup.BACKLOG, BoardGroup.READY, BoardGroup.IN_PROGRESS, BoardGroup.REVIEW,
+                BoardGroup.TO_RELEASE, BoardGroup.RELEASED, BoardGroup.WONTFIX,
+            ),
+            board.map { it.group },
+        )
+        assertEquals(
+            mapOf<BoardGroup?, List<String>>(BoardGroup.BACKLOG to listOf("second", "third"), BoardGroup.RELEASED to listOf("first")),
+            board.filter { it.cards.isNotEmpty() }.associate { it.group to it.cards.map { c -> c.id } },
+        )
+        // Only the columns with children are open, and the cards don't repeat the parent.
+        assertEquals(listOf(BoardGroup.BACKLOG, BoardGroup.RELEASED), board.filter { !it.collapsed }.map { it.group })
+        assertTrue(board.flatMap { it.cards }.all { it.parentId == null })
+    }
+
+    @Test
+    fun aTicketWithoutChildrenHasNoBoard() {
+        val snapshot = snapshotOf(ticket("parent-one"), ticket("child", extra = "parent: parent-one"))
+        assertEquals(emptyList(), ticketViewState("child", snapshot).childrenBoard)
     }
 
     @Test

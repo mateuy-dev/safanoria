@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.mateuy.safanoria.core.Board
 import dev.mateuy.safanoria.core.BoardGroup
+import dev.mateuy.safanoria.core.Config
 import dev.mateuy.safanoria.core.Diagnostic
 import dev.mateuy.safanoria.core.Severity
 import dev.mateuy.safanoria.core.Ticket
@@ -88,12 +89,7 @@ internal fun boardViewState(
     val config = snapshot.config
     if (graph == null || config == null) return BoardViewState(loading = snapshot.loading || snapshot.error == null, error = snapshot.error, filter = filter)
     val shown = graph.tickets.filter { filter.matches(graph, it) }
-    val byGroup = shown.groupBy { BoardGroup.of(it, config) }
-    fun card(ticket: Ticket) = card(graph, ticket, snapshot.diagnostics[ticket.fileId].orEmpty())
-    // The column for unreadable statuses only exists when there are such tickets.
-    val columns = (COLUMN_ORDER + listOf(null))
-        .filter { it != null || null in byGroup }
-        .map { group -> BoardColumn(group, byGroup[group].orEmpty().map(::card), group in collapsed) }
+    val columns = columns(snapshot, graph, config, shown) { group, _ -> group in collapsed }
     return BoardViewState(
         columns = columns,
         ticketCount = graph.tickets.size,
@@ -107,7 +103,39 @@ internal fun boardViewState(
     )
 }
 
-private fun card(graph: TicketGraph, ticket: Ticket, diagnostics: List<Diagnostic>): TicketCard {
+/**
+ * The children of [parent] as a board, for its screen: the columns of the board, with the children
+ * in the parent's Plan order. Empty when it has none. A column without children is collapsed, so
+ * that the ones with children get the width.
+ */
+internal fun childrenColumns(snapshot: TicketsSnapshot, parent: Ticket): List<BoardColumn> {
+    val graph = snapshot.graph ?: return emptyList()
+    val config = snapshot.config ?: return emptyList()
+    val children = graph.children(parent).ifEmpty { return emptyList() }
+    // Every card here has the same parent, the ticket on screen: not said on each.
+    return columns(snapshot, graph, config, children, withParent = false) { _, cards -> cards.isEmpty() }
+}
+
+/** [tickets] as cards in the column of their group, in the order given. [collapsed] says which columns are. */
+private fun columns(
+    snapshot: TicketsSnapshot,
+    graph: TicketGraph,
+    config: Config,
+    tickets: List<Ticket>,
+    withParent: Boolean = true,
+    collapsed: (BoardGroup?, List<TicketCard>) -> Boolean,
+): List<BoardColumn> {
+    val byGroup = tickets.groupBy { BoardGroup.of(it, config) }
+    // The column for unreadable statuses only exists when there are such tickets.
+    return (COLUMN_ORDER + listOf(null))
+        .filter { it != null || null in byGroup }
+        .map { group ->
+            val cards = byGroup[group].orEmpty().map { card(graph, it, snapshot.diagnostics[it.fileId].orEmpty(), withParent) }
+            BoardColumn(group, cards, collapsed(group, cards))
+        }
+}
+
+private fun card(graph: TicketGraph, ticket: Ticket, diagnostics: List<Diagnostic>, withParent: Boolean): TicketCard {
     val f = ticket.frontmatter
     return TicketCard(
         id = ticket.fileId,
@@ -115,7 +143,7 @@ private fun card(graph: TicketGraph, ticket: Ticket, diagnostics: List<Diagnosti
         type = f?.type,
         priority = f?.priority,
         size = f?.size,
-        parentId = f?.parent?.value,
+        parentId = f?.parent?.value?.takeIf { withParent },
         tags = f?.tags.orEmpty().map { it.value },
         progress = graph.progress(ticket)?.takeIf { graph.children(ticket).isNotEmpty() },
         openBlockers = graph.openBlockers(ticket),

@@ -7,6 +7,7 @@ import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.core.Ticket
 import dev.mateuy.safanoria.core.TicketGraph
 import dev.mateuy.safanoria.core.text
+import dev.mateuy.safanoria.gui.board.childrenColumns
 import dev.mateuy.safanoria.gui.data.FinishOutcome
 import dev.mateuy.safanoria.gui.data.MergeOutcome
 import dev.mateuy.safanoria.gui.data.ReopenOutcome
@@ -153,6 +154,7 @@ internal fun ticketViewState(id: String, snapshot: TicketsSnapshot): TicketViewS
         ),
         parent = f?.parent?.value?.let(::link),
         children = graph.children(ticket).map(::link),
+        childrenBoard = childrenColumns(snapshot, ticket),
         blockedBy = f?.blockedBy.orEmpty().map { it.value }.distinct().map(::link),
         blocks = graph.blocks(ticket).map(::link),
         body = body(ticket),
