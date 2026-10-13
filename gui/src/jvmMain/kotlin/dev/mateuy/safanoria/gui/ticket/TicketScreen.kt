@@ -46,6 +46,7 @@ import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.MarkdownTypography
 import com.mikepenz.markdown.model.markdownAnnotator
+import dev.mateuy.safanoria.gui.board.ChildrenBoard
 import dev.mateuy.safanoria.gui.theme.WarningColor
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.getTextInNode
@@ -93,13 +94,17 @@ fun TicketContent(
             return@Scaffold
         }
         Row(Modifier.padding(padding).fillMaxSize()) {
-            SelectionContainer(Modifier.weight(1f).fillMaxHeight()) {
-                Column(
-                    Modifier.verticalScroll(rememberScrollState()).padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    Problems(state.problems)
-                    Markdown(state.body, typography = ticketTypography(), annotator = ticketAnnotator)
+            Column(
+                Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                // Outside the selection: its cards are to click, not text to select.
+                if (state.childrenBoard.isNotEmpty()) ChildrenBoard(state.childrenBoard, onOpenTicket)
+                SelectionContainer {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Problems(state.problems)
+                        Markdown(state.body, typography = ticketTypography(), annotator = ticketAnnotator)
+                    }
                 }
             }
             VerticalDivider()

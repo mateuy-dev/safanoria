@@ -1,6 +1,7 @@
 package dev.mateuy.safanoria.gui.ticket
 
 import dev.mateuy.safanoria.core.Status
+import dev.mateuy.safanoria.gui.board.BoardColumn
 
 /** What the ticket screen shows. */
 data class TicketViewState(
@@ -14,6 +15,8 @@ data class TicketViewState(
     val facts: List<Pair<String, String>> = emptyList(),
     val parent: TicketLink? = null,
     val children: List<TicketLink> = emptyList(),
+    /** The children as a board, a column per status; empty when the ticket has none. */
+    val childrenBoard: List<BoardColumn> = emptyList(),
     val blockedBy: List<TicketLink> = emptyList(),
     val blocks: List<TicketLink> = emptyList(),
     /** The markdown after the frontmatter. */

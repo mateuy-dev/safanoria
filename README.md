@@ -227,7 +227,9 @@ in the taskbar. Without it, or when the file can't be read, it has Safanoria's.
   when both are in the same version; a child released earlier is in its own version, marked with
   its parent. With several components, chips choose which one.
 - **Ticket**: the body as rendered markdown, its fields, links to its parent, children and
-  blockers, and its `validate` problems. Problems are those of this checkout's files, so a
+  blockers, and its `validate` problems. A parent has, on top, a board of its children: the
+  board's columns with only its children as cards, in its Plan's order; a column without children
+  is collapsed. Problems are those of this checkout's files, so a
   ticket shown from another branch shows none.
 - **Actions**, in the bar under the ticket (all but Open terminal ask first): **Start** on a backlog or ready ticket does what
   `safanoria-cli start` does, then opens a terminal in the new worktree; **Open terminal** on a
