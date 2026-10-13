@@ -2,7 +2,7 @@
 id: gui-parent-children-board
 type: feature
 title: "GUI: kanban of the children on a parent ticket's screen"
-status: in-progress
+status: review
 priority: medium
 size: S
 area: [safanoria]
@@ -26,3 +26,4 @@ When a parent ticket is open in the GUI, the status of its children is hard to s
 - **2026-10-13** · decision · The children board is as tall as its cards and scrolls with the ticket's body, rather than being a fixed band above it: a parent has few children, and the body stays the main thing on the screen.
 - **2026-10-13** · decision · Columns without children are collapsed and columns aren't toggled, unlike the general board (Released and Won't fix collapsed, click to toggle): the board shares the width with the fields panel, and on a parent the done children are the progress one looks for.
 - **2026-10-13** · decision · Cards are in the parent's Plan order, not priority then id, and don't say their parent. The Children links in the side panel stay.
+- **2026-10-13** · status · review
