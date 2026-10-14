@@ -2,7 +2,7 @@
 id: gui-board-children-toggle
 type: feature
 title: "GUI: toggle to show the child tickets on the general board"
-status: in-progress
+status: review
 priority: medium
 size: S
 area: [safanoria]
@@ -35,3 +35,4 @@ The general board lists every ticket, children included, each with a ↑ parent 
 - **2026-10-14** · status · started
 - **2026-10-14** · decision · The toggle is a view flag in the GUI's BoardViewModel, not a field of core's `TicketFilter`: the CLI's `list` shares that filter and must keep listing children. Clear leaves it, as it isn't a filter.
 - **2026-10-14** · decision · Only children whose parent is in the project are hidden: a child with a missing parent would otherwise be unreachable from the board.
+- **2026-10-14** · status · review
