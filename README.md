@@ -217,8 +217,9 @@ in the taskbar. Without it, or when the file can't be read, it has Safanoria's.
 
 - **Board**: a column per status, left to right as a ticket moves (Backlog, Ready, In progress,
   Review, To release, Released, Won't fix). Done tickets are in two columns: To release is what
-  the next version brings, Released what a version already has. Every ticket is a card, children
-  too, read from every local branch as `list` does. Released and Won't fix start collapsed: click
+  the next version brings, Released what a version already has. Every ticket is a card, read
+  from every local branch as `list` does; children only with the children chip, as their parent's
+  card and screen already show them. Released and Won't fix start collapsed: click
   a column's header to collapse or open it. Chips filter by type, area, tag and blocked. A card shows its parent, its tags, a parent's
   `done/total` Plan items, open blockers, and how many problems `validate` finds in it.
 - **Versions**, from the board's bar: what each version brought. The versions of a component,

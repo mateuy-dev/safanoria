@@ -10,10 +10,11 @@ import dev.mateuy.safanoria.core.TicketType
 /** What the board screen shows. */
 data class BoardViewState(
     val columns: List<BoardColumn> = emptyList(),
-    /** Tickets in the project, and how many of them pass [filter]. */
+    /** Tickets in the project, and how many of them are cards: those that pass [filter], children only with [showChildren]. */
     val ticketCount: Int = 0,
     val shownCount: Int = 0,
     val filter: TicketFilter = TicketFilter(),
+    val showChildren: Boolean = false,
     /** The areas tickets have, to filter by. */
     val areas: List<String> = emptyList(),
     /** The tags tickets have, to filter by. */
