@@ -2,7 +2,7 @@
 id: gui-board-children-toggle
 type: feature
 title: "GUI: toggle to show the child tickets on the general board"
-status: backlog
+status: in-progress
 priority: medium
 size: S
 area: [safanoria]
@@ -32,3 +32,4 @@ The general board lists every ticket, children included, each with a ↑ parent 
 
 ## Work Log
 
+- **2026-10-14** · status · started
