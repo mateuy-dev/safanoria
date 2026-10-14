@@ -73,6 +73,7 @@ fun BoardScreen(viewModel: BoardViewModel, onOpenTicket: (String) -> Unit, onOpe
             toggleArea = viewModel::toggleArea,
             toggleTag = viewModel::toggleTag,
             toggleBlocked = viewModel::toggleBlocked,
+            toggleChildren = viewModel::toggleChildren,
             clearFilter = viewModel::clearFilter,
             openTicket = onOpenTicket,
             openVersions = onOpenVersions,
@@ -88,6 +89,7 @@ class BoardActions(
     val toggleArea: (String) -> Unit,
     val toggleTag: (String) -> Unit,
     val toggleBlocked: () -> Unit,
+    val toggleChildren: () -> Unit,
     val clearFilter: () -> Unit,
     val openTicket: (String) -> Unit,
     val openVersions: () -> Unit,
@@ -101,7 +103,7 @@ fun BoardContent(state: BoardViewState, actions: BoardActions) {
         topBar = {
             TopAppBar(
                 navigationIcon = { Image(rememberAppIcon(), contentDescription = null, Modifier.padding(start = 12.dp, end = 4.dp).size(32.dp)) },
-                title = { Text("Board · " + (if (filtered) "${state.shownCount} of " else "") + "${state.ticketCount} tickets") },
+                title = { Text("Board · " + (if (state.shownCount < state.ticketCount) "${state.shownCount} of " else "") + "${state.ticketCount} tickets") },
                 actions = {
                     if (state.loading) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
                     TextButton(onClick = actions.openVersions) { Text("Versions") }
@@ -133,7 +135,10 @@ fun BoardContent(state: BoardViewState, actions: BoardActions) {
     }
 }
 
-/** Chips to narrow the board: by type, by area and tag (when tickets have them) and to blocked tickets. */
+/**
+ * Chips to narrow the board: by type, by area and tag (when tickets have them) and to blocked
+ * tickets; and one to show children. That one isn't a filter: Clear leaves it.
+ */
 @Composable
 private fun FilterBar(state: BoardViewState, filtered: Boolean, actions: BoardActions) {
     Row(
@@ -155,6 +160,8 @@ private fun FilterBar(state: BoardViewState, filtered: Boolean, actions: BoardAc
         FilterGap()
         FilterChip(selected = state.filter.blocked, onClick = actions.toggleBlocked, label = { Text("blocked") })
         if (filtered) TextButton(onClick = actions.clearFilter) { Text("Clear") }
+        FilterGap()
+        FilterChip(selected = state.showChildren, onClick = actions.toggleChildren, label = { Text("children") })
     }
 }
 

@@ -60,15 +60,33 @@ class BoardViewStateTest {
         assertEquals(listOf("odd-one"), state.ids(null))
     }
 
+    private val family = snapshotOf(
+        ticket("parent-one", status = "in-progress", plan = "- [x] `child-done`: first\n- [ ] `child-open`: second"),
+        ticket("child-done", status = "done", extra = "parent: parent-one"),
+        ticket("child-open", extra = "parent: parent-one"),
+    )
+
+    @Test
+    fun childrenAreHiddenUntilAskedForAndTheCountSaysSo() {
+        val state = boardViewState(family)
+        assertEquals(listOf("parent-one"), state.columns.flatMap { it.cards }.map { it.id })
+        assertEquals(Progress(1, 2), state.card("parent-one").progress)
+        assertEquals(3, state.ticketCount)
+        assertEquals(1, state.shownCount)
+        assertFalse(state.showChildren)
+    }
+
+    @Test
+    fun aChildWhoseParentIsMissingIsShown() {
+        val state = boardViewState(snapshotOf(ticket("orphan", extra = "parent: gone")))
+        assertEquals(listOf("orphan"), state.ids(BoardGroup.BACKLOG))
+        assertEquals("gone", state.card("orphan").parentId)
+    }
+
     @Test
     fun childrenAreTheirOwnCardsAndParentsShowProgress() {
-        val state = boardViewState(
-            snapshotOf(
-                ticket("parent-one", status = "in-progress", plan = "- [x] `child-done`: first\n- [ ] `child-open`: second"),
-                ticket("child-done", status = "done", extra = "parent: parent-one"),
-                ticket("child-open", extra = "parent: parent-one"),
-            ),
-        )
+        val state = boardViewState(family, showChildren = true)
+        assertEquals(3, state.shownCount)
         assertEquals(Progress(1, 2), state.card("parent-one").progress)
         assertEquals("parent-one", state.card("child-open").parentId)
         assertEquals(listOf("child-done"), state.ids(BoardGroup.RELEASED))

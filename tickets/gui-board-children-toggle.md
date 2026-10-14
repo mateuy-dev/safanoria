@@ -26,10 +26,12 @@ The general board lists every ticket, children included, each with a ↑ parent 
 
 ## Acceptance Criteria
 
-- [ ] The general board hides child tickets by default; the count in the title says how many are shown.
-- [ ] A toggle next to the filters shows them again, with their ↑ parent line.
-- [ ] A parent's screen still shows its children board.
+- [x] The general board hides child tickets by default; the count in the title says how many are shown.
+- [x] A toggle next to the filters shows them again, with their ↑ parent line.
+- [x] A parent's screen still shows its children board.
 
 ## Work Log
 
 - **2026-10-14** · status · started
+- **2026-10-14** · decision · The toggle is a view flag in the GUI's BoardViewModel, not a field of core's `TicketFilter`: the CLI's `list` shares that filter and must keep listing children. Clear leaves it, as it isn't a filter.
+- **2026-10-14** · decision · Only children whose parent is in the project are hidden: a child with a missing parent would otherwise be unreachable from the board.

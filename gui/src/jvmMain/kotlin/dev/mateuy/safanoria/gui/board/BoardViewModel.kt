@@ -30,7 +30,10 @@ class BoardViewModel(private val store: TicketStore) : ViewModel() {
 
     private val filter = MutableStateFlow(TicketFilter())
 
-    val state: StateFlow<BoardViewState> = combine(store.snapshot, collapsed, filter, ::boardViewState)
+    /** Children are hidden until asked for: their parent's card shows their progress, its screen their board. */
+    private val showChildren = MutableStateFlow(false)
+
+    val state: StateFlow<BoardViewState> = combine(store.snapshot, collapsed, filter, showChildren, ::boardViewState)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BoardViewState())
 
     /** Collapses the column of [group], or expands it when collapsed. */
@@ -53,6 +56,10 @@ class BoardViewModel(private val store: TicketStore) : ViewModel() {
     /** Only tickets with a `blockedBy` that isn't done. */
     fun toggleBlocked() {
         filter.update { it.copy(blocked = !it.blocked) }
+    }
+
+    fun toggleChildren() {
+        showChildren.update { !it }
     }
 
     fun clearFilter() {
@@ -78,23 +85,28 @@ internal val COLUMN_ORDER: List<BoardGroup> = listOf(
 /**
  * Every ticket that passes [filter] as a card in the column of its group: its status, with `done`
  * in two columns, to release and released. Every group has a column, even when empty. Within a
- * column, cards keep the graph's order (priority, then id).
+ * column, cards keep the graph's order (priority, then id). Children are cards only with
+ * [showChildren]; one whose parent isn't in the project always is, as nothing else leads to it.
  */
 internal fun boardViewState(
     snapshot: TicketsSnapshot,
     collapsed: Set<BoardGroup?> = emptySet(),
     filter: TicketFilter = TicketFilter(),
+    showChildren: Boolean = false,
 ): BoardViewState {
     val graph = snapshot.graph
     val config = snapshot.config
-    if (graph == null || config == null) return BoardViewState(loading = snapshot.loading || snapshot.error == null, error = snapshot.error, filter = filter)
-    val shown = graph.tickets.filter { filter.matches(graph, it) }
+    if (graph == null || config == null) {
+        return BoardViewState(loading = snapshot.loading || snapshot.error == null, error = snapshot.error, filter = filter, showChildren = showChildren)
+    }
+    val shown = graph.tickets.filter { (showChildren || graph.parent(it) == null) && filter.matches(graph, it) }
     val columns = columns(snapshot, graph, config, shown) { group, _ -> group in collapsed }
     return BoardViewState(
         columns = columns,
         ticketCount = graph.tickets.size,
         shownCount = shown.size,
         filter = filter,
+        showChildren = showChildren,
         areas = graph.tickets.flatMap { t -> t.frontmatter?.area.orEmpty().map { it.value } }.distinct().sorted(),
         tags = graph.tickets.flatMap { t -> t.frontmatter?.tags.orEmpty().map { it.value } }.distinct().sorted(),
         projectProblems = snapshot.projectDiagnostics.map { it.toString() },
