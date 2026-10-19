@@ -2,7 +2,7 @@
 id: herdr-integration
 type: feature
 title: Herdr integration
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-10-19
@@ -24,3 +24,4 @@ First integration of Safanoria with Herdr (a terminal multiplexer for coding age
 
 - **2026-10-19** · status · started
 - **2026-10-19** · decision · In the CLI (`start --herdr/--implement`, `merge`), not only the skill, so it works from any Herdr pane and the GUI. Layout follows the ticket's `size` (L/XL workspace, else tab). On merge, close what has a pane in the ticket's worktree, whichever pane runs it; a workspace closes whole only when all its tabs are in it, and the current one last because it ends the process. Opt-out is a `--keep-herdr` flag, not a `safanoria.yaml` setting, to stay small.
+- **2026-10-19** · status · review
