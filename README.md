@@ -275,6 +275,13 @@ safanoria-start() {
 
 `safanoria-start herd-photos && claude` then starts the ticket and opens the session in its worktree.
 
+**In Herdr.** Inside a [Herdr](https://herdr.dev) pane, `start <id> --herdr` also opens the worktree
+there running Claude Code (`claude --name <id>`), without taking focus: a workspace for tickets of
+size L and XL, a tab of the current workspace for smaller ones (`--in workspace|tab` overrides).
+`--implement` does the same but the session starts implementing the ticket and finishes it.
+`merge` then closes the workspace or tab whose panes are in that ticket's worktree (a workspace only
+when all its tabs are), from whichever pane you run it; `--keep-herdr` leaves it open.
+
 **Work.** Open Claude Code in the worktree yourself. The session belongs to that worktree, so
 `claude --resume` there finds it again after a restart. The SessionStart hook that `init`
 installs runs `safanoria-cli context`: on a ticket's branch it gives the session the ticket and

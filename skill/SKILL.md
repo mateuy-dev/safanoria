@@ -18,7 +18,8 @@ planning or approval step, and a session works as the user directs it.
 ## Rules
 
 - **Never start a ticket.** The user starts tickets with `safanoria-cli start <id>` and opens a
-  session in the worktree. Don't create ticket branches or worktrees, don't switch the session
+  session in the worktree (inside Herdr, `safanoria-cli start <id> --herdr`, or `--implement` to
+  have it implement the ticket, opens that session itself; run it only when the user asks). Don't create ticket branches or worktrees, don't switch the session
   into another worktree, and don't set `in-progress` yourself.
 - **Never land a ticket unasked.** Merging is the user's call. Setting `review` is yours (Finish).
 - Set `updated` to today on every change. Keep frontmatter field order. Preserve unknown fields and sections.
