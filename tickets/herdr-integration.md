@@ -2,7 +2,7 @@
 id: herdr-integration
 type: feature
 title: Herdr integration
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-19
@@ -18,3 +18,4 @@ First integration of Safanoria with Herdr (a terminal multiplexer for coding age
 
 ## Work Log
 
+- **2026-10-19** · status · started
