@@ -10,6 +10,8 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import dev.mateuy.safanoria.core.Branches
 import dev.mateuy.safanoria.core.FinishException
+import dev.mateuy.safanoria.core.Herdr
+import dev.mateuy.safanoria.core.HerdrException
 import dev.mateuy.safanoria.core.Land
 import dev.mateuy.safanoria.core.LandException
 import dev.mateuy.safanoria.core.LandResult
@@ -19,6 +21,7 @@ import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.core.SystemFileSystem
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
+import okio.Path
 import okio.Path.Companion.toPath
 import kotlin.time.Clock
 
@@ -35,6 +38,7 @@ class MergeCommand : RepositoryCommand(name = "merge") {
 
     private val idArgument by argument(name = "id", help = "Ticket id (on a terminal: asks, starting on this branch's ticket)").optional()
     private val dryRun by option("--dry-run", help = "Check that it can be merged, change nothing").flag()
+    private val keepHerdr by option("--keep-herdr", help = "Inside Herdr, don't close the workspace or tab the ticket's worktree was open in").flag()
     private val date by option("--date", hidden = true, help = "Today's date (tests)")
 
     override fun run() {
@@ -57,6 +61,8 @@ class MergeCommand : RepositoryCommand(name = "merge") {
             if (parent != null) echo("would check '$id' in the Plan of ${parent.fileId}, on ${ready.parentBranch}")
             return
         }
+        // Before the merge removes it.
+        val worktree = runCatching { repo.git.worktrees().firstOrNull { it.branch == id }?.path }.getOrNull()
         val landed = try {
             Land.perform(repo, ready, today)
         } catch (e: LandException) {
@@ -69,6 +75,21 @@ class MergeCommand : RepositoryCommand(name = "merge") {
         landed.cleanUp.forEach { echo(it) }
         if (!SystemFileSystem.exists(repo.root)) echo("this directory was its worktree and is gone: cd somewhere else")
         echo("nothing was pushed")
+        if (!keepHerdr && Herdr.inside()) closeHerdr(worktree)
+    }
+
+    /** Last: closing the workspace or tab this runs in ends this process. */
+    private fun closeHerdr(worktree: Path?) {
+        if (worktree == null) return
+        val herdr = Herdr()
+        try {
+            for (target in herdr.closing(worktree)) {
+                echo("closing the Herdr ${target.kind.text} ${target.id}")
+                herdr.close(target)
+            }
+        } catch (e: HerdrException) {
+            echo("couldn't close it in Herdr: ${e.message}", err = true)
+        }
     }
 }
 
