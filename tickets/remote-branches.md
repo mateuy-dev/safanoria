@@ -2,7 +2,7 @@
 id: remote-branches
 type: feature
 title: Read remote branches to see tickets being worked on another computer
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-10-20
@@ -29,3 +29,4 @@ Read remote-tracking branches as SPEC §14.1 already allows ("Tools MAY include 
 - **2026-10-20** · decision · `start` refuses a ticket on `origin/<id>`, like an existing local branch, instead of warning: starting it again makes a second branch that diverges. The app offers Create worktree instead; the CLI prints the `git worktree add --track` command (a CLI command for it can follow if wanted).
 - **2026-10-20** · decision · The mark is computed on read (`Ticket.remote`), not stored. Only ticket branches are marked, never `mainBranch`: a CI clone with only `origin/main` would mark everything.
 - **2026-10-20** · decision · A remote branch merged into `origin/main` counts as merged even before `main` is pulled, so it isn't read and doesn't show a stale in-progress; the ticket shows `main`'s copy until it is pulled.
+- **2026-10-20** · status · review
