@@ -22,6 +22,7 @@ internal fun ticket(
     plan: String = "",
     branch: String? = null,
     onlyOnBranch: Boolean = false,
+    remote: String? = null,
 ): Ticket = Ticket(
     TICKET_DIR / "$id.md",
     (
@@ -31,6 +32,7 @@ internal fun ticket(
         ).joinToString("\n"),
     branch,
     onlyOnBranch,
+    remote,
 )
 
 internal fun problem(id: String, code: String, severity: Severity = Severity.ERROR, line: Int? = 3) =

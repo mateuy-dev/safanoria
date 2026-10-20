@@ -41,6 +41,9 @@ enum class TicketAction(val confirmed: Boolean) {
     /** Backlog or ready: start it like [START], with Claude Code running in the terminal, told to work on the ticket. */
     START_IN_CLAUDE(confirmed = true),
 
+    /** Started on another computer (only on `origin/<id>`): add its worktree here, with a local branch tracking it, and open a terminal there. */
+    CHECK_OUT(confirmed = true),
+
     /** In progress or review: open a terminal where its branch is checked out. */
     OPEN_TERMINAL(confirmed = false),
 

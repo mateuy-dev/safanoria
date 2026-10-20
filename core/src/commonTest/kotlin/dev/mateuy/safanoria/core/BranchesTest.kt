@@ -102,18 +102,54 @@ class BranchesTest {
     }
 
     @Test
-    fun remoteBranchesOnlyWhenAsked() {
+    fun remoteBranchesUnlessAskedNotTo() {
         val origin = scenario("branches-origin")
         val clone = GitFixture("branches-clone")
         clone.git("remote", "add", "origin", origin.root.toString())
         clone.git("fetch", "-q", "origin")
         clone.git("checkout", "-q", "-b", "main", "origin/main")
 
-        assertEquals("backlog@main", Branches.read(clone.repository)!!.summary()["started"])
-        val all = Branches.read(clone.repository, remote = true)!!
+        assertEquals("backlog@main", Branches.read(clone.repository, remote = false)!!.summary()["started"])
+        val all = Branches.read(clone.repository)!!
         assertEquals("in-progress@started", all.summary()["started"])
         assertEquals("backlog@feature!", all.summary()["stray"])
         assertEquals(listOf(CreatedTwice("twice", "feature", "other")), all.createdTwice())
+        // Copies from a remote ticket branch are marked; mainBranch's never are.
+        val byId = all.tickets.associateBy { it.fileId }
+        assertEquals("origin/started", byId.getValue("started").remoteBranch)
+        assertEquals("origin/feature", byId.getValue("stray").remoteBranch)
+        assertNull(byId.getValue("only-main").remote)
+    }
+
+    @Test
+    fun aLocalBranchWinsOverTheRemoteOneAndIsNotMarked() {
+        val origin = scenario("branches-origin-local")
+        val clone = GitFixture("branches-clone-local")
+        clone.git("remote", "add", "origin", origin.root.toString())
+        clone.git("fetch", "-q", "origin")
+        clone.git("checkout", "-q", "-b", "main", "origin/main")
+        clone.checkout("started", create = true)
+        clone.git("reset", "-q", "--hard", "origin/started")
+        clone.write("tickets/started.md", t("started", "review")); clone.commit("local work")
+        clone.checkout("main")
+
+        val started = Branches.read(clone.repository)!!.tickets.first { it.fileId == "started" }
+        assertEquals("review", started.frontmatter!!.status!!.text)
+        assertNull(started.remote)
+    }
+
+    @Test
+    fun aRemoteBranchMergedIntoTheRemoteMainIsNotReadBeforeMainIsPulled() {
+        val origin = scenario("branches-origin-merged")
+        origin.merge("started")
+        val clone = GitFixture("branches-clone-merged")
+        clone.git("remote", "add", "origin", origin.root.toString())
+        clone.git("fetch", "-q", "origin")
+        clone.git("checkout", "-q", "-b", "main", "origin/main~1") // main as before the merge was pulled
+
+        val started = Branches.read(clone.repository)!!.tickets.first { it.fileId == "started" }
+        assertEquals("main", started.branch)
+        assertNull(started.remote)
     }
 
     @Test

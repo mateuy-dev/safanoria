@@ -6,6 +6,7 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.split
 import com.github.ajalt.clikt.parameters.types.choice
+import dev.mateuy.safanoria.core.Board
 import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.core.Ticket
 import dev.mateuy.safanoria.core.TicketFilter
@@ -63,7 +64,7 @@ class ListTickets : AcrossBranchesCommand(name = "list") {
         graph.progress(t)?.takeIf { graph.children(t).isNotEmpty() }?.let { "[${it.done}/${it.total}]" },
         t.frontmatter?.parent?.value?.let { "parent $it" },
         graph.openBlockers(t).takeIf { it.isNotEmpty() }?.let { "blocked by ${it.joinToString(", ")}" },
-        t.branch?.takeIf { t.onlyOnBranch }?.let { "only on $it" },
+        Board.branchMarker(t),
     )
 
     private fun json(graph: TicketGraph, tickets: List<Ticket>): JsonObject = buildJsonObject {
@@ -78,6 +79,7 @@ class ListTickets : AcrossBranchesCommand(name = "list") {
         put("file", t.path.relativeTo(repository.root).segments.joinToString("/")) // `/` on every OS, like the board's links
         put("branch", str(t.branch)) // where the real copy was read (SPEC §14); null with --checkout
         put("onlyOnBranch", t.onlyOnBranch)
+        put("remote", str(t.remote)) // set when the copy is from a remote-tracking branch: worked on elsewhere
         put("title", str(f?.title?.value))
         put("type", str(f?.type?.text))
         put("status", str(f?.status?.text))

@@ -60,6 +60,7 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
             // Named after the ticket: Claude Code shows the session's name as the terminal's title.
             command = listOf(CLAUDE, "--name", id, "Start working on ticket $id"),
         )
+        TicketAction.CHECK_OUT -> checkOut()
         TicketAction.OPEN_TERMINAL -> openTerminal()
         TicketAction.FINISH -> finish()
         TicketAction.MERGE -> merge()
@@ -74,6 +75,14 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
                 null -> Notice("Started, but ${outcome.note}", error = true)
                 else -> openTerminal(workspace, "Started in $workspace", command)
             }
+        }
+    }
+
+    /** Continues here a ticket started on another computer: its worktree, then a terminal there. */
+    private fun checkOut() = act {
+        when (val outcome = store.checkOut(id)) {
+            is StartOutcome.NotStarted -> Notice("No worktree added: ${outcome.reason}", error = true)
+            is StartOutcome.Started -> outcome.workspace?.let { openTerminal(it, "Worktree added in $it") }
         }
     }
 
@@ -150,7 +159,7 @@ internal fun ticketViewState(id: String, snapshot: TicketsSnapshot): TicketViewS
             f?.assignee?.let { "assignee" to it.value },
             f?.created?.let { "created" to it.value },
             f?.updated?.let { "updated" to it.value },
-            ticket.branch?.let { "read from" to it },
+            (ticket.remoteBranch ?: ticket.branch)?.let { "read from" to it },
         ),
         parent = f?.parent?.value?.let(::link),
         children = graph.children(ticket).map(::link),
@@ -158,7 +167,8 @@ internal fun ticketViewState(id: String, snapshot: TicketsSnapshot): TicketViewS
         blockedBy = f?.blockedBy.orEmpty().map { it.value }.distinct().map(::link),
         blocks = graph.blocks(ticket).map(::link),
         body = body(ticket),
-        actions = when (f?.status) {
+        // Started on another computer: nothing can be done with it here until it is checked out.
+        actions = if (ticket.remote != null) listOf(TicketAction.CHECK_OUT) else when (f?.status) {
             Status.BACKLOG, Status.READY -> listOf(TicketAction.START, TicketAction.START_IN_CLAUDE)
             Status.IN_PROGRESS -> listOf(TicketAction.OPEN_TERMINAL, TicketAction.FINISH)
             Status.REVIEW -> listOf(TicketAction.OPEN_TERMINAL, TicketAction.MERGE, TicketAction.REOPEN)

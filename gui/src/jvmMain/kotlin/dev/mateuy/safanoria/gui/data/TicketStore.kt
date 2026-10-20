@@ -77,7 +77,7 @@ data class TicketsSnapshot(
 
 /**
  * The single source of the project's tickets for every screen: reads them through `core` (each
- * ticket's real copy from every local branch, SPEC §14, as `safanoria-cli list` does) and keeps the
+ * ticket's real copy from every branch, remote-tracking ones too, SPEC §14, as `safanoria-cli list` does) and keeps the
  * last result. Operations that change tickets ([start], [finish], [merge], [reopen]) are here too, followed by
  * a [refresh].
  */
@@ -118,6 +118,41 @@ class TicketStore(val root: Path) {
         }
         if (outcome is StartOutcome.Started) refresh()
         return outcome
+    }
+
+    /**
+     * Continues here ticket [id], started on another computer: its worktree, with a local branch
+     * `<id>` tracking `origin/<id>` (nothing is committed). The tickets are read again afterwards.
+     */
+    suspend fun checkOut(id: String): StartOutcome {
+        val outcome = withContext(Dispatchers.IO) {
+            try {
+                val repository = Repository(root)
+                val branches = Branches.read(repository)
+                    ?: return@withContext StartOutcome.NotStarted("needs a git repository with the branch '${repository.config.mainBranch}' (mainBranch)")
+                val ready = when (val r = Start.prepareCheckout(repository, branches, id)) {
+                    is StartResult.Refused -> return@withContext StartOutcome.NotStarted(r.reason)
+                    is StartResult.Ready -> r
+                }
+                Start.checkOut(repository, ready)
+                StartOutcome.Started(ready.worktree)
+            } catch (e: Exception) {
+                StartOutcome.NotStarted(e.message ?: e.toString())
+            }
+        }
+        if (outcome is StartOutcome.Started) refresh()
+        return outcome
+    }
+
+    /**
+     * Fetches every remote (`git fetch --all --prune`), so tickets worked on other computers show
+     * as last pushed, then reads the tickets again. Only here: reading never fetches by itself.
+     */
+    suspend fun fetch() {
+        state.update { it.copy(loading = true, error = null) }
+        val failure = withContext(Dispatchers.IO) { runCatching { Repository(root).git.run("fetch", "--all", "--prune") }.exceptionOrNull() }
+        refresh()
+        failure?.let { e -> state.update { it.copy(error = "Fetch failed: ${e.message ?: e}") } }
     }
 
     /**

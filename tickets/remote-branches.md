@@ -17,6 +17,15 @@ Read remote-tracking branches as SPEC §14.1 already allows ("Tools MAY include 
 
 ## Acceptance Criteria
 
+- [x] `list`, `board` and the app read remote-tracking branches by default, as last fetched; `--local` turns it off.
+- [x] A copy read from a remote ticket branch (no local branch `<id>`) is marked `on origin/<id>` (`remote` in `list --format json`); `mainBranch`'s copy never is.
+- [x] `start` refuses a ticket started on another computer and prints how to check it out; `finish`, `merge` and `reopen` refuse it too.
+- [x] The app has a Fetch button (`git fetch --all --prune`), and a Create worktree action for such a ticket (local branch tracking `origin/<id>`).
+
 ## Work Log
 
 - **2026-10-20** · status · started
+- **2026-10-20** · decision · Remote-tracking branches are read by default (`--remote` replaced by `--local`): reading refs is cheap and `validate` already did it. Nothing fetches implicitly (network, credentials, slowness); only the app's Fetch button does.
+- **2026-10-20** · decision · `start` refuses a ticket on `origin/<id>`, like an existing local branch, instead of warning: starting it again makes a second branch that diverges. The app offers Create worktree instead; the CLI prints the `git worktree add --track` command (a CLI command for it can follow if wanted).
+- **2026-10-20** · decision · The mark is computed on read (`Ticket.remote`), not stored. Only ticket branches are marked, never `mainBranch`: a CI clone with only `origin/main` would mark everything.
+- **2026-10-20** · decision · A remote branch merged into `origin/main` counts as merged even before `main` is pulled, so it isn't read and doesn't show a stale in-progress; the ticket shows `main`'s copy until it is pulled.

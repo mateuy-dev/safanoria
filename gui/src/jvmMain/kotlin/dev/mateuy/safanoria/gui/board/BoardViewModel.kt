@@ -71,6 +71,11 @@ class BoardViewModel(private val store: TicketStore) : ViewModel() {
     fun refresh() {
         viewModelScope.launch { store.refresh() }
     }
+
+    /** Fetches the remotes, then reads the tickets again. */
+    fun fetch() {
+        viewModelScope.launch { store.fetch() }
+    }
 }
 
 /**
@@ -160,6 +165,7 @@ private fun card(graph: TicketGraph, ticket: Ticket, diagnostics: List<Diagnosti
         progress = graph.progress(ticket)?.takeIf { graph.children(ticket).isNotEmpty() },
         openBlockers = graph.openBlockers(ticket),
         onlyOnBranch = ticket.branch?.takeIf { ticket.onlyOnBranch },
+        remoteBranch = ticket.remoteBranch,
         versions = Board.versions(ticket),
         errors = diagnostics.count { it.severity == Severity.ERROR },
         warnings = diagnostics.count { it.severity == Severity.WARNING },

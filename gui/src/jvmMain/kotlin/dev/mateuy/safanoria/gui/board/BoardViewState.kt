@@ -45,6 +45,8 @@ data class TicketCard(
     val openBlockers: List<String>,
     /** The branch, when the ticket exists only there. */
     val onlyOnBranch: String?,
+    /** The remote-tracking branch (`origin/<id>`) when the ticket is being worked on another computer. */
+    val remoteBranch: String? = null,
     /** The versions it was released in (`resolvedIn`), e.g. `app 4.3.0`. */
     val versions: String? = null,
     /** `validate` problems in the ticket. */

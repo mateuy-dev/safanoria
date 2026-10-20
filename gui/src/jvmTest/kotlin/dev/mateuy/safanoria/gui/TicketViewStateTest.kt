@@ -112,6 +112,10 @@ class TicketViewStateTest {
         assertEquals(emptyList(), actions("done"))
         assertEquals(emptyList(), actions("wontfix"))
         assertEquals(emptyList(), actions("paused"))
+        // Started on another computer: only its worktree can be created here, whatever its status.
+        val remote = ticketViewState("the-one", snapshotOf(ticket("the-one", status = "in-progress", branch = "the-one", remote = "origin")))
+        assertEquals(listOf(TicketAction.CHECK_OUT), remote.actions)
+        assertTrue("read from" to "origin/the-one" in remote.facts)
     }
 
     @Test

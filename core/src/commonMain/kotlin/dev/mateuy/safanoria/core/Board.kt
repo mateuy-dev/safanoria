@@ -41,6 +41,20 @@ public object Board {
         .mapNotNull { (component, version) -> version.value?.let { "$component $it" } }
         .takeIf { it.isNotEmpty() }?.joinToString(", ")
 
+    /**
+     * Where [ticket]'s copy is, when that is worth saying: `on origin/<id>` when it is being worked
+     * on another computer (a remote-tracking branch, SPEC §14.1), `only on <branch>` when no other
+     * branch has it (rule 3). Branch names in [quote]s. Null for the usual copies.
+     */
+    public fun branchMarker(ticket: Ticket, quote: String = ""): String? {
+        val branch = ticket.remoteBranch ?: ticket.branch ?: return null
+        return when {
+            ticket.onlyOnBranch -> "only on $quote$branch$quote"
+            ticket.remote != null -> "on $quote$branch$quote"
+            else -> null
+        }
+    }
+
     /** The board, with links to ticket files relative to [linkFrom], the directory the board is written to. */
     public fun markdown(graph: TicketGraph, config: Config, linkFrom: Path): String {
         fun link(t: Ticket): String {
@@ -48,8 +62,8 @@ public object Board {
             return "[${t.fileId}](${path.segments.joinToString("/")})"
         }
         fun ref(id: String) = graph.ticket(id)?.let(::link) ?: "`$id`"
-        /** The title, and the branch when the ticket exists only there (SPEC §14.1 rule 3). */
-        fun title(t: Ticket) = (t.frontmatter?.title?.value ?: "(no title)") + (t.branch?.takeIf { t.onlyOnBranch }?.let { " · only on `$it`" } ?: "")
+        /** The title, and where the copy is when it isn't the usual place (see [branchMarker]). */
+        fun title(t: Ticket) = (t.frontmatter?.title?.value ?: "(no title)") + (branchMarker(t, quote = "`")?.let { " · $it" } ?: "")
 
         /** Type and priority when not the usual ones, then progress and open blockers. */
         fun details(t: Ticket, withStatus: Boolean): String {

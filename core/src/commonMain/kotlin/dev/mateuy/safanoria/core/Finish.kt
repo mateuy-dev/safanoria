@@ -38,6 +38,7 @@ public object Finish {
         require(status == Status.REVIEW || status == Status.DONE) { "finish sets review or done" }
         if (!isValidId(id)) return FinishResult.Refused("'$id' is not a ticket id (SPEC §3)")
         val ticket = branches.graph.ticket(id) ?: return FinishResult.Refused("no ticket '$id' on any branch")
+        onlyRemote(ticket)?.let { return FinishResult.Refused(it) }
         val current = ticket.frontmatter?.status
         val from = if (status == Status.REVIEW) setOf(Status.IN_PROGRESS) else setOf(Status.IN_PROGRESS, Status.REVIEW)
         if (current !in from) {
@@ -50,6 +51,7 @@ public object Finish {
         }
         if (status == Status.REVIEW) notReviewable(repository, branch, target)?.let { return FinishResult.Refused(it) }
         val parent = if (status == Status.DONE) uncheckedParent(branches, ticket) else null
+        parent?.let(::onlyRemote)?.let { return FinishResult.Refused(it) }
         val open = if (status == Status.REVIEW) openItems(ticket) else emptyList()
         return FinishResult.Ready(id, status, branch, parent, parent?.branch, target, open)
     }
@@ -78,6 +80,14 @@ public object Finish {
             return e.message
         }
         return null
+    }
+
+    /**
+     * Why [ticket] can't be changed here when its real copy is on a remote-tracking branch only
+     * (being worked on another computer): there is no local branch to commit on. Null otherwise.
+     */
+    internal fun onlyRemote(ticket: Ticket): String? = ticket.remoteBranch?.let {
+        "'${ticket.fileId}' is being worked on another computer: it is on $it, with no local branch '${ticket.branch}' to commit on. Check it out here first"
     }
 
     private fun files(n: Int) = "$n file${if (n == 1) "" else "s"}"
@@ -161,6 +171,7 @@ public object Reopen {
     public fun prepare(branches: Branches, id: String, reason: String): ReopenResult {
         if (!isValidId(id)) return ReopenResult.Refused("'$id' is not a ticket id (SPEC §3)")
         val ticket = branches.graph.ticket(id) ?: return ReopenResult.Refused("no ticket '$id' on any branch")
+        Finish.onlyRemote(ticket)?.let { return ReopenResult.Refused(it) }
         val status = ticket.frontmatter?.status
         if (status != Status.REVIEW) {
             return ReopenResult.Refused("'$id' is ${status?.text ?: "without a readable status"}; only a ticket in review goes back to in-progress")

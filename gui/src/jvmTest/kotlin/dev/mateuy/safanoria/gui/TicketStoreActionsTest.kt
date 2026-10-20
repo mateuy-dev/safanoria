@@ -159,6 +159,43 @@ class TicketStoreActionsTest {
     }
 
     @Test
+    fun aTicketStartedOnAnotherComputerIsFetchedAndGetsItsWorktreeHere() = runBlocking<Unit> {
+        // project is the other computer (and the remote): first-one is in progress on its branch there.
+        repository("first-one" to "backlog")
+        git("checkout", "-q", "-b", "first-one")
+        File(project, "tickets/first-one.md").writeText(ticket("first-one", status = "in-progress").text)
+        git("commit", "-q", "-am", "first-one: start")
+        git("checkout", "-q", "main")
+        git("clone", "-q", project.path, "here", dir = base)
+        val here = File(base, "here")
+        val store = TicketStore(here.toOkioPath())
+        store.refresh()
+        assertEquals(Status.IN_PROGRESS, store.status("first-one"))
+        assertEquals("origin/first-one", store.snapshot.value.graph?.ticket("first-one")?.remoteBranch)
+
+        val notStarted = assertIs<StartOutcome.NotStarted>(store.start("first-one"))
+        assertTrue("started on another computer" in notStarted.reason, notStarted.reason)
+
+        // More work pushed there shows once fetched, not before.
+        git("checkout", "-q", "first-one")
+        File(project, "tickets/first-one.md").writeText(ticket("first-one", status = "review").text)
+        git("commit", "-q", "-am", "first-one: review")
+        git("checkout", "-q", "main")
+        store.refresh()
+        assertEquals(Status.IN_PROGRESS, store.status("first-one"))
+        store.fetch()
+        assertEquals(Status.REVIEW, store.status("first-one"))
+        assertNull(store.snapshot.value.error)
+
+        val workspace = File(base, "project--first-one")
+        assertEquals(StartOutcome.Started(workspace.toOkioPath()), store.checkOut("first-one"))
+        assertEquals("origin/first-one", git("rev-parse", "--abbrev-ref", "first-one@{upstream}", dir = here))
+        assertEquals("first-one: review", git("log", "-1", "--format=%s", dir = workspace))
+        assertNull(store.snapshot.value.graph?.ticket("first-one")?.remote)
+        assertIs<StartOutcome.NotStarted>(store.checkOut("first-one"))
+    }
+
+    @Test
     fun aBranchNotCheckedOutHasNoWorkspace() = runBlocking<Unit> {
         repository("first-one" to "backlog")
         git("branch", "first-one")
