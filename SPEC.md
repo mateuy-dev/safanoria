@@ -482,5 +482,3 @@ An id is taken if any branch has a ticket file with it (§3). The same id **crea
 two branches have `<dir>/<id>.md` but the commit where they diverged (their merge-base) does not:
 two tickets that will conflict at merge. A started ticket on `mainBranch` and `<id>` isn't
 created twice, because the file existed when `<id>` branched.
-
-<!-- safanoria 0.6.0-dev -->

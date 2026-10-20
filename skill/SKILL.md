@@ -137,5 +137,3 @@ Write the text from them. Its readers are the people who use the product and are
 - Between two versions, one text for the whole update, not one per version.
 - Only what the tickets say. If an Objective doesn't tell what changed for the user, read the
   ticket; if it still doesn't, ask.
-
-<!-- safanoria 0.6.0-dev -->
