@@ -66,7 +66,12 @@ class StartCommand : RepositoryCommand(name = "start") {
         )
         id = idArgument ?: askTicket(branches, "Start which ticket?", setOf(Status.BACKLOG, Status.READY), "nothing to start: no backlog or ready ticket")
         val ready = when (val r = Start.prepare(repo, branches, id)) {
-            is StartResult.Refused -> throw PrintMessage("Not started: ${r.reason}", 1, true)
+            is StartResult.Refused -> {
+                // Started on another computer: say how to continue it here.
+                val checkout = (Start.prepareCheckout(repo, branches, id) as? StartResult.Ready)
+                    ?.let { "\nCheck it out with: git worktree add --track -b $id ${it.worktree} ${it.base}" }.orEmpty()
+                throw PrintMessage("Not started: ${r.reason}$checkout", 1, true)
+            }
             is StartResult.Ready -> r
         }
         val herdr = herdrOption || implement || into != null

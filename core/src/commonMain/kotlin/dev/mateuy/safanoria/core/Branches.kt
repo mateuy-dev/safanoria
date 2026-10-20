@@ -54,8 +54,10 @@ public class Branches private constructor(
         val target = target(id)
         val (branch, copy) = listOf(real, target).firstNotNullOfOrNull { b -> c[b]?.let { b to it } }
             ?: c.entries.first().toPair()
-        val path = repository.root / copy.path.relativeTo(sources.getValue(branch).repository.root)
-        return Ticket(path, copy.text, branch, onlyOnBranch = branch != real && branch != target)
+        val source = sources.getValue(branch)
+        val path = repository.root / copy.path.relativeTo(source.repository.root)
+        val remote = source.ref.takeIf { it != branch && branch != mainBranch }?.substringBefore('/')
+        return Ticket(path, copy.text, branch, onlyOnBranch = branch != real && branch != target, remote = remote)
     }
 
     /**
@@ -151,16 +153,16 @@ public class Branches private constructor(
     }
 
     public companion object {
-        /**
-         * Reads [repository]'s branches: local ones, and with [remote] remote-tracking ones too
-         * (a local branch wins over a remote one with the same name). Null when there is nothing
-         * to read across: not a git repository, or no [Config.mainBranch] branch (e.g. a CI
-         * checkout of one detached commit). Callers then use the checkout as it is.
-         */
         /** The ids [read] finds on every branch, remote-tracking ones too: what `validate` counts as known (§14). */
-        public fun ids(repository: Repository): Set<String> = read(repository, remote = true)?.ids.orEmpty()
+        public fun ids(repository: Repository): Set<String> = read(repository)?.ids.orEmpty()
 
-        public fun read(repository: Repository, remote: Boolean = false): Branches? {
+        /**
+         * Reads [repository]'s branches: local ones, and unless [remote] is false remote-tracking
+         * ones too, as last fetched (a local branch wins over a remote one with the same name). Null
+         * when there is nothing to read across: not a git repository, or no [Config.mainBranch]
+         * branch (e.g. a CI checkout of one detached commit). Callers then use the checkout as it is.
+         */
+        public fun read(repository: Repository, remote: Boolean = true): Branches? {
             val git = repository.git
             val fs = repository.fileSystem
             val root = repository.root
@@ -180,7 +182,11 @@ public class Branches private constructor(
             if (mainBranch !in byName) return null
 
             val mainRef = byName.getValue(mainBranch)
-            val mergedIntoMain = try { git.mergedInto(mainRef) } catch (e: GitException) { return null }
+            // A remote branch merged into the remote's mainBranch is merged, even before mainBranch is pulled here.
+            val remoteMains = remotes.filter { it != mainRef && it.substringAfter('/') == mainBranch }
+            val mergedIntoMain = try {
+                git.mergedInto(mainRef) + remoteMains.flatMap { git.mergedInto(it) }.filter { it in remotes.toSet() }
+            } catch (e: GitException) { return null }
             val blobs = BlobCache(git)
             fun committed(ref: String) = Repository(root, GitTreeFileSystem(git, ref, top, blobs))
             val sources = linkedMapOf<String, Source>()

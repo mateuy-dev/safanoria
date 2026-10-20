@@ -185,6 +185,12 @@ private fun Confirmation(action: TicketAction, id: String, onConfirm: (String) -
                 "Then opens a terminal there running Claude Code, told to start working on the ticket.",
             "Start in Claude",
         )
+        TicketAction.CHECK_OUT -> Triple(
+            "Create the worktree for $id?",
+            "$id was started on another computer. Adds its worktree here, with a local branch $id tracking the remote one, " +
+                "as last fetched. Then opens a terminal there. Nothing is committed.",
+            "Create worktree",
+        )
         TicketAction.FINISH -> Triple(
             "Set $id to review?",
             "Sets the ticket to review, logs it, and commits only the ticket on its branch.",
@@ -236,6 +242,7 @@ private fun ActionBar(state: TicketViewState, onAction: (TicketAction) -> Unit) 
                 when (action) {
                     TicketAction.START -> Button(onClick, enabled = !state.busy) { Text("Start") }
                     TicketAction.START_IN_CLAUDE -> OutlinedButton(onClick, enabled = !state.busy) { Text("Start in Claude") }
+                    TicketAction.CHECK_OUT -> Button(onClick, enabled = !state.busy) { Text("Create worktree") }
                     TicketAction.OPEN_TERMINAL -> OutlinedButton(onClick, enabled = !state.busy) { Text("Open terminal") }
                     TicketAction.FINISH -> Button(onClick, enabled = !state.busy) { Text("Finish: set to review") }
                     TicketAction.MERGE -> Button(onClick, enabled = !state.busy) { Text("Merge and finish") }

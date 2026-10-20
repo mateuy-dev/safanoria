@@ -159,7 +159,7 @@ safanoria-cli list --parent v1-tooling --blocked    # children blocked by a tick
 safanoria-cli list --format json                    # {tickets: [...]}: every field, plus children, blocks, openBlockers, progress
 safanoria-cli board                                 # markdown board on stdout
 safanoria-cli board -o docs/BOARD.md                # links relative to the file
-safanoria-cli list --remote                         # also origin/* branches (git fetch first)
+safanoria-cli list --local                          # local branches only, not origin/*
 safanoria-cli list --checkout                       # only this checkout's files
 ```
 
@@ -175,6 +175,14 @@ A branch checked out in a worktree is read from its files, so uncommitted edits 
 that exists only on some other branch (created there instead of on `main`) is listed with
 `only on <branch>`. Branches already merged into `main` aren't read: their tickets are on `main`.
 `list --format json` has `branch` (where the copy came from) and `onlyOnBranch` for each ticket.
+
+**Other computers.** Remote-tracking branches (`origin/*`) are read too, as last fetched: nothing
+fetches by itself, so `git fetch` to see what was pushed since. A ticket started on another
+computer and pushed shows its real status, marked `on origin/<id>` (`remote` in the JSON). A local
+branch always wins over the remote one with the same name, so your own pushed tickets aren't
+marked. `start` refuses such a ticket and prints the `git worktree add --track` that continues it
+here; `finish`, `merge` and `reopen` refuse it until it has a local branch. A ticket branch merged
+into `origin/main` isn't read, even before `main` is pulled.
 Outside git, or without a local `mainBranch` branch (as in a CI checkout of one commit), both
 read the checkout as it is.
 
@@ -218,7 +226,8 @@ in the taskbar. Without it, or when the file can't be read, it has Safanoria's.
 - **Board**: a column per status, left to right as a ticket moves (Backlog, Ready, In progress,
   Review, To release, Released, Won't fix). Done tickets are in two columns: To release is what
   the next version brings, Released what a version already has. Every ticket is a card, read
-  from every local branch as `list` does; children only with the children chip, as their parent's
+  from every branch as `list` does, `origin/*` too (marked `on origin/<id>`: started on another
+  computer); children only with the children chip, as their parent's
   card and screen already show them. Released and Won't fix start collapsed: click
   a column's header to collapse or open it. Chips filter by type, area, tag and blocked. A card shows its parent, its tags, a parent's
   `done/total` Plan items, open blockers, and how many problems `validate` finds in it.
@@ -238,10 +247,12 @@ in the taskbar. Without it, or when the file can't be read, it has Safanoria's.
   ticket in progress sets it to `review`, as `safanoria-cli finish` does, and shows why it
   refused or what the ticket still has open. A ticket in review has **Merge and finish**, which
   does what `safanoria-cli merge` does, and **Back to in progress**, which asks for the reason
-  and does what `safanoria-cli reopen` does. On Linux the terminal is
+  and does what `safanoria-cli reopen` does. A ticket started on another computer has only
+  **Create worktree**: its worktree here, on a local branch tracking `origin/<id>`, then a terminal there. On Linux the terminal is
   `$TERMINAL`, else the first usual one found on the `PATH`.
 
-The app reads the tickets again when its window gets the focus back, and on Refresh.
+The app reads the tickets again when its window gets the focus back, and on Refresh. **Fetch**
+runs `git fetch --all --prune` first, the only time the app fetches.
 
 ## Working on a ticket
 

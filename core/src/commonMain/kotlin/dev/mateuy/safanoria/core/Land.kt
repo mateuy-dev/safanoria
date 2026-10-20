@@ -37,6 +37,7 @@ public object Land {
     public fun prepare(repository: Repository, branches: Branches, id: String): LandResult {
         if (!isValidId(id)) return refused("'$id' is not a ticket id (SPEC §3)")
         val ticket = branches.graph.ticket(id) ?: return refused("no ticket '$id' on any branch")
+        Finish.onlyRemote(ticket)?.let { return refused(it) }
         val status = ticket.frontmatter?.status
         val target = branches.targetBranch(id)
         if (status != Status.REVIEW) {

@@ -137,10 +137,10 @@ class AcrossBranchesTest {
     }
 
     @Test
-    fun checkoutAndRemoteTogetherIsAUsageError() {
+    fun checkoutAndLocalTogetherIsAUsageError() {
         val repo = GitRepo.scenario("across-usage")
-        val r = run(repo, "list", "--checkout", "--remote")
+        val r = run(repo, "list", "--checkout", "--local")
         assertTrue(r.statusCode != 0)
-        assertTrue("--checkout or --remote" in r.stderr, r.stderr)
+        assertTrue("--checkout or --local" in r.stderr, r.stderr)
     }
 }

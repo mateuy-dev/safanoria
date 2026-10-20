@@ -13,7 +13,16 @@ public class Ticket(
     public val branch: String? = null,
     /** True when the copy is real only because no other branch has it (SPEC §14.1 rule 3). */
     public val onlyOnBranch: Boolean = false,
+    /**
+     * The remote (`origin`) when this copy was read from a remote-tracking branch because no local
+     * branch has that name: the ticket is being worked on elsewhere (SPEC §14.1). Never set for
+     * mainBranch's copy. Null otherwise.
+     */
+    public val remote: String? = null,
 ) {
+    /** The remote-tracking branch this copy was read from (`origin/<branch>`), or null. */
+    public val remoteBranch: String? get() = remote?.let { "$it/$branch" }
+
     /** The id from the filename (SPEC §3: the filename is `<id>.md`). */
     public val fileId: String get() = path.name.removeSuffix(".md")
 

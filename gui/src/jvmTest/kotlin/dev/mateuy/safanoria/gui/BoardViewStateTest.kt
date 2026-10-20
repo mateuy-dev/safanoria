@@ -110,6 +110,9 @@ class BoardViewStateTest {
         val state = boardViewState(snapshotOf(ticket("draft", branch = "other", onlyOnBranch = true), ticket("usual", branch = "main")))
         assertEquals("other", state.card("draft").onlyOnBranch)
         assertNull(state.card("usual").onlyOnBranch)
+        val remote = boardViewState(snapshotOf(ticket("elsewhere", branch = "elsewhere", remote = "origin"), ticket("usual", branch = "main")))
+        assertEquals("origin/elsewhere", remote.card("elsewhere").remoteBranch)
+        assertNull(remote.card("usual").remoteBranch)
     }
 
     @Test

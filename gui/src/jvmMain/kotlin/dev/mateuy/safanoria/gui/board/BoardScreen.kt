@@ -68,6 +68,7 @@ fun BoardScreen(viewModel: BoardViewModel, onOpenTicket: (String) -> Unit, onOpe
         state,
         actions = BoardActions(
             refresh = viewModel::refresh,
+            fetch = viewModel::fetch,
             toggleColumn = viewModel::toggleColumn,
             toggleType = viewModel::toggleType,
             toggleArea = viewModel::toggleArea,
@@ -84,6 +85,7 @@ fun BoardScreen(viewModel: BoardViewModel, onOpenTicket: (String) -> Unit, onOpe
 /** What the user can do on the board. */
 class BoardActions(
     val refresh: () -> Unit,
+    val fetch: () -> Unit,
     val toggleColumn: (BoardGroup?) -> Unit,
     val toggleType: (TicketType) -> Unit,
     val toggleArea: (String) -> Unit,
@@ -107,6 +109,7 @@ fun BoardContent(state: BoardViewState, actions: BoardActions) {
                 actions = {
                     if (state.loading) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
                     TextButton(onClick = actions.openVersions) { Text("Versions") }
+                    TextButton(onClick = actions.fetch, enabled = !state.loading) { Text("Fetch") }
                     TextButton(onClick = actions.refresh, enabled = !state.loading) { Text("Refresh") }
                 },
             )
@@ -313,7 +316,8 @@ private fun TicketCardView(card: TicketCard, onClick: () -> Unit) {
                 card.priority?.takeIf { it != Priority.MEDIUM }?.text,
                 card.size?.text,
                 card.parentId?.let { "↑ $it" },
-                card.onlyOnBranch?.let { "only on $it" },
+                card.onlyOnBranch?.let { "only on ${card.remoteBranch ?: it}" },
+                card.remoteBranch?.takeIf { card.onlyOnBranch == null }?.let { "on $it" },
                 card.versions,
             ) + card.tags.map { "#$it" }
             if (facts.isNotEmpty()) {

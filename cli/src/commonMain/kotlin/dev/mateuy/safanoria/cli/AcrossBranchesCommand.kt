@@ -7,11 +7,12 @@ import dev.mateuy.safanoria.core.Branches
 import dev.mateuy.safanoria.core.TicketGraph
 
 /**
- * A command that shows tickets: by default each ticket's real copy from every local branch
- * (SPEC §14), so a started ticket shows its branch's status, not `main`'s `backlog`.
+ * A command that shows tickets: by default each ticket's real copy from every branch, local and
+ * remote-tracking as last fetched (SPEC §14), so a started ticket shows its branch's status, not
+ * `main`'s `backlog`, even when it was started on another computer.
  */
 abstract class AcrossBranchesCommand(name: String) : RepositoryCommand(name) {
-    private val remote by option("--remote", help = "Also read remote-tracking branches (origin/*). Run git fetch first.").flag()
+    private val local by option("--local", help = "Only local branches, not remote-tracking ones (origin/*)").flag()
     private val checkout by option("--checkout", help = "Only the files in this checkout, as they are; no other branches").flag()
 
     /**
@@ -19,7 +20,7 @@ abstract class AcrossBranchesCommand(name: String) : RepositoryCommand(name) {
      * git repository, or no mainBranch branch).
      */
     protected val graph: TicketGraph by lazy {
-        if (checkout && remote) throw UsageError("Give --checkout or --remote, not both.").apply { context = currentContext }
-        if (checkout) repository.graph else Branches.read(repository, remote)?.graph ?: repository.graph
+        if (checkout && local) throw UsageError("Give --checkout or --local, not both.").apply { context = currentContext }
+        if (checkout) repository.graph else Branches.read(repository, remote = !local)?.graph ?: repository.graph
     }
 }
