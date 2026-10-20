@@ -2,7 +2,7 @@
 id: remote-branches
 type: feature
 title: Read remote branches to see tickets being worked on another computer
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-20
@@ -19,3 +19,4 @@ Read remote-tracking branches as SPEC §14.1 already allows ("Tools MAY include 
 
 ## Work Log
 
+- **2026-10-20** · status · started
