@@ -57,7 +57,11 @@ jobs:
         run: |
           b=cli/build/bin/${{ matrix.dir }}/releaseExecutable/${{ matrix.binary }}
           $b version
-          for f in tickets/*.md; do $b dump "$f" > /dev/null; done
+          # README.md and _TEMPLATE*.md are not tickets.
+          for f in tickets/*.md; do
+            case "${f##*/}" in README.md|_*) continue ;; esac
+            $b dump "$f" > /dev/null
+          done
           $b validate
 
       - uses: actions/setup-python@v5
