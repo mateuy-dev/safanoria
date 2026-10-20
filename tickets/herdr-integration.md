@@ -6,8 +6,10 @@ status: done
 priority: medium
 size: S
 created: 2026-10-19
-updated: 2026-10-19
+updated: 2026-10-20
 related: [start-ticket-new-tmux]
+resolvedIn:
+  safanoria: 0.6.0
 ---
 
 ## Objective
@@ -26,3 +28,4 @@ First integration of Safanoria with Herdr (a terminal multiplexer for coding age
 - **2026-10-19** · decision · In the CLI (`start --herdr/--implement`, `merge`), not only the skill, so it works from any Herdr pane and the GUI. Layout follows the ticket's `size` (L/XL workspace, else tab). On merge, close what has a pane in the ticket's worktree, whichever pane runs it; a workspace closes whole only when all its tabs are in it, and the current one last because it ends the process. Opt-out is a `--keep-herdr` flag, not a `safanoria.yaml` setting, to stay small.
 - **2026-10-19** · status · review
 - **2026-10-19** · status · done
+- **2026-10-20** · release · safanoria 0.6.0

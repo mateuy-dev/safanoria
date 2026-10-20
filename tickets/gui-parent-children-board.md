@@ -7,7 +7,9 @@ priority: medium
 size: S
 area: [safanoria]
 created: 2026-10-13
-updated: 2026-10-13
+updated: 2026-10-20
+resolvedIn:
+  safanoria: 0.6.0
 ---
 
 ## Objective
@@ -28,3 +30,4 @@ When a parent ticket is open in the GUI, the status of its children is hard to s
 - **2026-10-13** · decision · Cards are in the parent's Plan order, not priority then id, and don't say their parent. The Children links in the side panel stay.
 - **2026-10-13** · status · review
 - **2026-10-13** · status · done
+- **2026-10-20** · release · safanoria 0.6.0

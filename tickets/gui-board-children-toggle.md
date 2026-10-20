@@ -7,12 +7,14 @@ priority: medium
 size: S
 area: [safanoria]
 created: 2026-10-14
-updated: 2026-10-14
+updated: 2026-10-20
 related: [gui-parent-children-board]
 requests:
   - user: enelrecord-apps
     channel: other
     date: 2026-10-14
+resolvedIn:
+  safanoria: 0.6.0
 ---
 
 ## Objective
@@ -37,3 +39,4 @@ The general board lists every ticket, children included, each with a ↑ parent 
 - **2026-10-14** · decision · Only children whose parent is in the project are hidden: a child with a missing parent would otherwise be unreachable from the board.
 - **2026-10-14** · status · review
 - **2026-10-14** · status · done
+- **2026-10-20** · release · safanoria 0.6.0

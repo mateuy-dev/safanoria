@@ -7,6 +7,8 @@ priority: medium
 size: S
 created: 2026-10-20
 updated: 2026-10-20
+resolvedIn:
+  safanoria: 0.6.0
 ---
 
 ## Objective
@@ -31,3 +33,4 @@ Read remote-tracking branches as SPEC §14.1 already allows ("Tools MAY include 
 - **2026-10-20** · decision · A remote branch merged into `origin/main` counts as merged even before `main` is pulled, so it isn't read and doesn't show a stale in-progress; the ticket shows `main`'s copy until it is pulled.
 - **2026-10-20** · status · review
 - **2026-10-20** · status · done
+- **2026-10-20** · release · safanoria 0.6.0
