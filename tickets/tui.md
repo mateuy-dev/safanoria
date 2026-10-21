@@ -2,7 +2,7 @@
 id: tui
 type: feature
 title: "Console app (TUI) similar to the GUI, with keyboard and mouse"
-status: in-progress
+status: review
 priority: medium
 size: L
 area: [safanoria]
@@ -35,3 +35,4 @@ Safanoria has a desktop GUI (gui module: board, ticket screen, versions screen, 
 - **2026-10-21** · decision · On POSIX the TUI parses the raw input bytes itself (SGR mouse, keys, a lone Esc), with Mordant only for raw mode: Mordant's parser turns the wheel into clicks (see Learnings). Windows keeps Mordant's console events.
 - **2026-10-21** · decision · Where the GUI opens a desktop terminal, the TUI opens a new Herdr tab (a workspace for Claude on L/XL tickets, as `start --herdr`), a new tmux window, or else runs the shell or Claude in the same terminal and comes back when it exits. `Herdr.open` takes a null prompt for a tab with only a shell.
 - **2026-10-21** · decision · `safanoria-cli` alone on a terminal in a project opens the TUI instead of the command menu; outside a project it still offers `init`.
+- **2026-10-21** · status · review
