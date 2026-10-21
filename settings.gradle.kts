@@ -14,4 +14,4 @@ dependencyResolutionManagement {
     }
 }
 
-include(":core", ":views", ":cli", ":gui")
+include(":core", ":views", ":tui", ":cli", ":gui")

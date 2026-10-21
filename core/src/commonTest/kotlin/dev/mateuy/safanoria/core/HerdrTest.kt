@@ -42,6 +42,14 @@ class HerdrTest {
     }
 
     @Test
+    fun withoutAPromptOnlyAShellIsLeft() {
+        val log = mutableListOf<String>()
+        val r = herdr(emptyList(), emptyMap(), log).open(dir, "alpha", prompt = null, workspace = true)
+        assertEquals("opened a workspace 'alpha'", r)
+        assertEquals(listOf("herdr workspace create --cwd /work/proj--alpha --label alpha --no-focus 2>&1"), log)
+    }
+
+    @Test
     fun aWorkspaceOnlyOfThisWorktreeClosesWhole() {
         val h = herdr(listOf(pane("w2:p1", "w2:t1", "w2", "/work/proj--alpha"), pane("w1:p1", "w1:t1", "w1", "/work/proj")), mapOf("w1" to 1, "w2" to 1))
         assertEquals(listOf(HerdrTarget(HerdrTarget.Kind.WORKSPACE, "w2", false)), h.closing(dir))

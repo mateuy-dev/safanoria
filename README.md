@@ -30,7 +30,8 @@ Ticket frontmatter is inside markdown, which editors don't check against a schem
 There are two commands. `safanoria` opens the desktop app on the project you are in: a board
 of the tickets you can click through (see "The desktop app"). `safanoria-cli` is the
 command-line tool: it does the mechanical parts, so agents and people spend their time on the
-content. `safanoria-cli --help` lists its commands; each is described below.
+content. `safanoria-cli --help` lists its commands; each is described below. On a terminal,
+`safanoria-cli` alone opens the same board in the terminal (see "The terminal app").
 
 | Command | Does |
 |---|---|
@@ -43,6 +44,7 @@ content. `safanoria-cli --help` lists its commands; each is described below.
 | `validate`, `hook` | Check every SPEC rule; before each commit |
 | `release` | Stamp `resolvedIn` on the tickets a release ships |
 | `notes` | The tickets a version shipped, to write its release notes from |
+| `tui` | The terminal app: the desktop app's board, tickets and versions, by keyboard and mouse |
 
 ## Installing
 
@@ -118,8 +120,8 @@ any branch (ids are never reused), an unknown parent, and a parent that can't ha
 branch with the same name is a warning. The suggested id is short (filler words dropped, at
 most four words); it's the branch name.
 
-**On a terminal, the CLI asks** for what you leave out. `safanoria-cli` alone asks which command to
-run. `new` without a title asks for the title, the type and the id (enter keeps the suggestion),
+**On a terminal, the CLI asks** for what you leave out. `safanoria-cli` alone opens the terminal
+app, or outside a project offers to set one up. `new` without a title asks for the title, the type and the id (enter keeps the suggestion),
 optionally priority, size, parent, tags (when the project declares some) and objective, and, on a branch other than `mainBranch`,
 whether the ticket goes on `mainBranch`; with a title it asks only for a missing `area`.
 `start`, `finish`, `merge`, `reopen` and `release` without an id or component offer a list (backlog and ready
@@ -253,6 +255,24 @@ in the taskbar. Without it, or when the file can't be read, it has Safanoria's.
 
 The app reads the tickets again when its window gets the focus back, and on Refresh. **Fetch**
 runs `git fetch --all --prune` first, the only time the app fetches.
+
+### The terminal app
+
+`safanoria-cli tui`, or `safanoria-cli` alone on a terminal, opens the desktop app's screens in
+the terminal: for SSH sessions, Herdr or tmux, or no desktop at all. Board, Versions and Ticket
+show what the desktop app shows and offer the same actions (they share its code), by keyboard
+or by mouse: click cards, chips, buttons and tabs, and scroll with the wheel. `?` lists the keys:
+
+- Board: arrows or `hjkl` move between columns and cards, Enter opens a ticket, Space collapses a
+  column, Tab goes to the filter chips, `v` Versions, `F` Fetch, `r` reads the tickets again, `q` quits.
+- Ticket: arrows scroll, Tab and Enter go through its links and buttons, and each action has a
+  key (`s` Start, `c` Start in Claude, `o` Open shell, `f` Finish, `m` Merge, `i` Back to in
+  progress, `w` Create worktree); Esc goes back.
+
+Where a desktop app opens a terminal window, the terminal app opens a new tab inside Herdr, a new
+window inside tmux, and otherwise runs the shell (or Claude Code) in the same terminal, coming
+back to the ticket when it exits. In Herdr, Start in Claude on a large ticket (L, XL) gets a
+workspace of its own, as `start --herdr` does.
 
 ## Working on a ticket
 
@@ -467,7 +487,9 @@ Elsewhere, install with `SAFANORIA_CLI_ONLY=1` and `install.sh`, and run `safano
 ## Development
 
 The CLI is Kotlin Multiplatform: `core/` holds all logic (config, parser, schema checks,
-targeted edits, git) and is shared with the apps; `cli/` is the `safanoria-cli` command, built
+targeted edits, git) and is shared with the apps; `views/` is what the apps' screens show and the
+actions they offer, without UI, shared by both; `tui/` is the terminal app (on Mordant), part of
+`cli/`, the `safanoria-cli` command, built
 as a native binary for Linux (x64), Windows (x64) and macOS (arm64); `gui/` is the desktop app,
 the `safanoria` command (Compose Desktop, JVM only; installed with its own Java runtime, as
 `./gradlew :gui:createDistributable` builds it).

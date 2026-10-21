@@ -59,10 +59,10 @@ public class Herdr(
 
     /**
      * Opens [dir] in a new Herdr workspace, or a tab of the current one, labelled [id], and starts Claude Code there
-     * named [id] with [prompt]. Focus stays where it is. Returns what it opened. Nothing is closed when Claude
-     * can't start: the shell is left for the user.
+     * named [id] with [prompt]; without a [prompt], a shell is left there. Focus stays where it is. Returns what it
+     * opened. Nothing is closed when Claude can't start: the shell is left for the user.
      */
-    public fun open(dir: Path, id: String, prompt: String, workspace: Boolean): String {
+    public fun open(dir: Path, id: String, prompt: String?, workspace: Boolean): String {
         val created = if (workspace) {
             herdr("workspace", "create", "--cwd", dir.toString(), "--label", id, "--no-focus")
         } else {
@@ -71,6 +71,7 @@ public class Herdr(
         }
         val pane = created["root_pane"]?.string("pane_id") ?: throw HerdrException("herdr didn't return the new pane")
         val kind = if (workspace) "workspace" else "tab"
+        if (prompt == null) return "opened a $kind '$id'"
         try {
             herdr("agent", "start", agentName(id), "--kind", "claude", "--pane", pane, "--", "--name", id, prompt)
         } catch (e: HerdrException) {
