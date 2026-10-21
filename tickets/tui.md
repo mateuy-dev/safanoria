@@ -2,7 +2,7 @@
 id: tui
 type: feature
 title: "Console app (TUI) similar to the GUI, with keyboard and mouse"
-status: backlog
+status: in-progress
 priority: medium
 size: L
 area: [safanoria]
@@ -18,3 +18,4 @@ Safanoria has a desktop GUI (gui module: board, ticket screen, versions screen, 
 
 ## Work Log
 
+- **2026-10-21** · status · started
