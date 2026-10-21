@@ -1,11 +1,6 @@
-package dev.mateuy.safanoria.gui
+package dev.mateuy.safanoria.views
 
 import dev.mateuy.safanoria.core.Status
-import dev.mateuy.safanoria.gui.data.FinishOutcome
-import dev.mateuy.safanoria.gui.data.MergeOutcome
-import dev.mateuy.safanoria.gui.data.ReopenOutcome
-import dev.mateuy.safanoria.gui.data.StartOutcome
-import dev.mateuy.safanoria.gui.data.TicketStore
 import kotlinx.coroutines.runBlocking
 import okio.Path
 import okio.Path.Companion.toOkioPath

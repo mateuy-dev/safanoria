@@ -1,8 +1,5 @@
-package dev.mateuy.safanoria.gui
+package dev.mateuy.safanoria.views
 
-import dev.mateuy.safanoria.gui.data.TicketsSnapshot
-import dev.mateuy.safanoria.gui.versions.VersionsViewState
-import dev.mateuy.safanoria.gui.versions.versionsViewState
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

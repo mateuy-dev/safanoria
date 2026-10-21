@@ -1,13 +1,8 @@
-package dev.mateuy.safanoria.gui
+package dev.mateuy.safanoria.views
 
 import dev.mateuy.safanoria.core.BoardGroup
 import dev.mateuy.safanoria.core.Severity
 import dev.mateuy.safanoria.core.Status
-import dev.mateuy.safanoria.gui.data.TicketsSnapshot
-import dev.mateuy.safanoria.gui.ticket.TicketAction
-import dev.mateuy.safanoria.gui.ticket.TicketLink
-import dev.mateuy.safanoria.gui.ticket.TicketProblem
-import dev.mateuy.safanoria.gui.ticket.ticketViewState
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

@@ -19,3 +19,5 @@ Safanoria has a desktop GUI (gui module: board, ticket screen, versions screen, 
 ## Work Log
 
 - **2026-10-21** · status · started
+- **2026-10-21** · decision · Built on Mordant 3.0.2 (already in the CLI through Clikt), drawing the screens on our own cell buffer: it reads keys and mouse events in raw mode on JVM and every native target, so the TUI ships inside the native `safanoria-cli` (`safanoria-cli tui`, and plain `safanoria-cli` on a terminal in a repository). Rejected Mosaic (no mouse events), Lanterna (JVM only) and Kotter (no mouse).
+- **2026-10-21** · decision · The GUI's UI-free state (board columns and cards, ticket and versions view state, `TicketStore` with start/finish/merge/reopen) moved from `gui` to a new multiplatform `views` module that both apps use, so they can't drift apart. `java.time` became kotlinx-datetime for native.

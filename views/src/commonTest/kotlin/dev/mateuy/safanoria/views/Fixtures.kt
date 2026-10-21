@@ -1,4 +1,4 @@
-package dev.mateuy.safanoria.gui
+package dev.mateuy.safanoria.views
 
 import dev.mateuy.safanoria.core.Component
 import dev.mateuy.safanoria.core.Config
@@ -6,8 +6,6 @@ import dev.mateuy.safanoria.core.Diagnostic
 import dev.mateuy.safanoria.core.Severity
 import dev.mateuy.safanoria.core.Ticket
 import dev.mateuy.safanoria.core.TicketGraph
-import dev.mateuy.safanoria.gui.data.TicketsSnapshot
-import dev.mateuy.safanoria.gui.data.snapshot
 import okio.Path.Companion.toPath
 
 internal val TICKET_DIR = "/project/tickets".toPath()

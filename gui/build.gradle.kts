@@ -15,6 +15,7 @@ kotlin {
         jvmMain { resources.srcDir(rootProject.layout.projectDirectory.dir("design")) }
         jvmMain.dependencies {
             implementation(project(":core"))
+            implementation(project(":views"))
             implementation(compose.desktop.currentOs)
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)

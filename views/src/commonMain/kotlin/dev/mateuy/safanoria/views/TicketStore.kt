@@ -1,4 +1,4 @@
-package dev.mateuy.safanoria.gui.data
+package dev.mateuy.safanoria.views
 
 import dev.mateuy.safanoria.core.BranchView
 import dev.mateuy.safanoria.core.Branches
@@ -21,6 +21,7 @@ import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.core.TicketGraph
 import dev.mateuy.safanoria.core.Validator
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,8 +29,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 import okio.Path
-import java.time.LocalDate
+import kotlin.time.Clock
 
 /** What [TicketStore.start] did. */
 sealed interface StartOutcome {
@@ -91,7 +94,7 @@ class TicketStore(val root: Path) {
      * Starts ticket [id] as `safanoria-cli start` does (SPEC §11.2): branch `<id>` with the ticket
      * `in-progress` on it, then its worktree. The tickets are read again afterwards.
      */
-    suspend fun start(id: String, today: String = LocalDate.now().toString()): StartOutcome {
+    suspend fun start(id: String, today: String = today()): StartOutcome {
         val outcome = withContext(Dispatchers.IO) {
             try {
                 val repository = Repository(root)
@@ -160,7 +163,7 @@ class TicketStore(val root: Path) {
      * one commit with only that file, unless its branch has uncommitted changes or is behind its
      * target. The tickets are read again afterwards.
      */
-    suspend fun finish(id: String, today: String = LocalDate.now().toString()): FinishOutcome {
+    suspend fun finish(id: String, today: String = today()): FinishOutcome {
         val outcome = withContext(Dispatchers.IO) {
             try {
                 val repository = Repository(root)
@@ -186,7 +189,7 @@ class TicketStore(val root: Path) {
      * Lands ticket [id], in review, as `safanoria-cli merge` does (SPEC §11.5): one merge commit on
      * its target with the ticket `done` in it, then its worktree and branch go. Nothing is pushed.
      */
-    suspend fun merge(id: String, today: String = LocalDate.now().toString()): MergeOutcome {
+    suspend fun merge(id: String, today: String = today()): MergeOutcome {
         val outcome = withContext(Dispatchers.IO) {
             try {
                 val repository = Repository(root)
@@ -209,7 +212,7 @@ class TicketStore(val root: Path) {
     }
 
     /** Sends ticket [id] back from `review` to `in-progress` as `safanoria-cli reopen` does, logging [reason] (SPEC §6.1). */
-    suspend fun reopen(id: String, reason: String, today: String = LocalDate.now().toString()): ReopenOutcome {
+    suspend fun reopen(id: String, reason: String, today: String = today()): ReopenOutcome {
         val outcome = withContext(Dispatchers.IO) {
             try {
                 val repository = Repository(root)
@@ -274,3 +277,5 @@ internal fun snapshot(graph: TicketGraph, config: Config, diagnostics: List<Diag
         projectDiagnostics = ofProject,
     )
 }
+
+private fun today(): String = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
