@@ -65,14 +65,14 @@ class PromptsTest {
     }
 
     @Test
-    fun theRootCommandAsksWhichAction() {
+    fun theRootCommandOpensTheTerminalApp() {
         val repo = GitRepo.scenario("prompts-root")
-        val prompts = ScriptedPrompts("list")
-        val r = run(repo, prompts)
+        val prompts = ScriptedPrompts()
+        val opened = mutableListOf<okio.Path>()
+        val r = cli(prompts, tui = { _, root -> opened += root }).test(listOf("--root", repo.root.toString()))
         assertEquals(0, r.statusCode, r.output)
-        assertTrue("alpha" in r.stdout && "beta" in r.stdout, r.stdout)
-        val offered = prompts.asked.single().second
-        assertTrue("new" in offered && "start" in offered && "init" !in offered, offered.toString())
+        assertEquals(listOf(repo.root), opened)
+        assertTrue(prompts.asked.isEmpty(), prompts.asked.toString())
     }
 
     @Test

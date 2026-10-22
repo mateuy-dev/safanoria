@@ -4,7 +4,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -52,14 +52,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.mateuy.safanoria.core.Priority
 import dev.mateuy.safanoria.core.BoardGroup
+import dev.mateuy.safanoria.core.Priority
 import dev.mateuy.safanoria.core.TicketFilter
 import dev.mateuy.safanoria.core.TicketType
 import dev.mateuy.safanoria.core.text
 import dev.mateuy.safanoria.gui.theme.WarningColor
 import dev.mateuy.safanoria.gui.theme.color
 import dev.mateuy.safanoria.gui.theme.rememberAppIcon
+import dev.mateuy.safanoria.views.BoardColumn
+import dev.mateuy.safanoria.views.BoardViewState
+import dev.mateuy.safanoria.views.TicketCard
+
 
 @Composable
 fun BoardScreen(viewModel: BoardViewModel, onOpenTicket: (String) -> Unit, onOpenVersions: () -> Unit) {

@@ -3,6 +3,7 @@ kotlin = "2.4.20"
 kaml = "0.104.0"
 okio = "3.18.2"
 clikt = "5.1.0"
+mordant = "3.0.2"
 jsonSchemaValidator = "0.5.5"
 kotlinxSerialization = "1.11.0"
 kotlinxDatetime = "0.8.0"
@@ -18,9 +19,12 @@ kaml = { module = "com.charleskorn.kaml:kaml", version.ref = "kaml" }
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "okio" }
 clikt = { module = "com.github.ajalt.clikt:clikt", version.ref = "clikt" }
+mordant = { module = "com.github.ajalt.mordant:mordant", version.ref = "mordant" }
+mordant-markdown = { module = "com.github.ajalt.mordant:mordant-markdown", version.ref = "mordant" }
 json-schema-validator = { module = "io.github.optimumcode:json-schema-validator", version.ref = "jsonSchemaValidator" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinxCoroutines" }
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose" }
 compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose" }

@@ -1,4 +1,4 @@
-package dev.mateuy.safanoria.gui
+package dev.mateuy.safanoria.views
 
 import dev.mateuy.safanoria.core.BoardGroup
 import dev.mateuy.safanoria.core.Diagnostic
@@ -6,9 +6,6 @@ import dev.mateuy.safanoria.core.Progress
 import dev.mateuy.safanoria.core.Severity
 import dev.mateuy.safanoria.core.TicketFilter
 import dev.mateuy.safanoria.core.TicketType
-import dev.mateuy.safanoria.gui.board.BoardViewState
-import dev.mateuy.safanoria.gui.board.boardViewState
-import dev.mateuy.safanoria.gui.data.TicketsSnapshot
 import okio.Path.Companion.toPath
 import kotlin.test.Test
 import kotlin.test.assertEquals

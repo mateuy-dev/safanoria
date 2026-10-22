@@ -13,9 +13,11 @@ import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.core.requireObject
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.mordant.terminal.Terminal
 import dev.mateuy.safanoria.core.Embedded
 import dev.mateuy.safanoria.core.Repository
 import dev.mateuy.safanoria.core.SPEC_VERSION
+import dev.mateuy.safanoria.tui.runTui
 import okio.Path
 import okio.Path.Companion.toPath
 
@@ -42,15 +44,22 @@ class CliContext(val rootOption: String?, val prompts: Prompts?) {
     }
 }
 
-/** The root command. [prompts] replaces the terminal's (tests); by default they exist only on a terminal. */
-class Safanoria(private val prompts: Prompts? = null) : CliktCommand(name = "safanoria-cli") {
+/**
+ * The root command. [prompts] replaces the terminal's (tests); by default they exist only on a
+ * terminal. [tui] runs the terminal app on a project's root (tests record it instead).
+ */
+class Safanoria(
+    private val prompts: Prompts? = null,
+    private val tui: (Terminal, Path) -> Unit = ::runTui,
+) : CliktCommand(name = "safanoria-cli") {
     private val root by option("--root", help = "Repository root (default: the nearest directory with safanoria.yaml)")
     private val context by findOrSetObject { CliContext(root, prompts ?: terminalPrompts()) }
 
     override val invokeWithoutSubcommand = true
 
     override fun help(context: Context) =
-        "Tickets as markdown files in your repository (SPEC.md). Without a command, on a terminal, asks which one to run. " +
+        "Tickets as markdown files in your repository (SPEC.md). Without a command, on a terminal, opens the terminal app " +
+            "(as `tui`), or outside a project offers to set one up. " +
             "The desktop app is `safanoria`."
 
     override fun helpEpilog(context: Context) =
@@ -62,8 +71,9 @@ class Safanoria(private val prompts: Prompts? = null) : CliktCommand(name = "saf
         val cli = context // create it with --root before subcommands run
         if (currentContext.invokedSubcommand != null) return
         val prompts = cli.prompts ?: throw PrintHelpMessage(currentContext, error = true)
-        val actions = actions(cli.repositoryOrNull != null)
-        val name = prompts.choose("What do you want to do?", actions.map { Choice(it.first, description = it.second) })
+        // In a project, the terminal app; outside one, only `init` can run.
+        cli.repositoryOrNull?.let { return tui(currentContext.terminal, it.root) }
+        val name = prompts.choose("What do you want to do?", listOf(Choice("init", description = "Set up Safanoria in this project")))
         // Parsed again with the command: a subcommand parsed on its own would have no parent context (--root, prompts).
         parse(root?.let { listOf("--root", it) }.orEmpty() + name)
     }
@@ -72,22 +82,6 @@ class Safanoria(private val prompts: Prompts? = null) : CliktCommand(name = "saf
         val info = currentContext.terminal.terminalInfo
         return if (info.inputInteractive && info.outputInteractive) TerminalPrompts(currentContext.terminal) else null
     }
-
-    /** The commands a person runs by hand, with what they do; outside a repository, only `init`. */
-    private fun actions(inRepository: Boolean): List<Pair<String, String>> =
-        if (!inRepository) listOf("init" to "Set up Safanoria in this project")
-        else listOf(
-            "board" to "Show the board",
-            "list" to "List tickets",
-            "new" to "Create a ticket",
-            "start" to "Start a ticket: its branch and worktree",
-            "finish" to "Finish a ticket: set it to review",
-            "merge" to "Land a ticket in review: merge it, done",
-            "reopen" to "Send a ticket in review back to in-progress",
-            "validate" to "Check the tickets",
-            "release" to "Stamp released tickets with a version",
-            "update" to "Update the skill and the hooks to this version",
-        )
 }
 
 class Version : CliktCommand(name = "version") {
@@ -109,8 +103,8 @@ abstract class RepositoryCommand(name: String) : CliktCommand(name = name) {
     internal val prompts: Prompts? get() = cli.prompts
 }
 
-/** The command tree; tests run it with Clikt's `test()`, and give it [prompts] to answer questions. */
-fun cli(prompts: Prompts? = null): CliktCommand = Safanoria(prompts).subcommands(Init(), Update(), New(), ListTickets(), BoardCommand(), ReleaseCommand(), NotesCommand(), StartCommand(), FinishCommand(), MergeCommand(), ReopenCommand(), ContextCommand(), Validate(), hookCommand(), Version(), Dump())
+/** The command tree; tests run it with Clikt's `test()`, and give it [prompts] to answer questions and a [tui] to record it. */
+fun cli(prompts: Prompts? = null, tui: (Terminal, Path) -> Unit = ::runTui): CliktCommand = Safanoria(prompts, tui).subcommands(Init(), Update(), New(), ListTickets(), BoardCommand(), ReleaseCommand(), NotesCommand(), StartCommand(), FinishCommand(), MergeCommand(), ReopenCommand(), ContextCommand(), Validate(), TuiCommand(), hookCommand(), Version(), Dump())
 
 /**
  * Like Clikt's `main`, but usage errors (bad option, missing argument) exit 2 as documented

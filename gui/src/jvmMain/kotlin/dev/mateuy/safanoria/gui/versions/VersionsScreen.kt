@@ -38,6 +38,10 @@ import dev.mateuy.safanoria.core.BoardGroup
 import dev.mateuy.safanoria.core.TicketType
 import dev.mateuy.safanoria.core.text
 import dev.mateuy.safanoria.gui.theme.color
+import dev.mateuy.safanoria.views.VersionGroup
+import dev.mateuy.safanoria.views.VersionTicket
+import dev.mateuy.safanoria.views.VersionsViewState
+
 
 @Composable
 fun VersionsScreen(viewModel: VersionsViewModel, onOpenTicket: (String) -> Unit, onBack: () -> Unit) {

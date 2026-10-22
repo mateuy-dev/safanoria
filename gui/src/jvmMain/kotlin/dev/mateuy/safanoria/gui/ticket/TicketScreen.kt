@@ -48,10 +48,15 @@ import com.mikepenz.markdown.model.MarkdownTypography
 import com.mikepenz.markdown.model.markdownAnnotator
 import dev.mateuy.safanoria.gui.board.ChildrenBoard
 import dev.mateuy.safanoria.gui.theme.WarningColor
-import org.intellij.markdown.MarkdownTokenTypes
-import org.intellij.markdown.ast.getTextInNode
 import dev.mateuy.safanoria.gui.theme.color
 import dev.mateuy.safanoria.gui.theme.label
+import dev.mateuy.safanoria.views.TicketAction
+import dev.mateuy.safanoria.views.TicketLink
+import dev.mateuy.safanoria.views.TicketProblem
+import dev.mateuy.safanoria.views.TicketViewState
+import org.intellij.markdown.MarkdownTokenTypes
+import org.intellij.markdown.ast.getTextInNode
+
 
 @Composable
 fun TicketScreen(viewModel: TicketViewModel, onOpenTicket: (String) -> Unit, onBack: () -> Unit) {
