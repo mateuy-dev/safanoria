@@ -7,7 +7,7 @@
 # SAFANORIA_VERSION=0.1.0     a given version instead of the latest
 # SAFANORIA_BIN_DIR=/usr/local/bin   where to put the commands (default ~/.local/bin)
 # SAFANORIA_APP_DIR=...       where to put the app's files (default ~/.local/share/safanoria)
-# SAFANORIA_CLI_ONLY=1        only safanoria-cli (CI, servers)
+# SAFANORIA_CLI_ONLY=1        only safanoria-cli (CI, servers), without the app and the agent skill
 # SAFANORIA_BASE_URL=...      where releases are (default the GitHub releases; tests use a local copy)
 set -eu
 
@@ -60,6 +60,13 @@ mkdir -p "$bin_dir"
 chmod 755 "$tmp/$asset"
 mv "$tmp/$asset" "$bin_dir/safanoria-cli"
 echo "Installed $bin_dir/safanoria-cli: $("$bin_dir/safanoria-cli" version 2>/dev/null || echo "can't run it, see below")"
+# The agent skill and SPEC.md, in ~/.claude/skills/safanoria/ for all projects, from this version.
+# Not for CI and servers, which have no agent sessions.
+if [ -z "${SAFANORIA_CLI_ONLY:-}" ]; then
+  if skill="$("$bin_dir/safanoria-cli" update --global 2>&1)"; then echo "$skill" | tail -n 1
+  else echo "warning: the agent skill wasn't installed; run \`safanoria-cli update --global\`" >&2
+  fi
+fi
 
 # Up to 0.2 the CLI was `safanoria`. That name is the app's now: the launcher below replaces the
 # old binary, and without the app it is removed rather than left behind at its old version.

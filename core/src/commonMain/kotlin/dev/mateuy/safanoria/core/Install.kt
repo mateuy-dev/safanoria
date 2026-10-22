@@ -8,6 +8,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import okio.FileSystem
 import okio.Path
+import okio.Path.Companion.toPath
 
 /** What `init`/`update` would do to one file. */
 public enum class FileAction {
@@ -37,9 +38,17 @@ public data class ComponentSpec(val name: String, val source: VersionSource.Prop
  * Setting up and updating a project (SPEC §13): the skill and SPEC.md, which Safanoria manages and
  * marks with its version, and the files the project owns once created (templates, the ticket
  * directory's README, CLAUDE.md, safanoria.yaml). Writes nothing: the caller asks and writes.
+ *
+ * The skill and spec go to the user's Claude Code directory ([globalPlan]), shared by every project
+ * and worktree, so one `update` keeps them in step with the CLI. A project may also commit its own
+ * copy ([SKILL_DIR]), for sessions that only have the repository (Claude Code on the web) and
+ * contributors without the CLI; where both exist Claude Code uses the user's.
  */
 public object Install {
+    /** The project's copy of the skill, relative to its root. */
     public const val SKILL_DIR: String = ".claude/skills/safanoria"
+    /** The user's copy of the skill, relative to [claudeDir]. */
+    public const val GLOBAL_SKILL_DIR: String = "skills/safanoria"
     public const val CLAUDE_FILE: String = "CLAUDE.md"
     public const val SETTINGS_FILE: String = ".claude/settings.json"
 
@@ -59,6 +68,23 @@ public object Install {
 
     private fun marked(text: String) = text.trimEnd('\n') + "\n\n" + marker() + "\n"
 
+    /**
+     * Claude Code's user directory: `CLAUDE_CONFIG_DIR`, else `.claude` in the home directory; null
+     * when neither is known.
+     */
+    public fun claudeDir(): Path? {
+        environmentVariable("CLAUDE_CONFIG_DIR")?.takeIf { it.isNotEmpty() }?.let { return it.toPath() }
+        val home = (environmentVariable("HOME") ?: environmentVariable("USERPROFILE"))?.takeIf { it.isNotEmpty() } ?: return null
+        return home.toPath() / ".claude"
+    }
+
+    /** The Safanoria version of the skill in [skillDir]: null when there is none, "installed by hand" when unmarked. */
+    public fun skillVersion(fileSystem: FileSystem, skillDir: Path): String? {
+        val skill = skillDir / "SKILL.md"
+        if (!fileSystem.exists(skill)) return null
+        return installedVersion(fileSystem.read(skill) { readUtf8() }) ?: "installed by hand"
+    }
+
     /** The managed files, with their content for this version. */
     public fun managedFiles(): Map<String, String> =
         mapOf("SKILL.md" to marked(Embedded.SKILL), "SPEC.md" to marked(Embedded.SPEC))
@@ -70,7 +96,8 @@ public object Install {
 
     public fun ticketReadme(): String =
         "# Tickets\n\nThis directory is tracked with [Safanoria](https://github.com/mateuy-dev/safanoria):\n" +
-            "one markdown file per ticket, `<id>.md`. The format is in `$SKILL_DIR/SPEC.md`.\n\n" +
+            "one markdown file per ticket, `<id>.md`. The format is in the `SPEC.md` of the `safanoria` skill\n" +
+            "(`~/.claude/$GLOBAL_SKILL_DIR/`, or the project's `$SKILL_DIR/`).\n\n" +
             "- `_TEMPLATE.md`: template for new tickets; `_TEMPLATE.<type>.md` for one type.\n" +
             "- `attachments/<id>/`: files a ticket links to.\n\n" +
             "`safanoria-cli list`, `safanoria-cli board` and `safanoria-cli validate` show and check them.\n"
@@ -117,19 +144,30 @@ public object Install {
         }
     }
 
-    /** Every file Safanoria installs or creates in [root], and what to do with each. */
-    public fun plan(fileSystem: FileSystem, root: Path, dir: String): List<FileChange> {
-        fun read(path: Path) = if (fileSystem.exists(path)) fileSystem.read(path) { readUtf8() } else null
-        fun change(path: Path, wanted: String, managed: Boolean): FileChange {
-            val existing = read(path)
-            val action = when {
-                existing == null -> FileAction.CREATE
-                existing.replace("\r\n", "\n") == wanted -> FileAction.SAME
-                managed -> FileAction.REPLACE
-                else -> FileAction.DIFFERS
-            }
-            return FileChange(path, wanted, action, managed)
+    private fun read(fileSystem: FileSystem, path: Path) = if (fileSystem.exists(path)) fileSystem.read(path) { readUtf8() } else null
+
+    private fun change(fileSystem: FileSystem, path: Path, wanted: String, managed: Boolean): FileChange {
+        val existing = read(fileSystem, path)
+        val action = when {
+            existing == null -> FileAction.CREATE
+            existing.replace("\r\n", "\n") == wanted -> FileAction.SAME
+            managed -> FileAction.REPLACE
+            else -> FileAction.DIFFERS
         }
+        return FileChange(path, wanted, action, managed)
+    }
+
+    /** The skill and spec in the user's Claude Code directory, [claudeDir]. */
+    public fun globalPlan(fileSystem: FileSystem, claudeDir: Path): List<FileChange> =
+        managedFiles().map { (name, text) -> change(fileSystem, claudeDir / GLOBAL_SKILL_DIR / name, text, managed = true) }
+
+    /**
+     * Every file Safanoria installs or creates in [root], and what to do with each; the project's
+     * copy of the skill and spec only with [projectSkill].
+     */
+    public fun plan(fileSystem: FileSystem, root: Path, dir: String, projectSkill: Boolean): List<FileChange> {
+        fun read(path: Path) = read(fileSystem, path)
+        fun change(path: Path, wanted: String, managed: Boolean) = change(fileSystem, path, wanted, managed)
 
         val skillDir = root / SKILL_DIR
         val ticketDir = root / dir
@@ -146,7 +184,8 @@ public object Install {
             null, settingsText -> FileChange(settings, settingsText.orEmpty(), FileAction.SAME, managed = false) // not JSON we can edit: left alone
             else -> FileChange(settings, wanted, if (settingsText == null) FileAction.CREATE else FileAction.DIFFERS, managed = false)
         }
-        return managedFiles().map { (name, text) -> change(skillDir / name, text, managed = true) } +
+        val skill = if (projectSkill) managedFiles().map { (name, text) -> change(skillDir / name, text, managed = true) } else emptyList()
+        return skill +
             templates().map { (name, text) -> change(ticketDir / name, text, managed = false) } +
             listOf(change(ticketDir / "README.md", ticketReadme(), managed = false)).map {
                 // A README that exists is the project's, whatever it says.

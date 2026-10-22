@@ -17,15 +17,17 @@ import kotlin.test.assertTrue
 class InitTest {
     private val repoRoot = (environmentVariable("SAFANORIA_REPO_ROOT") ?: error("run through Gradle")).toPath()
     private val work: Path = repoRoot / "cli" / "build" / "test-repos" / "init"
+    private val claude: Path = repoRoot / "cli" / "build" / "test-repos" / "init-claude"
 
     @BeforeTest
     fun emptyProject() {
         SystemFileSystem.deleteRecursively(work)
+        SystemFileSystem.deleteRecursively(claude)
         SystemFileSystem.createDirectories(work)
     }
 
     private fun run(vararg args: String, prompts: Prompts? = null) =
-        cli(prompts).test(listOf("--root", work.toString(), "init") + args.toList())
+        cli(prompts, claudeDir = claude).test(listOf("--root", work.toString(), "init") + args.toList())
     private fun read(path: String) = SystemFileSystem.read(work / path) { readUtf8() }
     private fun exists(path: String) = SystemFileSystem.exists(work / path)
 
@@ -40,7 +42,8 @@ class InitTest {
         for (f in listOf("issues/_TEMPLATE.md", "issues/_TEMPLATE.bug.md", "issues/_TEMPLATE.research.md", "issues/README.md", "CLAUDE.md")) {
             assertTrue(exists(f), f)
         }
-        assertTrue(read(".claude/skills/safanoria/SPEC.md").endsWith("<!-- safanoria ${Embedded.VERSION} -->\n"))
+        assertTrue(SystemFileSystem.read(claude / "skills/safanoria/SPEC.md") { readUtf8() }.endsWith("<!-- safanoria ${Embedded.VERSION} -->\n"))
+        assertFalse(exists(".claude/skills"), "the project gets its own copy only when asked")
         assertTrue(read("CLAUDE.md").contains("`issues/<id>.md`"))
         assertEquals(emptyList(), Validator(Repository(work)).validate().map { it.toString() })
 
@@ -52,8 +55,10 @@ class InitTest {
     @Test
     fun asksForComponents() {
         // Two names, then where each one's version is: a file (the default one), and external.
-        val r = run(prompts = ScriptedPrompts("app, server", "file", "", "external"))
+        // And whether the project gets its own copy of the skill: yes.
+        val r = run(prompts = ScriptedPrompts("app, server", "file", "", "external", true))
         assertEquals(0, r.statusCode, r.output)
+        assertTrue(read(".claude/skills/safanoria/SKILL.md").endsWith("<!-- safanoria ${Embedded.VERSION} -->\n"))
         val config = read("safanoria.yaml")
         assertTrue(config.contains("  app:\n    version: { file: gradle.properties, property: version }\n  server:\n    external: true\n"), config)
     }
@@ -67,9 +72,17 @@ class InitTest {
         assertEquals("# Project\n\nBuild with gradle.\n", read("CLAUDE.md"))
 
         SystemFileSystem.delete(work / "safanoria.yaml")
-        val asked = run("--external", "web", prompts = ScriptedPrompts(true))
+        val asked = run("--external", "web", "--no-project-skill", prompts = ScriptedPrompts(true))
         assertEquals(0, asked.statusCode, asked.output)
         assertTrue(read("CLAUDE.md").startsWith("# Project\n\nBuild with gradle.\n\nWork is tracked as Safanoria tickets"), read("CLAUDE.md"))
+    }
+
+    @Test
+    fun projectSkillFlag() {
+        val r = run("--external", "web", "--project-skill")
+        assertEquals(0, r.statusCode, r.output)
+        assertTrue(r.stdout.contains("create $claude/skills/safanoria/SKILL.md\n"), r.stdout)
+        assertTrue(r.stdout.contains("create .claude/skills/safanoria/SKILL.md\n"), r.stdout)
     }
 
     @Test

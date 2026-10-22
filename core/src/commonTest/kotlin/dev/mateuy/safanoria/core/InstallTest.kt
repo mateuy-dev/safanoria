@@ -11,7 +11,7 @@ class InstallTest {
     private val root = "/project".toPath()
     private val fs = FakeFileSystem().apply { createDirectories(root) }
 
-    private fun plan(dir: String = "tickets") = Install.plan(fs, root, dir)
+    private fun plan(dir: String = "tickets") = Install.plan(fs, root, dir, projectSkill = true)
     private fun actions(dir: String = "tickets") =
         plan(dir).associate { it.path.relativeTo(root).segments.joinToString("/") to it.action }
     private fun write(changes: List<FileChange>) = changes.forEach { c ->
@@ -73,6 +73,22 @@ class InstallTest {
             ),
             actions(),
         )
+    }
+
+    @Test
+    fun globalSkill() {
+        val claude = "/home/me/.claude".toPath()
+        val global = Install.globalPlan(fs, claude)
+        assertEquals(listOf(claude / "skills/safanoria/SKILL.md".toPath(), claude / "skills/safanoria/SPEC.md".toPath()), global.map { it.path })
+        assertTrue(global.all { it.managed && it.action == FileAction.CREATE })
+        assertNull(Install.skillVersion(fs, claude / Install.GLOBAL_SKILL_DIR))
+        write(global)
+        assertEquals(Embedded.VERSION, Install.skillVersion(fs, claude / Install.GLOBAL_SKILL_DIR))
+        assertTrue(Install.globalPlan(fs, claude).all { it.action == FileAction.SAME })
+
+        // Without its own copy, the project gets everything but the skill.
+        val project = Install.plan(fs, root, "tickets", projectSkill = false)
+        assertTrue(project.none { it.managed }, project.toString())
     }
 
     @Test

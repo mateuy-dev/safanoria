@@ -8,7 +8,9 @@ description: >
   ticket id, to keep that ticket current.
 ---
 
-The format is defined in `SPEC.md` next to this file; read it before writing a ticket. Project
+The format is defined in `SPEC.md` next to this file; read it before writing a ticket. Its title
+names its spec version; if `safanoria:` in `safanoria.yaml` is another one, follow the project's
+own `.claude/skills/safanoria/SPEC.md` instead (or tell the user, when it has none). Project
 settings (ticket directory, components, channels, worktree path, main branch) are in
 `safanoria.yaml` at the repository root.
 

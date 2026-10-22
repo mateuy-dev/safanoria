@@ -15,6 +15,7 @@ import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.mordant.terminal.Terminal
 import dev.mateuy.safanoria.core.Embedded
+import dev.mateuy.safanoria.core.Install
 import dev.mateuy.safanoria.core.Repository
 import dev.mateuy.safanoria.core.SPEC_VERSION
 import dev.mateuy.safanoria.tui.runTui
@@ -23,9 +24,10 @@ import okio.Path.Companion.toPath
 
 /**
  * Shared by all commands: finds the repository once, from `--root` or the working directory, and
- * holds the [prompts] (null when stdin or stdout isn't a terminal: then nothing is asked).
+ * holds the [prompts] (null when stdin or stdout isn't a terminal: then nothing is asked) and
+ * Claude Code's user directory, where the skill is installed ([claudeDir], null when unknown).
  */
-class CliContext(val rootOption: String?, val prompts: Prompts?) {
+class CliContext(val rootOption: String?, val prompts: Prompts?, val claudeDir: Path? = Install.claudeDir()) {
     /** Where `init` sets up a project: `--root` or the working directory. */
     val projectRoot: okio.Path by lazy {
         dev.mateuy.safanoria.core.SystemFileSystem.canonicalize((rootOption ?: ".").toPath())
@@ -46,14 +48,16 @@ class CliContext(val rootOption: String?, val prompts: Prompts?) {
 
 /**
  * The root command. [prompts] replaces the terminal's (tests); by default they exist only on a
- * terminal. [tui] runs the terminal app on a project's root (tests record it instead).
+ * terminal. [tui] runs the terminal app on a project's root (tests record it instead). [claudeDir]
+ * replaces Claude Code's user directory (tests).
  */
 class Safanoria(
     private val prompts: Prompts? = null,
     private val tui: (Terminal, Path) -> Unit = ::runTui,
+    private val claudeDir: Path? = null,
 ) : CliktCommand(name = "safanoria-cli") {
     private val root by option("--root", help = "Repository root (default: the nearest directory with safanoria.yaml)")
-    private val context by findOrSetObject { CliContext(root, prompts ?: terminalPrompts()) }
+    private val context by findOrSetObject { CliContext(root, prompts ?: terminalPrompts(), claudeDir ?: Install.claudeDir()) }
 
     override val invokeWithoutSubcommand = true
 
@@ -101,10 +105,16 @@ abstract class RepositoryCommand(name: String) : CliktCommand(name = name) {
     protected val repository: Repository get() = cli.repository
     /** Null when nothing may be asked: see [Prompts]. */
     internal val prompts: Prompts? get() = cli.prompts
+    /** Claude Code's user directory, where the skill is installed; null when unknown. */
+    protected val claudeDir: Path? get() = cli.claudeDir
 }
 
-/** The command tree; tests run it with Clikt's `test()`, and give it [prompts] to answer questions and a [tui] to record it. */
-fun cli(prompts: Prompts? = null, tui: (Terminal, Path) -> Unit = ::runTui): CliktCommand = Safanoria(prompts, tui).subcommands(Init(), Update(), New(), ListTickets(), BoardCommand(), ReleaseCommand(), NotesCommand(), StartCommand(), FinishCommand(), MergeCommand(), ReopenCommand(), ReviewCommand(), ContextCommand(), Validate(), TuiCommand(), hookCommand(), Version(), Dump())
+/**
+ * The command tree; tests run it with Clikt's `test()`, and give it [prompts] to answer questions, a
+ * [tui] to record it and a [claudeDir] instead of the user's.
+ */
+fun cli(prompts: Prompts? = null, tui: (Terminal, Path) -> Unit = ::runTui, claudeDir: Path? = null): CliktCommand =
+    Safanoria(prompts, tui, claudeDir).subcommands(Init(), Update(), New(), ListTickets(), BoardCommand(), ReleaseCommand(), NotesCommand(), StartCommand(), FinishCommand(), MergeCommand(), ReopenCommand(), ReviewCommand(), ContextCommand(), Validate(), TuiCommand(), hookCommand(), Version(), Dump())
 
 /**
  * Like Clikt's `main`, but usage errors (bad option, missing argument) exit 2 as documented
