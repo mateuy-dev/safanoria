@@ -181,6 +181,15 @@ public class Git(private val root: Path) {
     /** The current branch, or `HEAD` when detached. */
     public fun currentBranch(): String = gitOrThrow("rev-parse", "--abbrev-ref", "HEAD").trim()
 
+    /** This working tree's own git directory (`.git`, or `.git/worktrees/<name>` for a linked worktree). Absolute. */
+    public fun gitDir(): Path = gitOrThrow("rev-parse", "--absolute-git-dir").trim().toPath()
+
+    /** How many commits `git rev-list` lists for [args] (revisions and options). */
+    public fun count(vararg args: String): Int = gitOrThrow("rev-list", "--count", *args).trim().toInt()
+
+    /** What is staged against HEAD, as `git diff --cached --stat`. */
+    public fun stagedStat(): String = gitOrThrow("diff", "--cached", "--stat").trimEnd()
+
     /**
      * The directory git runs hooks from: `core.hooksPath` if set, else the common `.git/hooks`
      * (shared by all worktrees). Absolute.

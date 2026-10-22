@@ -2,6 +2,7 @@ package dev.mateuy.safanoria.cli
 
 import com.github.ajalt.clikt.core.Context
 import dev.mateuy.safanoria.core.Repository
+import dev.mateuy.safanoria.core.Review
 import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.core.isValidId
 import dev.mateuy.safanoria.core.CONFIG_FILE
@@ -24,11 +25,20 @@ class ContextCommand : RepositoryCommand(name = "context") {
     }
 
     private fun context(repo: Repository): String? {
-        val branch = repo.git.currentBranch()
+        val review = Review.state(repo.root)
+        val branch = review?.id ?: repo.git.currentBranch()
         if (!isValidId(branch)) return null
         val ticket = repo.ticket(branch) ?: return null
         val file = displayPath(ticket.path)
         return buildString {
+            if (review != null) {
+                val against = review.since?.let { "after $it" } ?: "against ${review.target}"
+                append("This worktree is in review mode (`safanoria-cli review`): HEAD is detached at ${review.base.take(7)} and the ")
+                append("ticket's changes $against are staged, for the human to review in their IDE; branch `$branch` is unchanged. ")
+                append("Don't edit or commit while in review mode. When the human says the review is done (or asks to look at their ")
+                append("`REVIEW:` comments, or to merge), run `safanoria-cli review --end` first: it goes back to the branch and leaves ")
+                append("the human's edits uncommitted. Then act on them as the safanoria skill says.\n\n")
+            }
             append("This session works on the Safanoria ticket `$branch`: this checkout is its branch, and the ticket is $file ")
             append("(format: ${Install.SKILL_DIR}/SPEC.md, settings: $CONFIG_FILE). Work as the user directs; there is no planning ")
             append("or approval step. Keep the ticket current with the `safanoria` skill: a short Work Log entry for each decision ")

@@ -63,6 +63,7 @@ public object Finish {
      */
     private fun notReviewable(repository: Repository, branch: String, target: String): String? {
         if (branch == target) return null
+        Review.blocking(repository.git, branch)?.let { return it }
         val git = repository.git
         try {
             val worktree = git.worktrees().firstOrNull { it.branch == branch }?.path?.takeIf { repository.fileSystem.exists(it) }
@@ -129,6 +130,7 @@ public object Finish {
     }
 
     internal fun commit(repository: Repository, branch: String, changes: List<TicketChange>, message: String): FinishCommit {
+        Review.blocking(repository.git, branch)?.let { throw FinishException(it) }
         val view = BranchView.open(repository, branch) ?: throw FinishException("can't read the branch '$branch'.")
         val files = changes.map { c ->
             val ticket = view.repository.ticket(c.ticketId) ?: throw FinishException("no ticket '${c.ticketId}' on '$branch'.")

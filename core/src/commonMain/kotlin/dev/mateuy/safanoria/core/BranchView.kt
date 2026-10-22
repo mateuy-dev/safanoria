@@ -39,6 +39,8 @@ public class BranchView private constructor(
             return wt.commitId("HEAD") ?: throw GitException("no commit after git commit")
         }
 
+        // Review mode needs the branch where it left it (Review.end).
+        Review.blocking(git, branch)?.let { throw GitException(it) }
         val old = git.commitId("refs/heads/$branch") ?: throw GitException("no branch '$branch'")
         val commit = git.commitTree(treeWith(git, old, sub, files.zip(relative) { f, rel -> rel to f.text }), listOf(old), message)
         git.updateBranch(branch, commit, old)
