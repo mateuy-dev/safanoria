@@ -11,6 +11,8 @@ val generateEmbedded = tasks.register("generateEmbedded") {
     val ticketTemplate = rootProject.layout.projectDirectory.file("templates/ticket.md")
     val skill = rootProject.layout.projectDirectory.file("skill/SKILL.md")
     val spec = rootProject.layout.projectDirectory.file("SPEC.md")
+    // skill/commands/<name>.md: the slash commands installed next to the skill.
+    val commands = rootProject.layout.projectDirectory.dir("skill/commands").asFileTree.matching { include("*.md") }
     // templates/<type>.md: built-in templates for one type (SPEC §6.2).
     val typeTemplates = listOf("feature", "bug", "maintenance", "research")
         .map { rootProject.layout.projectDirectory.file("templates/$it.md") }
@@ -22,7 +24,7 @@ val generateEmbedded = tasks.register("generateEmbedded") {
     require(Regex("""\d+\.\d+\.\d+""").matches(plain)) { "gradle.properties version must be MAJOR.MINOR.PATCH, got '$plain'" }
     val version = if (providers.gradleProperty("release").isPresent) plain else "$plain-dev"
     val outDir = layout.buildDirectory.dir("generated/embedded")
-    inputs.files(ticketSchema, configSchema, ticketTemplate, typeTemplates, skill, spec)
+    inputs.files(ticketSchema, configSchema, ticketTemplate, typeTemplates, skill, spec, commands)
     inputs.property("version", version)
     outputs.dir(outDir)
     doLast {
@@ -51,6 +53,10 @@ val generateEmbedded = tasks.register("generateEmbedded") {
             "    )",
             "    /** skill/SKILL.md, installed into projects. */",
             "    public const val SKILL: String = ${raw(skill)}",
+            "    /** skill/commands/<name>.md by name: slash commands, installed as skills of their own. */",
+            "    public val COMMANDS: Map<String, String> = mapOf(",
+            commands.files.sortedBy { it.name }.joinToString(",\n") { "        \"${it.nameWithoutExtension}\" to ${raw(rootProject.layout.projectDirectory.file("skill/commands/${it.name}"))}" },
+            "    )",
             "    /** SPEC.md, installed next to the skill. */",
             "    public const val SPEC: String = ${raw(spec)}",
             "}",

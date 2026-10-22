@@ -19,9 +19,12 @@ class InstallTest {
         fs.write(c.path) { writeUtf8(c.text) }
     }
 
+    /** Every slash command, with [action]. */
+    private fun commands(action: FileAction) = Embedded.COMMANDS.keys.associate { Install.commandFile(it) to action }
+
     @Test
     fun marker() {
-        val skill = Install.managedFiles().getValue("SKILL.md")
+        val skill = Install.managedFiles().getValue(".claude/skills/safanoria/SKILL.md")
         assertTrue(skill.startsWith(Embedded.SKILL.trimEnd('\n')) && skill.endsWith("\n\n<!-- safanoria ${Embedded.VERSION} -->\n"), skill.takeLast(80))
         assertEquals(Embedded.VERSION, Install.installedVersion(skill))
         assertNull(Install.installedVersion(Embedded.SKILL), "the source has no marker")
@@ -40,7 +43,7 @@ class InstallTest {
                 "issues/README.md" to FileAction.CREATE,
                 "CLAUDE.md" to FileAction.CREATE,
                 ".claude/settings.json" to FileAction.CREATE,
-            ),
+            ) + commands(FileAction.CREATE),
             actions("issues"),
         )
         write(plan("issues"))
@@ -70,9 +73,27 @@ class InstallTest {
                 "tickets/README.md" to FileAction.SAME,
                 "CLAUDE.md" to FileAction.SAME,
                 ".claude/settings.json" to FileAction.CREATE,
-            ),
+            ) + commands(FileAction.CREATE),
             actions(),
         )
+    }
+
+    @Test
+    fun commandsAreSkillsOfTheirOwn() {
+        assertTrue("sc" in Embedded.COMMANDS && "scshi" in Embedded.COMMANDS && "sm" in Embedded.COMMANDS, Embedded.COMMANDS.keys.toString())
+        for ((name, text) in Embedded.COMMANDS) {
+            assertTrue(text.startsWith("---\nname: $name\n"), name)
+            assertTrue("disable-model-invocation: true" in text, name)
+        }
+        // An older Safanoria's copy is replaced; a project skill of the same name is only after asking.
+        fs.createDirectories(root / ".claude/skills/sc".toPath())
+        fs.write(root / ".claude/skills/sc/SKILL.md".toPath()) { writeUtf8("old\n\n${Install.marker("0.1.0")}\n") }
+        fs.createDirectories(root / ".claude/skills/sm".toPath())
+        fs.write(root / ".claude/skills/sm/SKILL.md".toPath()) { writeUtf8("the project's own\n") }
+        val plan = plan().associateBy { it.path.relativeTo(root).segments.joinToString("/") }
+        assertEquals(FileAction.REPLACE, plan.getValue(".claude/skills/sc/SKILL.md").action)
+        assertEquals(FileAction.DIFFERS, plan.getValue(".claude/skills/sm/SKILL.md").action)
+        assertEquals(FileAction.CREATE, plan.getValue(".claude/skills/sr/SKILL.md").action)
     }
 
     @Test

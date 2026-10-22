@@ -8,6 +8,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import okio.FileSystem
 import okio.Path
+import okio.Path.Companion.toPath
 
 /** What `init`/`update` would do to one file. */
 public enum class FileAction {
@@ -59,9 +60,13 @@ public object Install {
 
     private fun marked(text: String) = text.trimEnd('\n') + "\n\n" + marker() + "\n"
 
-    /** The managed files, with their content for this version. */
+    /** Where slash command [name] is installed: a skill of its own, invoked only by the user. */
+    public fun commandFile(name: String): String = ".claude/skills/$name/SKILL.md"
+
+    /** The managed files by their path in the project, with their content for this version: the skill, SPEC.md and the slash commands. */
     public fun managedFiles(): Map<String, String> =
-        mapOf("SKILL.md" to marked(Embedded.SKILL), "SPEC.md" to marked(Embedded.SPEC))
+        mapOf("$SKILL_DIR/SKILL.md" to marked(Embedded.SKILL), "$SKILL_DIR/SPEC.md" to marked(Embedded.SPEC)) +
+            Embedded.COMMANDS.entries.associate { (name, text) -> commandFile(name) to marked(text) }
 
     /** The templates a project gets: the default and one per type with a built-in template. */
     public fun templates(): Map<String, String> =
@@ -131,7 +136,7 @@ public object Install {
             return FileChange(path, wanted, action, managed)
         }
 
-        val skillDir = root / SKILL_DIR
+        val commands = Embedded.COMMANDS.keys.map { commandFile(it) }.toSet()
         val ticketDir = root / dir
         val claude = root / CLAUDE_FILE
         val claudeText = read(claude)
@@ -146,7 +151,12 @@ public object Install {
             null, settingsText -> FileChange(settings, settingsText.orEmpty(), FileAction.SAME, managed = false) // not JSON we can edit: left alone
             else -> FileChange(settings, wanted, if (settingsText == null) FileAction.CREATE else FileAction.DIFFERS, managed = false)
         }
-        return managedFiles().map { (name, text) -> change(skillDir / name, text, managed = true) } +
+        return managedFiles().map { (file, text) ->
+            val path = root / file.toPath()
+            // A command skill without Safanoria's marker is the project's own, of the same name: only after asking.
+            val owned = file in commands && read(path)?.let { installedVersion(it) == null } == true
+            change(path, text, managed = !owned)
+        } +
             templates().map { (name, text) -> change(ticketDir / name, text, managed = false) } +
             listOf(change(ticketDir / "README.md", ticketReadme(), managed = false)).map {
                 // A README that exists is the project's, whatever it says.

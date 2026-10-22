@@ -88,9 +88,10 @@ safanoria-cli update                    # later: this version's skill and spec, 
 `init` writes `safanoria.yaml` (with `worktree: ../<this directory>--{id}`, where each ticket's
 worktree goes; `--worktree` to choose another place), the ticket directory (`_TEMPLATE.md`, `_TEMPLATE.bug.md`,
 `_TEMPLATE.research.md`, `README.md`), the skill and SPEC.md in `.claude/skills/safanoria/`,
-the paragraph that points agents to the skill in `CLAUDE.md`, and the SessionStart hook in
-`.claude/settings.json` (see "Working on a ticket"). The skill and spec are Safanoria's and end
+the slash commands (see "Slash commands"), the paragraph that points agents to the skill in `CLAUDE.md`, and the SessionStart hook in
+`.claude/settings.json` (see "Working on a ticket"). The skill, spec and commands are Safanoria's and end
 with `<!-- safanoria X.Y.Z -->`; `update` replaces them and says which version was there before.
+A project skill without that marker that has a command's name is kept unless you accept.
 Templates, the ticket README, `CLAUDE.md` and `.claude/settings.json` are the project's: they
 are created when missing and changed only after asking (`--yes` to accept, `--dry-run` to see).
 
@@ -384,6 +385,25 @@ branch; a worktree with uncommitted files is kept, with its branch. `finish <id>
 one. `release` does the same before stamping, and `validate` warns about them
 (`review-merged`). A squash merge leaves no trace git can follow: delete the branch, and the
 ticket counts as merged.
+
+### Slash commands
+
+The workflows typed most often are one command each in Claude Code, installed as skills in
+`.claude/skills/<name>/` that only you invoke. The text after a create command is what the ticket
+is about; "what we discussed" makes it from the conversation. The ticket is committed on
+`mainBranch` without questions, with an Objective that stands on its own, since the session that
+works it sees only the ticket.
+
+| Command | Does |
+|---|---|
+| `/sc <text>` | Create a ticket |
+| `/scsh <text>` | Create it and start it in Herdr (`start --herdr`): the session waits for you |
+| `/scshc <text>` | … and the session discusses it first (`--prompt chat`) |
+| `/scshi <text>` | … and the session implements and finishes it (`--prompt implement`) |
+| `/ssh <id>`, `/sshc <id>`, `/sshi <id>` | The same three starts, for an existing ticket |
+| `/sr [--since <commit>]` | `review`: review this worktree's ticket in your IDE |
+| `/sre` | `review --end`, then act on your edits and `// REVIEW:` comments |
+| `/sm` | End the review if in it, then `merge` this worktree's ticket |
 
 ## Releasing
 
