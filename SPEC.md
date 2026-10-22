@@ -431,9 +431,11 @@ field's meaning, increase it.
 The spec version is not the **Safanoria version**. Safanoria (this spec, the agent skill, the
 ticket templates, the `safanoria-cli` CLI and the `safanoria` desktop app) is released as one unit with one `MAJOR.MINOR.PATCH`
 version, which says which spec versions it supports. A project records only the spec version.
-Copies installed into a project (the skill, this file) SHOULD end with a
-`<!-- safanoria X.Y.Z -->` line naming the Safanoria version they came from, so tools can tell
-what is installed and update it.
+Copies installed for a user (shared by all their projects) or into a project (the skill, this
+file) SHOULD end with a `<!-- safanoria X.Y.Z -->` line naming the Safanoria version they came
+from, so tools can tell what is installed and update it. A copy installed for a user is this file
+at the spec version that Safanoria version implements; a project on another spec version reads
+its own copy.
 
 ## 14. Tickets across branches
 

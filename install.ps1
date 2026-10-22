@@ -6,7 +6,7 @@
 # $env:SAFANORIA_VERSION = "0.1.0"   a given version instead of the latest
 # $env:SAFANORIA_BIN_DIR = "..."     where to put the commands (default %USERPROFILE%\.local\bin)
 # $env:SAFANORIA_APP_DIR = "..."     where to put the app's files (default %LOCALAPPDATA%\safanoria)
-# $env:SAFANORIA_CLI_ONLY = "1"      only safanoria-cli (CI, servers)
+# $env:SAFANORIA_CLI_ONLY = "1"      only safanoria-cli (CI, servers), without the app and the agent skill
 # $env:SAFANORIA_BASE_URL = "..."    where releases are (default the GitHub releases)
 $ErrorActionPreference = "Stop"
 
@@ -49,6 +49,13 @@ try {
     $target = Join-Path $binDir "safanoria-cli.exe"
     Move-Item -Force (Join-Path $tmp $asset) $target
     Write-Host "Installed ${target}: $(& $target version)"
+    # The agent skill and SPEC.md, in ~/.claude/skills/safanoria/ for all projects, from this version.
+    # Not for CI and servers, which have no agent sessions.
+    if (-not $cliOnly) {
+        $skill = & $target update --global
+        if ($LASTEXITCODE -eq 0) { Write-Host ($skill | Select-Object -Last 1) }
+        else { Write-Warning "the agent skill wasn't installed; run ``safanoria-cli update --global``" }
+    }
 
     # Up to 0.2 the CLI was safanoria.exe. That name is the app's now (safanoria.cmd below), and
     # an .exe would be found first: the old binary is removed.

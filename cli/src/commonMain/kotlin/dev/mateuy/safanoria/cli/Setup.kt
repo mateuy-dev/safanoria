@@ -10,12 +10,14 @@ import okio.Path
 /**
  * Shared by `init` and `update`. Writes what [changes] say: missing and managed files directly; a
  * project's file that differs only when [yes] or the user agrees ([prompts]; null when nothing
- * may be asked). Prints one line per file.
+ * may be asked). Prints one line per file, relative to the project's [root] (null: no project).
  */
-internal fun CliktCommand.applyChanges(root: Path, changes: List<FileChange>, yes: Boolean, dryRun: Boolean, prompts: Prompts?) {
+internal fun CliktCommand.applyChanges(root: Path?, changes: List<FileChange>, yes: Boolean, dryRun: Boolean, prompts: Prompts?) {
     val would = if (dryRun) "would " else ""
     for (c in changes) {
-        val shown = c.path.relativeTo(root).segments.joinToString("/")
+        // The project's files relative to it; the user's skill (outside it) in full.
+        val shown = root?.let { runCatching { c.path.relativeTo(it).segments.joinToString("/") }.getOrNull() }
+            ?.takeIf { !it.startsWith("..") } ?: c.path.toString()
         fun write() {
             if (dryRun) return
             c.path.parent?.let { SystemFileSystem.createDirectories(it) }

@@ -45,6 +45,7 @@ install-cli: build
 	mkdir -p "$(BINDIR)"
 	cp "$(BINARY)" "$(BINDIR)/$(NAME)"
 	@echo "installed $(BINDIR)/$(NAME): $$("$(BINDIR)/$(NAME)" version)"
+	"$(BINDIR)/$(NAME)" update --global | tail -n 1
 
 # The app with its Java runtime goes to APPDIR; BINDIR gets a launcher for it, as install.sh
 # does, line for line (it replaces the CLI of 0.2 and earlier, which had that name).

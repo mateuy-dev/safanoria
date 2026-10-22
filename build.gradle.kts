@@ -15,8 +15,10 @@ plugins {
 // Linux binaries are therefore built on Linux. See tickets/v1-tooling-native-spike.md.
 // Tests read this repository's files (schema/examples, tickets, fixtures), and optionally other
 // local repositories' tickets (SAFANORIA_EXTRA_REPOS, paths separated by ':' or ';').
+// CLAUDE_CONFIG_DIR keeps `init` and `update` from installing the skill in the developer's ~/.claude.
 val testEnvironment = buildMap {
     put("SAFANORIA_REPO_ROOT", rootDir.absolutePath)
+    put("CLAUDE_CONFIG_DIR", rootDir.resolve("build/test-claude").absolutePath)
     System.getenv("SAFANORIA_EXTRA_REPOS")?.let { put("SAFANORIA_EXTRA_REPOS", it) }
 }
 

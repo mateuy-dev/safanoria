@@ -9,17 +9,21 @@ import okio.Path.Companion.toPath
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class UpdateTest {
     private val repoRoot = (environmentVariable("SAFANORIA_REPO_ROOT") ?: error("run through Gradle")).toPath()
     private val work: Path = repoRoot / "cli" / "build" / "test-repos" / "update"
+    private val claude: Path = repoRoot / "cli" / "build" / "test-repos" / "update-claude"
+    private val globalSkill get() = claude / "skills" / "safanoria"
     private val ownTemplate = "---\nid: the-ticket-id\n---\n\n## Objective\n\nOur own.\n"
 
     /** Set up by hand, like VacAppKMP before: unmarked skill, own template and README, CLAUDE.md with the paragraph. */
     @BeforeTest
     fun handInstalledProject() {
         SystemFileSystem.deleteRecursively(work)
+        SystemFileSystem.deleteRecursively(claude)
         SystemFileSystem.createDirectories(work / ".claude" / "skills" / "safanoria")
         SystemFileSystem.createDirectories(work / "tickets")
         write("safanoria.yaml", "safanoria: 1\nworktree: ../project--{id}\ncomponents:\n  app:\n    external: true\n")
@@ -33,7 +37,7 @@ class UpdateTest {
     private fun write(path: String, text: String) = SystemFileSystem.write(work / path) { writeUtf8(text) }
     private fun read(path: String) = SystemFileSystem.read(work / path) { readUtf8() }
     private fun run(vararg args: String, prompts: Prompts? = null) =
-        cli(prompts).test(listOf("--root", work.toString(), "update") + args.toList())
+        cli(prompts, claudeDir = claude).test(listOf("--root", work.toString(), "update") + args.toList())
 
     @Test
     fun replacesSkillKeepsTheProjectsFiles() {
@@ -43,18 +47,53 @@ class UpdateTest {
         assertTrue(out.contains("replace .claude/skills/safanoria/SKILL.md\nreplace .claude/skills/safanoria/SPEC.md\n"), out)
         assertTrue(out.contains("kept tickets/_TEMPLATE.md: it differs from Safanoria's, and there is no terminal to ask"), out)
         assertTrue(out.contains("create tickets/_TEMPLATE.bug.md\ncreate tickets/_TEMPLATE.research.md\nunchanged tickets/README.md\nunchanged CLAUDE.md\n"), out)
-        assertTrue(out.endsWith("skill and spec: installed by hand → ${Embedded.VERSION}\n"), out)
+        assertTrue(out.startsWith("create $globalSkill/SKILL.md\ncreate $globalSkill/SPEC.md\n"), out)
+        assertTrue(
+            out.endsWith(
+                "skill and spec in $globalSkill: not installed → ${Embedded.VERSION}\n" +
+                    "skill and spec in .claude/skills/safanoria: installed by hand → ${Embedded.VERSION}\n",
+            ),
+            out,
+        )
         assertTrue(read(".claude/skills/safanoria/SKILL.md").endsWith("<!-- safanoria ${Embedded.VERSION} -->\n"))
+        assertTrue(SystemFileSystem.read(globalSkill / "SPEC.md") { readUtf8() }.endsWith("<!-- safanoria ${Embedded.VERSION} -->\n"))
         assertEquals(ownTemplate, read("tickets/_TEMPLATE.md"))
 
         val again = run()
-        assertTrue(again.stdout.endsWith("skill and spec: already ${Embedded.VERSION}\n"), again.stdout)
+        assertTrue(
+            again.stdout.endsWith(
+                "skill and spec in $globalSkill: already ${Embedded.VERSION}\nskill and spec in .claude/skills/safanoria: already ${Embedded.VERSION}\n",
+            ),
+            again.stdout,
+        )
     }
 
     @Test
     fun fromAnOlderVersion() {
         write(".claude/skills/safanoria/SKILL.md", "old skill\n\n<!-- safanoria 0.0.9 -->\n")
-        assertTrue(run().stdout.endsWith("skill and spec: 0.0.9 → ${Embedded.VERSION}\n"))
+        assertTrue(run().stdout.endsWith("skill and spec in .claude/skills/safanoria: 0.0.9 → ${Embedded.VERSION}\n"))
+    }
+
+    @Test
+    fun projectWithoutItsOwnCopy() {
+        SystemFileSystem.deleteRecursively(work / ".claude")
+        val r = run()
+        assertEquals(0, r.statusCode, r.output)
+        assertTrue(r.stdout.endsWith("skill and spec in $globalSkill: not installed → ${Embedded.VERSION}\n"), r.stdout)
+        assertFalse(SystemFileSystem.exists(work / ".claude" / "skills"), "no project copy is added")
+    }
+
+    @Test
+    fun globalOnlyNeedsNoProject() {
+        val r = cli(claudeDir = claude).test(listOf("--root", (work / "tickets").toString(), "update", "--global"))
+        assertEquals(0, r.statusCode, r.output)
+        assertEquals(
+            "create $globalSkill/SKILL.md\ncreate $globalSkill/SPEC.md\n" +
+                Embedded.COMMANDS.keys.joinToString("") { "create ${globalSkill.parent}/$it/SKILL.md\n" } +
+                "skill and spec in $globalSkill: not installed → ${Embedded.VERSION}\n",
+            r.stdout,
+        )
+        assertEquals("old skill\n", read(".claude/skills/safanoria/SKILL.md"), "the project's copy is left alone")
     }
 
     @Test

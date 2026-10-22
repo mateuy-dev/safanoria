@@ -119,8 +119,9 @@ jobs:
       - name: install.sh
         if: runner.os != 'Windows'
         run: |
-          SAFANORIA_BASE_URL="file://$PWD/rel" SAFANORIA_BIN_DIR="$PWD/bin" SAFANORIA_APP_DIR="$PWD/app" ./install.sh
+          SAFANORIA_BASE_URL="file://$PWD/rel" SAFANORIA_BIN_DIR="$PWD/bin" SAFANORIA_APP_DIR="$PWD/app" CLAUDE_CONFIG_DIR="$PWD/claude" ./install.sh
           bin/safanoria-cli version
+          grep -q '<!-- safanoria ' claude/skills/safanoria/SKILL.md claude/skills/safanoria/SPEC.md
           bin/safanoria --version
           # What a hook written for the old `safanoria` (the CLI) gets: no window, and the new name.
           if bin/safanoria validate --staged 2> old.txt; then echo "::error::safanoria ran a CLI command"; exit 1; fi
@@ -132,8 +133,10 @@ jobs:
           $env:SAFANORIA_BASE_URL = "file:///$($PWD.Path -replace '\\','/')/rel"
           $env:SAFANORIA_BIN_DIR = "$PWD\bin"
           $env:SAFANORIA_APP_DIR = "$PWD\app"
+          $env:CLAUDE_CONFIG_DIR = "$PWD\claude"
           ./install.ps1
           & "$PWD\bin\safanoria-cli.exe" version
+          if (-not (Select-String -Quiet '<!-- safanoria ' "$PWD\claude\skills\safanoria\SKILL.md")) { throw "install.ps1 didn't install the skill" }
           $version = & "$PWD\bin\safanoria.cmd" --version
           if ($version -notlike "safanoria *") { throw "safanoria --version printed '$version'" }
       # The Action (action.yml), as projects use it, on this repository's tickets: after the

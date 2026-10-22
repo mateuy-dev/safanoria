@@ -9,8 +9,9 @@ session in that worktree. The session knows its ticket from the branch, works as
 and records its decisions in the ticket as it commits. No planning or approval steps.
 
 - [`SPEC.md`](SPEC.md): the format, version 1. The contract for every tool.
-- [`skill/`](skill/): agent workflow (Claude Code skill). `safanoria-cli init` / `update` install it,
-  with `SPEC.md`, into the project's `.claude/skills/safanoria/`.
+- [`skill/`](skill/): agent workflow (Claude Code skill). The install scripts, `safanoria-cli init`
+  and `update` install it, with `SPEC.md`, into `~/.claude/skills/safanoria/`, for all your
+  projects; a project can also commit its own copy (see "Adding Safanoria to a project").
 - [`templates/`](templates/): blank tickets. `ticket.md` for any type (copy to
   `<dir>/_TEMPLATE.md` to customise it), `bug.md` and `research.md` for those types (copy to
   `<dir>/_TEMPLATE.<type>.md`). The CLI embeds them.
@@ -59,7 +60,8 @@ The scripts download the latest release (`SAFANORIA_VERSION=0.1.0` for another),
 checksums, and put `safanoria-cli` and `safanoria` in `~/.local/bin` (`SAFANORIA_BIN_DIR` to
 change it). The app comes with its own Java runtime (about 150 MB), in
 `~/.local/share/safanoria` (Windows: `%LOCALAPPDATA%\safanoria`; `SAFANORIA_APP_DIR` to change
-it); `SAFANORIA_CLI_ONLY=1` installs only the CLI, for CI and servers. The Linux CLI needs
+it); `SAFANORIA_CLI_ONLY=1` installs only the CLI, for CI and servers. Otherwise they also install the
+agent skill for all your projects (`safanoria-cli update --global`, see "Adding Safanoria to a project"). The Linux CLI needs
 `libunistring.so.5` (Ubuntu 24.04+, Debian 13+: package `libunistring5`). From a checkout:
 `make install`.
 
@@ -83,15 +85,27 @@ own scripts and CI too. Workflows that use the Action at an older tag keep worki
 safanoria-cli init                      # asks for the components (parts released with their own version)
 safanoria-cli init --component app=composeApp/gradle.properties:appVersionName --external rails
 safanoria-cli update                    # later: this version's skill and spec, and any new templates
+safanoria-cli update --global           # only the skill and spec in ~/.claude, from anywhere
 ```
 
 `init` writes `safanoria.yaml` (with `worktree: ../<this directory>--{id}`, where each ticket's
 worktree goes; `--worktree` to choose another place), the ticket directory (`_TEMPLATE.md`, `_TEMPLATE.bug.md`,
-`_TEMPLATE.research.md`, `README.md`), the skill and SPEC.md in `.claude/skills/safanoria/`,
-the slash commands (see "Slash commands"), the paragraph that points agents to the skill in `CLAUDE.md`, and the SessionStart hook in
-`.claude/settings.json` (see "Working on a ticket"). The skill, spec and commands are Safanoria's and end
-with `<!-- safanoria X.Y.Z -->`; `update` replaces them and says which version was there before.
-A project skill without that marker that has a command's name is kept unless you accept.
+`_TEMPLATE.research.md`, `README.md`), the paragraph that points agents to the skill in
+`CLAUDE.md`, and the SessionStart hook in `.claude/settings.json` (see "Working on a ticket").
+
+**The skill and SPEC.md** go to `~/.claude/skills/safanoria/` (`$CLAUDE_CONFIG_DIR/skills/safanoria/`
+when that is set), and the slash commands (see "Slash commands") next to it, each in a
+`~/.claude/skills/<name>/` of its own, shared by every project and worktree: updating the CLI (the install scripts
+run `safanoria-cli update --global`) updates the skill every session reads, so it always matches
+the CLI, and ticket branches don't carry skill updates. They are Safanoria's and end with
+`<!-- safanoria X.Y.Z -->`; `update` replaces them and says which version was there before. A
+skill of yours without that marker that has a command's name is kept unless you accept.
+`init` asks whether the project also commits its own copy in `.claude/skills/safanoria/`
+(`--project-skill` / `--no-project-skill`), with the commands in `.claude/skills/<name>/`. Sessions that only have the repository need it:
+Claude Code on the web, and contributors without `safanoria-cli`. Where both exist, Claude Code
+uses the one in `~/.claude`; the project's copy is updated by `update` (run it on `main`, so ticket
+branches don't carry it), and you can drop it with `git rm -r .claude/skills/safanoria`. On a
+ticket's branch, the SessionStart context says when the skill in use isn't from the CLI's version.
 Templates, the ticket README, `CLAUDE.md` and `.claude/settings.json` are the project's: they
 are created when missing and changed only after asking (`--yes` to accept, `--dry-run` to see).
 
