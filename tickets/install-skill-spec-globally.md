@@ -2,7 +2,7 @@
 id: install-skill-spec-globally
 type: feature
 title: Install the skill and SPEC globally
-status: backlog
+status: in-progress
 priority: medium
 size: M
 created: 2026-10-22
@@ -20,3 +20,4 @@ Proposal: safanoria-cli install --global (or update --global) writes the skill a
 
 ## Work Log
 
+- **2026-10-22** · status · started
