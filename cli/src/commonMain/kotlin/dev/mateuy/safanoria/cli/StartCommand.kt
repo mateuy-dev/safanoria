@@ -12,6 +12,7 @@ import dev.mateuy.safanoria.core.Branches
 import dev.mateuy.safanoria.core.GitException
 import dev.mateuy.safanoria.core.Herdr
 import dev.mateuy.safanoria.core.HerdrException
+import dev.mateuy.safanoria.core.SessionPrompt
 import dev.mateuy.safanoria.core.Size
 import dev.mateuy.safanoria.core.Start
 import dev.mateuy.safanoria.core.StartException
@@ -45,10 +46,12 @@ class StartCommand : RepositoryCommand(name = "start") {
         "--herdr",
         help = "Inside Herdr, also open the worktree in a workspace (size L and XL) or a tab (smaller) running Claude Code",
     ).flag()
-    private val implement by option(
-        "--implement",
-        help = "Like --herdr, but the Claude session starts implementing the ticket and finishes it (implies --herdr)",
-    ).flag()
+    private val promptOption by option(
+        "--prompt",
+        help = "The first prompt of the Claude session --herdr opens: none (default; it waits for you), chat (discuss the " +
+            "ticket before changing anything) or implement (work it to completion and finish it). Implies --herdr",
+    ).choice(SessionPrompt.entries.associateBy { it.option })
+    private val implement by option("--implement", help = "Same as --prompt implement").flag()
     private val into by option("--in", help = "Where --herdr opens it, instead of by the ticket's size").choice("workspace", "tab")
     private val dryRun by option("--dry-run", help = "Show what would be done, change nothing").flag()
     private val date by option("--date", hidden = true, help = "Today's date (tests)")
@@ -74,7 +77,8 @@ class StartCommand : RepositoryCommand(name = "start") {
             }
             is StartResult.Ready -> r
         }
-        val herdr = herdrOption || implement || into != null
+        val prompt = if (implement) SessionPrompt.IMPLEMENT else promptOption ?: SessionPrompt.NONE
+        val herdr = herdrOption || implement || promptOption != null || into != null
         if (herdr && !Herdr.inside()) throw PrintMessage("Not started: --herdr needs a Herdr pane (HERDR_ENV=1).", 1, true)
         val workspace = (into ?: if (branches.graph.ticket(id)?.frontmatter?.size in setOf(Size.L, Size.XL)) "workspace" else "tab") == "workspace"
         val verb = if (dryRun) "would " else ""
@@ -95,8 +99,7 @@ class StartCommand : RepositoryCommand(name = "start") {
         }
         say("worktree ${ready.worktree}: open a session there (cd ${ready.worktree} && claude)")
         if (herdr) {
-            val prompt = if (implement) "Implement ticket $id: work it to completion following the safanoria skill, then finish it." else "Start working on ticket $id"
-            try { say(Herdr().open(ready.worktree, id, prompt, workspace)) } catch (e: HerdrException) {
+            try { say(Herdr().open(ready.worktree, id, prompt.text(id), workspace, claude = true)) } catch (e: HerdrException) {
                 throw PrintMessage("Started, but not opened in Herdr: ${e.message}", 1, true)
             }
         }

@@ -29,18 +29,17 @@ internal enum class Workplace(val text: String) {
 internal const val CLAUDE = "claude"
 
 /**
- * Opens [dir], the worktree of ticket [id], to work in: a shell, or Claude Code told to start
- * working on the ticket when [claude]. In Herdr, Claude on a large ticket (L, XL) gets a workspace
+ * Opens [dir], the worktree of ticket [id], to work in: a shell, or Claude Code when [claude], with
+ * no first prompt (the SessionStart hook gives it the ticket; it waits for the user). In Herdr, Claude on a large ticket (L, XL) gets a workspace
  * of its own, as `safanoria-cli start --herdr` does. Returns what to tell the user, after [done].
  */
 internal suspend fun Navigator.work(dir: Path, id: String, claude: Boolean, size: Size?, done: String? = null): Notice? {
-    val prompt = "Start working on ticket $id"
     // Named after the ticket: Claude Code shows the session's name as the terminal's title.
-    val command = if (claude) listOf(CLAUDE, "--name", id, prompt) else null
+    val command = if (claude) listOf(CLAUDE, "--name", id) else null
     fun told(text: String?, error: Boolean = false) = listOfNotNull(done, text).joinToString(". ").ifEmpty { null }?.let { Notice(it, error) }
     return when (Workplace.current()) {
         Workplace.HERDR -> try {
-            told(Herdr().open(dir, id, prompt.takeIf { claude }, workspace = claude && size in setOf(Size.L, Size.XL)))
+            told(Herdr().open(dir, id, prompt = null, workspace = claude && size in setOf(Size.L, Size.XL), claude = claude))
         } catch (e: HerdrException) {
             told("Not opened in Herdr: ${e.message}", error = true)
         }

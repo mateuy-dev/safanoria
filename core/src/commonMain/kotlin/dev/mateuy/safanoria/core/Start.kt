@@ -129,3 +129,23 @@ public object Start {
 
     private fun refused(reason: String) = StartResult.Refused(reason)
 }
+
+/**
+ * The first prompt of a Claude Code session opened on a started ticket's worktree (`start --herdr --prompt`).
+ * The SessionStart hook gives the session its ticket either way, so [NONE] loses nothing: it waits for the user.
+ */
+public enum class SessionPrompt(public val option: String) {
+    NONE("none"),
+    /** Read the ticket and discuss it with the user before changing anything. */
+    CHAT("chat"),
+    /** Work the ticket to completion and finish it. */
+    IMPLEMENT("implement");
+
+    /** The prompt for ticket [id]; null for [NONE]. */
+    public fun text(id: String): String? = when (this) {
+        NONE -> null
+        CHAT -> "Let's discuss ticket $id before changing anything: what it asks, what's unclear or undecided, " +
+            "and how you'd approach it. Don't edit files yet."
+        IMPLEMENT -> "Implement ticket $id: work it to completion following the safanoria skill, then finish it."
+    }
+}

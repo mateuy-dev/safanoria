@@ -85,9 +85,16 @@ public object Install {
         return installedVersion(fileSystem.read(skill) { readUtf8() }) ?: "installed by hand"
     }
 
-    /** The managed files, with their content for this version. */
+    /**
+     * The managed files by their path in a skills directory (the user's or the project's), with their content for
+     * this version: the skill and SPEC.md, and each slash command as a skill of its own ([commandFile]).
+     */
     public fun managedFiles(): Map<String, String> =
-        mapOf("SKILL.md" to marked(Embedded.SKILL), "SPEC.md" to marked(Embedded.SPEC))
+        mapOf("safanoria/SKILL.md" to marked(Embedded.SKILL), "safanoria/SPEC.md" to marked(Embedded.SPEC)) +
+            Embedded.COMMANDS.entries.associate { (name, text) -> commandFile(name) to marked(text) }
+
+    /** Where slash command [name] goes in a skills directory: a skill of its own, invoked only by the user. */
+    public fun commandFile(name: String): String = "$name/SKILL.md"
 
     /** The templates a project gets: the default and one per type with a built-in template. */
     public fun templates(): Map<String, String> =
@@ -157,13 +164,21 @@ public object Install {
         return FileChange(path, wanted, action, managed)
     }
 
-    /** The skill and spec in the user's Claude Code directory, [claudeDir]. */
+    /** The managed files in [skillsDir]. */
+    private fun managedChanges(fileSystem: FileSystem, skillsDir: Path): List<FileChange> = managedFiles().map { (file, text) ->
+        val path = skillsDir / file.toPath()
+        // A command's skill without Safanoria's marker is one of the same name of the user's own: only after asking.
+        val owned = file.substringBefore('/') in Embedded.COMMANDS && read(fileSystem, path)?.let { installedVersion(it) == null } == true
+        change(fileSystem, path, text, managed = !owned)
+    }
+
+    /** The skill, spec and slash commands in the user's Claude Code directory, [claudeDir]. */
     public fun globalPlan(fileSystem: FileSystem, claudeDir: Path): List<FileChange> =
-        managedFiles().map { (name, text) -> change(fileSystem, claudeDir / GLOBAL_SKILL_DIR / name, text, managed = true) }
+        managedChanges(fileSystem, (claudeDir / GLOBAL_SKILL_DIR).parent!!)
 
     /**
      * Every file Safanoria installs or creates in [root], and what to do with each; the project's
-     * copy of the skill and spec only with [projectSkill].
+     * copy of the skill, spec and slash commands only with [projectSkill].
      */
     public fun plan(fileSystem: FileSystem, root: Path, dir: String, projectSkill: Boolean): List<FileChange> {
         fun read(path: Path) = read(fileSystem, path)
@@ -184,7 +199,7 @@ public object Install {
             null, settingsText -> FileChange(settings, settingsText.orEmpty(), FileAction.SAME, managed = false) // not JSON we can edit: left alone
             else -> FileChange(settings, wanted, if (settingsText == null) FileAction.CREATE else FileAction.DIFFERS, managed = false)
         }
-        val skill = if (projectSkill) managedFiles().map { (name, text) -> change(skillDir / name, text, managed = true) } else emptyList()
+        val skill = if (projectSkill) managedChanges(fileSystem, skillDir.parent!!) else emptyList()
         return skill +
             templates().map { (name, text) -> change(ticketDir / name, text, managed = false) } +
             listOf(change(ticketDir / "README.md", ticketReadme(), managed = false)).map {

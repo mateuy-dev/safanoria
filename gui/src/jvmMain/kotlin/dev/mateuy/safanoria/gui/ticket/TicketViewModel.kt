@@ -53,8 +53,9 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
     private fun run(action: TicketAction, input: String = "") = when (action) {
         TicketAction.START -> start()
         TicketAction.START_IN_CLAUDE -> start(
-            // Named after the ticket: Claude Code shows the session's name as the terminal's title.
-            command = listOf(CLAUDE, "--name", id, "Start working on ticket $id"),
+            // Named after the ticket: Claude Code shows the session's name as the terminal's title. No first
+            // prompt: the SessionStart hook gives the session its ticket, and it waits for the user.
+            command = listOf(CLAUDE, "--name", id),
         )
         TicketAction.CHECK_OUT -> checkOut()
         TicketAction.OPEN_TERMINAL -> openTerminal()

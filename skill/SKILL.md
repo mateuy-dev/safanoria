@@ -63,6 +63,14 @@ planning or approval step, and a session works as the user directs it.
    uncommitted here. If you asked something, its content is still under discussion: leave it
    uncommitted and tell the user.
 
+**From a command** (`/sc`, `/scsh`, `/scshc`, `/scshi`): the user wants the ticket made and committed
+in one step, so ask nothing. Write it from the command's text and, when the text points to it
+("what we discussed"), from this conversation. The session that works the ticket sees only the
+ticket, so its Objective stands on its own: what was decided, the options rejected and why, the
+constraints found; conclusions already reached go into Acceptance Criteria. It is a top-level
+ticket on `mainBranch` (`--on <mainBranch>` from another branch). Only if the text and the
+conversation together are too thin for an Objective: ask, and create nothing until answered.
+
 Without the CLI: pick an id (SPEC §3) that no branch has used (`git rev-list --all -1 --
 '<dir>/<id>.md'` and `git branch -a --list '*<id>'` print nothing), copy the template (SPEC §6.2),
 set `status: backlog`, today's dates, and for a child `parent` plus its item in the parent's Plan.

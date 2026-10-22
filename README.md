@@ -94,12 +94,14 @@ worktree goes; `--worktree` to choose another place), the ticket directory (`_TE
 `CLAUDE.md`, and the SessionStart hook in `.claude/settings.json` (see "Working on a ticket").
 
 **The skill and SPEC.md** go to `~/.claude/skills/safanoria/` (`$CLAUDE_CONFIG_DIR/skills/safanoria/`
-when that is set), shared by every project and worktree: updating the CLI (the install scripts
+when that is set), and the slash commands (see "Slash commands") next to it, each in a
+`~/.claude/skills/<name>/` of its own, shared by every project and worktree: updating the CLI (the install scripts
 run `safanoria-cli update --global`) updates the skill every session reads, so it always matches
 the CLI, and ticket branches don't carry skill updates. They are Safanoria's and end with
-`<!-- safanoria X.Y.Z -->`; `update` replaces them and says which version was there before.
+`<!-- safanoria X.Y.Z -->`; `update` replaces them and says which version was there before. A
+skill of yours without that marker that has a command's name is kept unless you accept.
 `init` asks whether the project also commits its own copy in `.claude/skills/safanoria/`
-(`--project-skill` / `--no-project-skill`). Sessions that only have the repository need it:
+(`--project-skill` / `--no-project-skill`), with the commands in `.claude/skills/<name>/`. Sessions that only have the repository need it:
 Claude Code on the web, and contributors without `safanoria-cli`. Where both exist, Claude Code
 uses the one in `~/.claude`; the project's copy is updated by `update` (run it on `main`, so ticket
 branches don't carry it), and you can drop it with `git rm -r .claude/skills/safanoria`. On a
@@ -324,7 +326,9 @@ safanoria-start() {
 **In Herdr.** Inside a [Herdr](https://herdr.dev) pane, `start <id> --herdr` also opens the worktree
 there running Claude Code (`claude --name <id>`), without taking focus: a workspace for tickets of
 size L and XL, a tab of the current workspace for smaller ones (`--in workspace|tab` overrides).
-`--implement` does the same but the session starts implementing the ticket and finishes it.
+The session waits for you: the SessionStart hook has already given it the ticket. `--prompt chat`
+starts it discussing the ticket before changing anything, and `--prompt implement` (or `--implement`)
+working the ticket to completion and finishing it; either implies `--herdr`.
 `merge` then closes the workspace or tab whose panes are in that ticket's worktree (a workspace only
 when all its tabs are), from whichever pane you run it; `--keep-herdr` leaves it open.
 
@@ -395,6 +399,25 @@ branch; a worktree with uncommitted files is kept, with its branch. `finish <id>
 one. `release` does the same before stamping, and `validate` warns about them
 (`review-merged`). A squash merge leaves no trace git can follow: delete the branch, and the
 ticket counts as merged.
+
+### Slash commands
+
+The workflows typed most often are one command each in Claude Code, installed as skills in
+`.claude/skills/<name>/` that only you invoke. The text after a create command is what the ticket
+is about; "what we discussed" makes it from the conversation. The ticket is committed on
+`mainBranch` without questions, with an Objective that stands on its own, since the session that
+works it sees only the ticket.
+
+| Command | Does |
+|---|---|
+| `/sc <text>` | Create a ticket |
+| `/scsh <text>` | Create it and start it in Herdr (`start --herdr`): the session waits for you |
+| `/scshc <text>` | … and the session discusses it first (`--prompt chat`) |
+| `/scshi <text>` | … and the session implements and finishes it (`--prompt implement`) |
+| `/ssh <id>`, `/sshc <id>`, `/sshi <id>` | The same three starts, for an existing ticket |
+| `/sr [--since <commit>]` | `review`: review this worktree's ticket in your IDE |
+| `/sre` | `review --end`, then act on your edits and `// REVIEW:` comments |
+| `/sm` | End the review if in it, then `merge` this worktree's ticket |
 
 ## Releasing
 

@@ -22,6 +22,7 @@ class EmbeddedTest {
         assertEquals(file("templates/ticket.md"), Embedded.TICKET_TEMPLATE)
         assertEquals(file("templates/bug.md"), Embedded.TYPE_TEMPLATES["bug"])
         assertEquals(file("templates/research.md"), Embedded.TYPE_TEMPLATES["research"])
+        assertEquals(file("skill/commands/scshi.md"), Embedded.COMMANDS["scshi"])
     }
 
     @Test

@@ -88,7 +88,9 @@ class UpdateTest {
         val r = cli(claudeDir = claude).test(listOf("--root", (work / "tickets").toString(), "update", "--global"))
         assertEquals(0, r.statusCode, r.output)
         assertEquals(
-            "create $globalSkill/SKILL.md\ncreate $globalSkill/SPEC.md\nskill and spec in $globalSkill: not installed → ${Embedded.VERSION}\n",
+            "create $globalSkill/SKILL.md\ncreate $globalSkill/SPEC.md\n" +
+                Embedded.COMMANDS.keys.joinToString("") { "create ${globalSkill.parent}/$it/SKILL.md\n" } +
+                "skill and spec in $globalSkill: not installed → ${Embedded.VERSION}\n",
             r.stdout,
         )
         assertEquals("old skill\n", read(".claude/skills/safanoria/SKILL.md"), "the project's copy is left alone")

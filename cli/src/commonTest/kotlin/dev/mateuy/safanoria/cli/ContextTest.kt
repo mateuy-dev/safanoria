@@ -46,7 +46,8 @@ class ContextTest {
 
         // The user's copy is the one Claude Code uses: current, so no warning, and the format is there.
         SystemFileSystem.createDirectories(skill)
-        Install.managedFiles().forEach { (name, text) -> SystemFileSystem.write(skill / name) { writeUtf8(text) } }
+        Install.managedFiles().filterKeys { it.startsWith("safanoria/") }
+            .forEach { (file, text) -> SystemFileSystem.write(skill.parent!! / file) { writeUtf8(text) } }
         val current = run(repo, claude).stdout
         assertTrue("(format: ${displayPath(skill / "SPEC.md")}," in current, current)
         assertTrue("is from Safanoria" !in current && "isn't installed" !in current, current)
