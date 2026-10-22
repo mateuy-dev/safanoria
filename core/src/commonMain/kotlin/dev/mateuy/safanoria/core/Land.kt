@@ -48,6 +48,7 @@ public object Land {
             return refused("'$id' is merged into ${ticket.branch} already: set it done with finish --done")
         }
         val git = repository.git
+        Review.blocking(repository.git, id)?.let { return refused(it) }
         return try {
             val branchCommit = git.commitId("refs/heads/$id") ?: return refused("no local branch '$id' to merge")
             val targetCommit = git.commitId("refs/heads/$target") ?: return refused("no local branch '$target' to merge into")

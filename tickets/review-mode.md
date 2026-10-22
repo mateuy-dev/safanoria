@@ -40,3 +40,6 @@ Also:
 ## Work Log
 
 - **2026-10-22** · status · started
+- **2026-10-22** · decision · Review mode is a marker file (`safanoria-review`: id, target, base, tip) in the worktree's own git dir, valid while HEAD is detached. A detached worktree drops its branch from `git worktree list`, so without it `merge`/`finish` would skip that worktree's uncommitted check.
+- **2026-10-22** · decision · `review --end` resets to the tip recorded at the start; meanwhile every commit on the branch (`finish`, `merge`, `reopen`, `new` via BranchView) is refused, so it can't move under the review.
+- **2026-10-22** · decision · An already merged ticket is refused, not just warned: its merge-base diff is empty. The board isn't changed (a committed file can't show local worktree state); `context` tells a session instead.

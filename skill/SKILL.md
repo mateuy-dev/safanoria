@@ -101,6 +101,17 @@ the ticket `in-progress` and say which. Also finish when the user says the work 
 
 The user reviews. What comes next is theirs to say, never yours to start:
 
+- **"I want to review"**: `safanoria-cli review <id>` (`--since <commit>` for only what changed
+  after it, e.g. the fixes after a first review). In the ticket's worktree it detaches HEAD at
+  the merge-base with the target and stages the whole ticket, for the user's IDE; the branch
+  doesn't move. While in review mode (the SessionStart context says so) never edit or commit.
+  Warnings it prints (changes merged in from outside the target) are for the user: pass them on.
+- **"Finish review" / "look at my REVIEW comments" / "reviewed, merge"**: `safanoria-cli review --end`
+  first. It goes back to the branch, leaving only the user's edits uncommitted, and lists them.
+  Then do what was asked: commit the user's edits (a Work Log `review` entry if one is a
+  decision), act on the `// REVIEW: …` comments in the code (feedback; remove each once done),
+  or merge.
+
 - **"Merge it" / "land it"**: `safanoria-cli merge <id>`. One merge commit on the target with the
   ticket `done` in it and the parent's Plan item checked; then it removes this worktree and
   deletes the branch, so it is the last thing the session does. It pushes nothing. If it

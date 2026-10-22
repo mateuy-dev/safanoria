@@ -39,6 +39,7 @@ content. `safanoria-cli --help` lists its commands; each is described below. On 
 | `new` | Create a ticket from a title: id, template, parent's Plan |
 | `list`, `board` | One line per ticket; a markdown board by status, done split in to release and released |
 | `start`, `finish` | Start a ticket (branch, worktree, `in-progress`); set it `review` when the work is complete |
+| `review` | Review mode: the ticket's whole diff as uncommitted changes in its worktree, for an IDE; `--end` goes back |
 | `merge`, `reopen` | Land a ticket in review (merged, `done`, worktree and branch removed); or send it back to `in-progress` |
 | `context` | The current branch's ticket, for the agent session (SessionStart hook) |
 | `validate`, `hook` | Check every SPEC rule; before each commit |
@@ -281,6 +282,7 @@ safanoria-cli start herd-photos --dry-run       # what it would do
 safanoria-cli start herd-photos                 # branch, status: in-progress, worktree
 cd ../VacAppKMP--herd-photos && claude      # an ordinary session, in the worktree
 safanoria-cli finish herd-photos                # work complete: status: review
+safanoria-cli review herd-photos                # see its changes in your IDE; review --end when done
 safanoria-cli merge herd-photos                 # reviewed: merged, status: done, worktree and branch gone
 safanoria-cli reopen herd-photos --reason "…"   # or: the review found something, back to in-progress
 ```
@@ -338,6 +340,25 @@ uncommitted changes, or when the branch is behind its target (commits that only 
 don't count: tickets are created on `main` all the time). It lists the ticket's unchecked
 Acceptance Criteria and pending Learnings without stopping for them. Then it prints what there
 is to review (the diff stat against the target) and the next command.
+
+**Review mode.** To see exactly what a ticket changed in an IDE (IntelliJ: the Commit window
+lists every changed file, the gutter marks every changed line, and navigation, inspections and
+tests run on the real code), `review <id>` puts its worktree in review mode: `git checkout --detach`,
+then `git reset --soft` to the merge-base with its target (`main`, or the parent's branch for a
+child). The branch doesn't move; the whole ticket shows as staged changes. Edit what you like,
+leave `// REVIEW: …` comments for the session, then `review --end`: it moves HEAD back to the
+branch's commit (`reset --soft`, never `--hard`) and switches to the branch, so your edits are
+the only uncommitted changes, even if you committed by mistake meanwhile. It lists them; commit
+them on the branch, or tell the session to look at your comments.
+
+`review` refuses when the worktree has uncommitted changes, is in review mode already, or the
+ticket is merged into its target (review the merge commit then). It warns when the branch merged
+in commits its target doesn't have (a child merged `main` and its parent didn't): those changes
+show as the ticket's. `--since <commit>` reviews only what came after a commit, such as the fixes
+after a first review. `review --end` works from the worktree's state alone (a marker in its git
+directory while HEAD is detached), so any session can end it; `review --end <id>` ends it from
+another checkout. Meanwhile `finish`, `merge`, `reopen` and `new` refuse to commit on the branch,
+and the SessionStart context tells the session the worktree is in review mode.
 
 **Review, then land or go back.** After the review, one command each way, from any checkout:
 
