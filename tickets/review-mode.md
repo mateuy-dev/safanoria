@@ -2,7 +2,7 @@
 id: review-mode
 type: feature
 title: "Review mode: safanoria-cli review <id> and review --end"
-status: backlog
+status: in-progress
 priority: medium
 size: M
 created: 2026-10-22
@@ -39,3 +39,4 @@ Also:
 
 ## Work Log
 
+- **2026-10-22** · status · started
