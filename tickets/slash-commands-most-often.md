@@ -2,7 +2,7 @@
 id: slash-commands-most-often
 type: feature
 title: Slash commands for the most often run workflows
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-22
@@ -17,3 +17,4 @@ Many workflows are typed to Claude over and over in nearly the same words, e.g. 
 
 ## Work Log
 
+- **2026-10-22** · status · started
