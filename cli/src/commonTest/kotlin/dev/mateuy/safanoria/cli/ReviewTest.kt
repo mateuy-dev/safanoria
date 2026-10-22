@@ -76,6 +76,21 @@ class ReviewTest {
     }
 
     @Test
+    fun withoutAnIdItReviewsThisWorktreesTicket() {
+        val (repo, wt) = withWork("review-current")
+        val r = run(repo, "review", at = wt)
+        assertEquals(0, r.statusCode, r.output)
+        assertEquals(listOf("code.txt", "more.txt", "tickets/beta.md"), repo.staged(wt))
+
+        val again = run(repo, "review", at = wt)
+        assertEquals(1, again.statusCode)
+        assertTrue("is in review mode for 'beta' already" in again.stderr, again.stderr)
+
+        val main = run(repo, "review")
+        assertTrue("missing argument <id>" in main.stderr, "main isn't a ticket and nothing may be asked: ${main.output}")
+    }
+
+    @Test
     fun reviewRefusesUncommittedChanges() {
         val (repo, wt) = withWork("review-uncommitted")
         repo.write("code.txt", "dirty\n", at = wt)

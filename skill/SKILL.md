@@ -101,7 +101,7 @@ the ticket `in-progress` and say which. Also finish when the user says the work 
 
 The user reviews. What comes next is theirs to say, never yours to start:
 
-- **"I want to review"**: `safanoria-cli review <id>` (`--since <commit>` for only what changed
+- **"I want to review"**: `safanoria-cli review` (this worktree's ticket; `--since <commit>` for only what changed
   after it, e.g. the fixes after a first review). In the ticket's worktree it detaches HEAD at
   the merge-base with the target and stages the whole ticket, for the user's IDE; the branch
   doesn't move. While in review mode (the SessionStart context says so) never edit or commit.

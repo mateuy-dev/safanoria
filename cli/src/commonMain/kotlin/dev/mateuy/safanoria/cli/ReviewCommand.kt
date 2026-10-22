@@ -24,7 +24,7 @@ class ReviewCommand : RepositoryCommand(name = "review") {
             "branch) so the whole ticket shows as staged changes in an IDE; the branch doesn't move. --end goes back to " +
             "the branch, leaving only the edits made during the review uncommitted. Refuses on uncommitted changes."
 
-    private val idArgument by argument(name = "id", help = "Ticket id (on a terminal: asks, starting on this branch's ticket; with --end: the ticket whose review to end, default this worktree's)").optional()
+    private val idArgument by argument(name = "id", help = "Ticket id (default: this worktree's ticket; elsewhere, on a terminal, asks; with --end: the ticket whose review to end, default this worktree's)").optional()
     private val end by option("--end", help = "Leave review mode, keeping your edits as uncommitted changes on the branch").flag()
     private val since by option("--since", help = "Review only what changed after this commit (e.g. the fixes after a first review)")
     private val dryRun by option("--dry-run", help = "Show what would be done, change nothing").flag()
@@ -35,9 +35,8 @@ class ReviewCommand : RepositoryCommand(name = "review") {
         val branches = Branches.read(repo) ?: throw PrintMessage(
             "No review mode: needs a git repository with the branch '${repo.config.mainBranch}' (mainBranch).", 1, true,
         )
-        val id = idArgument ?: askTicket(
+        val id = idArgument ?: currentTicket(branches) ?: askTicket(
             branches, "Review which ticket?", setOf(Status.IN_PROGRESS, Status.REVIEW), "nothing to review: no ticket in progress or in review",
-            default = runCatching { repo.git.currentBranch() }.getOrNull(),
         )
         val ready = when (val r = Review.prepare(repo, branches, id, since)) {
             is ReviewResult.Refused -> throw PrintMessage("No review mode: ${r.reason}", 1, true)
@@ -56,6 +55,11 @@ class ReviewCommand : RepositoryCommand(name = "review") {
         if (stat.isNotEmpty()) echo(stat)
         echo("your edits stay yours; when done: safanoria-cli review --end")
     }
+
+    /** This worktree's ticket: its branch's, or the one it is in review mode for (then [Review.prepare] says so). */
+    private fun currentTicket(branches: Branches): String? = runCatching {
+        Review.state(repository.root)?.id ?: repository.git.currentBranch().takeIf { branches.graph.ticket(it) != null }
+    }.getOrNull()
 
     private fun end() {
         val worktree: Path = idArgument?.let { id ->

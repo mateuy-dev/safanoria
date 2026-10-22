@@ -343,7 +343,7 @@ is to review (the diff stat against the target) and the next command.
 
 **Review mode.** To see exactly what a ticket changed in an IDE (IntelliJ: the Commit window
 lists every changed file, the gutter marks every changed line, and navigation, inspections and
-tests run on the real code), `review <id>` puts its worktree in review mode: `git checkout --detach`,
+tests run on the real code), `review` in the ticket's worktree (or `review <id>` from any checkout) puts it in review mode: `git checkout --detach`,
 then `git reset --soft` to the merge-base with its target (`main`, or the parent's branch for a
 child). The branch doesn't move; the whole ticket shows as staged changes. Edit what you like,
 leave `// REVIEW: …` comments for the session, then `review --end`: it moves HEAD back to the
