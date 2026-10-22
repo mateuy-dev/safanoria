@@ -18,3 +18,5 @@ Many workflows are typed to Claude over and over in nearly the same words, e.g. 
 ## Work Log
 
 - **2026-10-22** · status · started
+- **2026-10-22** · decision · Commands: /sc (create), /scsh, /scshc, /scshi (create, then start in Herdr with no prompt, chat or implement), /ssh, /sshc, /sshi (the same for an existing ticket), /sr, /sre, /sm (review, end review, merge). Picked from past prompts: ticket creation, mostly followed by starting it, and merging are the most typed; commit, push and release are left out as not Safanoria-specific. A /scs without Herdr was dropped: a command can't move the session into the new worktree.
+- **2026-10-22** · decision · `start --prompt none|chat|implement` chooses the Herdr session's first prompt; `--implement` stays as its alias. The old "Start working on ticket <id>" is dropped everywhere (CLI, TUI, GUI Start in Claude) for no prompt: it was ambiguous, and the SessionStart hook already gives the session its ticket.

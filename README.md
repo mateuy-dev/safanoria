@@ -311,7 +311,9 @@ safanoria-start() {
 **In Herdr.** Inside a [Herdr](https://herdr.dev) pane, `start <id> --herdr` also opens the worktree
 there running Claude Code (`claude --name <id>`), without taking focus: a workspace for tickets of
 size L and XL, a tab of the current workspace for smaller ones (`--in workspace|tab` overrides).
-`--implement` does the same but the session starts implementing the ticket and finishes it.
+The session waits for you: the SessionStart hook has already given it the ticket. `--prompt chat`
+starts it discussing the ticket before changing anything, and `--prompt implement` (or `--implement`)
+working the ticket to completion and finishing it; either implies `--herdr`.
 `merge` then closes the workspace or tab whose panes are in that ticket's worktree (a workspace only
 when all its tabs are), from whichever pane you run it; `--keep-herdr` leaves it open.
 
