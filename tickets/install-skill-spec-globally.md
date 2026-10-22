@@ -2,7 +2,7 @@
 id: install-skill-spec-globally
 type: feature
 title: Install the skill and SPEC globally
-status: in-progress
+status: review
 priority: medium
 size: M
 created: 2026-10-22
@@ -44,3 +44,4 @@ Out of scope:
 - **2026-10-22** · decision · The context warning checks the skill Claude Code will use (user's if present, else project's), not every copy: a stale project copy behind a current user copy changes nothing locally.
 - **2026-10-22** · decision · Spec versions: the CLI rejects a `safanoria.yaml` on a spec version it doesn't implement, so a global SPEC can't silently meet one through the CLI; for agents, the skill compares SPEC.md's title with `safanoria:` and falls back to the project's copy. Revisit when spec 2 exists (install one SPEC per version).
 - **2026-10-22** · decision · Tests set `CLAUDE_CONFIG_DIR` (build/test-claude) so `init`/`update` tests never write the developer's `~/.claude`; tests that check it pass their own directory to `cli()`.
+- **2026-10-22** · status · review
