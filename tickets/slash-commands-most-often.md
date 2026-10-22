@@ -2,7 +2,7 @@
 id: slash-commands-most-often
 type: feature
 title: Slash commands for the most often run workflows
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-10-22
@@ -26,3 +26,4 @@ Many workflows are typed to Claude over and over in nearly the same words, e.g. 
 - **2026-10-22** · decision · `start --prompt none|chat|implement` chooses the Herdr session's first prompt; `--implement` stays as its alias. The old "Start working on ticket <id>" is dropped everywhere (CLI, TUI, GUI Start in Claude) for no prompt: it was ambiguous, and the SessionStart hook already gives the session its ticket.
 - **2026-10-22** · decision · The commands ship with Safanoria: sources in `skill/commands/<name>.md`, embedded in the CLI and installed by `init`/`update` as `.claude/skills/<name>/SKILL.md` (skills with `disable-model-invocation`), marked like the skill. A same-named skill without the marker is the project's and is replaced only after asking. The create rules they share (no questions, a self-contained Objective from the conversation, on mainBranch) live in the safanoria skill's Create, so each command stays a few lines.
 - **2026-10-22** · decision · After merging install-skill-spec-globally: the commands go wherever the skill does, `~/.claude/skills/<name>/` (`update --global`, run by the install scripts) and, when the project keeps its own copy, `.claude/skills/<name>/`.
+- **2026-10-22** · status · review
