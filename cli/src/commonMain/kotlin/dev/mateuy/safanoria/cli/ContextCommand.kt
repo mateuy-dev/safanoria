@@ -6,7 +6,9 @@ import dev.mateuy.safanoria.core.Review
 import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.core.isValidId
 import dev.mateuy.safanoria.core.CONFIG_FILE
+import dev.mateuy.safanoria.core.Embedded
 import dev.mateuy.safanoria.core.Install
+import dev.mateuy.safanoria.core.SystemFileSystem
 
 /**
  * `safanoria-cli context`: run by the Claude Code SessionStart hook (README "Agent sessions"). On a
@@ -30,6 +32,10 @@ class ContextCommand : RepositoryCommand(name = "context") {
         if (!isValidId(branch)) return null
         val ticket = repo.ticket(branch) ?: return null
         val file = displayPath(ticket.path)
+        // Claude Code prefers the user's skill to the project's when both exist.
+        val skillDir = listOfNotNull(claudeDir?.let { it / Install.GLOBAL_SKILL_DIR }, repo.root / Install.SKILL_DIR)
+            .firstOrNull { SystemFileSystem.exists(it / "SKILL.md") }
+        val skillVersion = skillDir?.let { Install.skillVersion(SystemFileSystem, it) }
         return buildString {
             if (review != null) {
                 val against = review.since?.let { "after $it" } ?: "against ${review.target}"
@@ -40,7 +46,8 @@ class ContextCommand : RepositoryCommand(name = "context") {
                 append("the human's edits uncommitted. Then act on them as the safanoria skill says.\n\n")
             }
             append("This session works on the Safanoria ticket `$branch`: this checkout is its branch, and the ticket is $file ")
-            append("(format: ${Install.SKILL_DIR}/SPEC.md, settings: $CONFIG_FILE). Work as the user directs; there is no planning ")
+            append("(format: ${skillDir?.let { displayPath(it / "SPEC.md") } ?: "the safanoria skill's SPEC.md"}, settings: $CONFIG_FILE). ")
+            append("Work as the user directs; there is no planning ")
             append("or approval step. Keep the ticket current with the `safanoria` skill: a short Work Log entry for each decision ")
             append("(what and why, not progress), committed together with the code it explains.")
             if (ticket.frontmatter?.status == Status.IN_PROGRESS) {
@@ -48,6 +55,16 @@ class ContextCommand : RepositoryCommand(name = "context") {
                 append("so the ticket shows that it waits for review.")
             }
             append("\n\n")
+            when {
+                skillDir == null -> append(
+                    "The `safanoria` skill isn't installed. Tell the user: `safanoria-cli update --global` installs it for all projects.\n\n",
+                )
+                skillVersion != Embedded.VERSION -> append(
+                    "The `safanoria` skill in ${displayPath(skillDir)} is from Safanoria $skillVersion, but safanoria-cli is " +
+                        "${Embedded.VERSION}: they may disagree. Tell the user: `safanoria-cli update --global` installs the " +
+                        "current one for all projects (and takes precedence over a project's copy).\n\n",
+                )
+            }
             append("<ticket file=\"$file\">\n")
             append(ticket.text.trimEnd('\n'))
             append("\n</ticket>\n")

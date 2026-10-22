@@ -9,6 +9,7 @@ import com.github.ajalt.clikt.core.requireObject
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.multiple
+import com.github.ajalt.clikt.parameters.options.nullableFlag
 import com.github.ajalt.clikt.parameters.options.option
 import dev.mateuy.safanoria.core.CONFIG_FILE
 import dev.mateuy.safanoria.core.ComponentSpec
@@ -24,7 +25,9 @@ import dev.mateuy.safanoria.core.VersionSource
 class Init : CliktCommand(name = "init") {
     override fun help(context: Context) =
         "Set up Safanoria here (or in --root): safanoria.yaml, the ticket directory with templates, " +
-            "the agent skill and SPEC.md, the CLAUDE.md paragraph and the SessionStart hook in .claude/settings.json. Asks for the components unless given."
+            "the CLAUDE.md paragraph and the SessionStart hook in .claude/settings.json; and the agent skill and SPEC.md in " +
+            "~/.claude/skills/safanoria/, for all your projects. Asks for the components unless given, and whether the project " +
+            "also gets its own copy of the skill."
 
     private val cli by requireObject<CliContext>()
     private val dir by option("--dir", help = "Ticket directory").default("tickets")
@@ -32,6 +35,11 @@ class Init : CliktCommand(name = "init") {
     private val worktree by option("--worktree", help = "Where a ticket's worktree goes, with {id} for the ticket id (default: ../<this directory>--{id})")
     private val components by option("--component", help = "NAME=FILE:PROPERTY, e.g. app=gradle.properties:version (repeatable)").multiple()
     private val externals by option("--external", help = "Component released from another repository (repeatable)").multiple()
+    private val projectSkill by option(
+        "--project-skill",
+        help = "Also put the skill and SPEC.md in the project (.claude/skills/safanoria/, to commit), for Claude Code on the web " +
+            "and contributors without safanoria-cli",
+    ).nullableFlag("--no-project-skill")
     private val yes by option("--yes", help = "Change the project's existing files (e.g. CLAUDE.md) without asking").flag()
     private val dryRun by option("--dry-run", help = "Show what would be written, write nothing").flag()
 
@@ -46,9 +54,19 @@ class Init : CliktCommand(name = "init") {
         val specs = components.map(::parseComponent) + externals.map { ComponentSpec(checkName(it, "--external"), null) }
         val chosen = specs.ifEmpty { askComponents() }
         chosen.groupBy { it.name }.filterValues { it.size > 1 }.keys.firstOrNull()?.let { throw usage("component '$it' given twice") }
+        val claudeDir = cli.claudeDir
+        val withProjectSkill = projectSkill ?: cli.prompts?.confirm(
+            "Also commit a copy of the skill and SPEC.md in the project (${Install.SKILL_DIR}/)? Claude Code on the web " +
+                "and contributors without safanoria-cli need it; you would update it with `safanoria-cli update` on $mainBranch.",
+            default = false,
+        ) ?: false
+        if (claudeDir == null && !withProjectSkill) {
+            throw usage("no home directory to install the skill in (HOME, CLAUDE_CONFIG_DIR): use --project-skill")
+        }
 
         val config = FileChange(root / CONFIG_FILE, Install.config(dir, chosen, worktree, mainBranch), FileAction.CREATE, managed = false)
-        applyChanges(root, listOf(config) + Install.plan(SystemFileSystem, root, dir), yes, dryRun, cli.prompts)
+        val global = claudeDir?.let { Install.globalPlan(SystemFileSystem, it) }.orEmpty()
+        applyChanges(root, listOf(config) + global + Install.plan(SystemFileSystem, root, dir, withProjectSkill), yes, dryRun, cli.prompts)
         if (dryRun) return
 
         val problems = Validator(Repository(root)).validate()
