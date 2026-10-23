@@ -79,7 +79,7 @@ public object Review {
      * Commits after [base] that don't descend from it and aren't in the target: brought by a merge
      * from elsewhere (a child merged main, its parent didn't). The diff from [base] has their changes too.
      */
-    private fun warnings(git: Git, id: String, target: String, targetCommit: String, base: String, tip: String): List<String> {
+    internal fun warnings(git: Git, id: String, target: String, targetCommit: String, base: String, tip: String): List<String> {
         val all = git.count(tip, "^$base", "^$targetCommit")
         val descending = git.count("--ancestry-path=$base", tip, "^$base", "^$targetCommit")
         val foreign = all - descending

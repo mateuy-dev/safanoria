@@ -40,6 +40,7 @@ content. `safanoria-cli --help` lists its commands; each is described below. On 
 | `new` | Create a ticket from a title: id, template, parent's Plan |
 | `list`, `board` | One line per ticket; a markdown board by status, done split in to release and released |
 | `start`, `finish` | Start a ticket (branch, worktree, `in-progress`); set it `review` when the work is complete |
+| `diff` | A quick look at a ticket's changes against its target: in the terminal, or `--tool` in git's diff tool |
 | `review` | Review mode: the ticket's whole diff as uncommitted changes in its worktree, for an IDE; `--end` goes back |
 | `merge`, `reopen` | Land a ticket in review (merged, `done`, worktree and branch removed); or send it back to `in-progress` |
 | `context` | The current branch's ticket, for the agent session (SessionStart hook) |
@@ -261,7 +262,9 @@ in the taskbar. Without it, or when the file can't be read, it has Safanoria's.
   ticket shown from another branch shows none.
 - **Actions**, in the bar under the ticket (all but Open terminal ask first): **Start** on a backlog or ready ticket does what
   `safanoria-cli start` does, then opens a terminal in the new worktree; **Open terminal** on a
-  ticket in progress or in review opens one where its branch is checked out; **Finish** on a
+  ticket in progress or in review opens one where its branch is checked out; **Diff** on a started
+  ticket opens its changes in git's diff tool, as `safanoria-cli diff --tool` does (it needs
+  `diff.tool` set, see Diff below); **Finish** on a
   ticket in progress sets it to `review`, as `safanoria-cli finish` does, and shows why it
   refused or what the ticket still has open. A ticket in review has **Merge and finish**, which
   does what `safanoria-cli merge` does, and **Back to in progress**, which asks for the reason
@@ -282,12 +285,13 @@ or by mouse: click cards, chips, buttons and tabs, and scroll with the wheel. `?
 - Board: arrows or `hjkl` move between columns and cards, Enter opens a ticket, Space collapses a
   column, Tab goes to the filter chips, `v` Versions, `F` Fetch, `r` reads the tickets again, `q` quits.
 - Ticket: arrows scroll, Tab and Enter go through its links and buttons, and each action has a
-  key (`s` Start, `c` Start in Claude, `o` Open shell, `f` Finish, `m` Merge, `i` Back to in
+  key (`s` Start, `c` Start in Claude, `o` Open shell, `d` Diff, `f` Finish, `m` Merge, `i` Back to in
   progress, `w` Create worktree); Esc goes back.
 
 Where a desktop app opens a terminal window, the terminal app opens a new tab inside Herdr, a new
 window inside tmux, and otherwise runs the shell (or Claude Code) in the same terminal, coming
-back to the ticket when it exits. In Herdr, Start in Claude on a large ticket (L, XL) gets a
+back to the ticket when it exits. Diff runs git's diff tool in the same terminal too, until it
+closes, so a terminal one (`vimdiff`) works. In Herdr, Start in Claude on a large ticket (L, XL) gets a
 workspace of its own, as `start --herdr` does.
 
 ## Working on a ticket
@@ -297,6 +301,7 @@ safanoria-cli start herd-photos --dry-run       # what it would do
 safanoria-cli start herd-photos                 # branch, status: in-progress, worktree
 cd ../VacAppKMP--herd-photos && claude      # an ordinary session, in the worktree
 safanoria-cli finish herd-photos                # work complete: status: review
+safanoria-cli diff herd-photos --tool           # a quick look at its changes in your diff tool
 safanoria-cli review herd-photos                # see its changes in your IDE; review --end when done
 safanoria-cli merge herd-photos                 # reviewed: merged, status: done, worktree and branch gone
 safanoria-cli reopen herd-photos --reason "…"   # or: the review found something, back to in-progress
@@ -357,6 +362,23 @@ uncommitted changes, or when the branch is behind its target (commits that only 
 don't count: tickets are created on `main` all the time). It lists the ticket's unchecked
 Acceptance Criteria and pending Learnings without stopping for them. Then it prints what there
 is to review (the diff stat against the target) and the next command.
+
+**Diff.** For a quick look at what a ticket changed, `diff` (this worktree's ticket, or `diff <id>`
+from any checkout) shows its changes against its target (`main`, or the parent's branch for a
+child) from their merge-base: `git diff <target>...<id>`, so nothing new on the target mixes in.
+`--stat` lists only the files. `--tool` opens them in git's diff tool instead (`git difftool
+--dir-diff`: only the changed files, copied into two temporary directories, so no project to
+load); `--uncommitted` goes up to the files in the ticket's worktree, uncommitted changes
+included (untracked files aside). It changes nothing, so it works while a session works in the
+worktree, in review mode, and on a ticket started on another computer (from `origin/<id>`). It
+refuses on a ticket not started or merged already, and warns as `review` does. The diff tool is
+git's own setting, e.g. Meld (`git config --global diff.tool meld`) or IntelliJ IDEA, which opens
+a diff window without loading a project (in seconds while IntelliJ runs):
+
+```sh
+git config --global diff.tool idea
+git config --global difftool.idea.cmd 'idea diff "$LOCAL" "$REMOTE"'
+```
 
 **Review mode.** To see exactly what a ticket changed in an IDE (IntelliJ: the Commit window
 lists every changed file, the gutter marks every changed line, and navigation, inspections and

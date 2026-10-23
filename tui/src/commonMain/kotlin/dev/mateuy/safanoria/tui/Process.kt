@@ -3,8 +3,9 @@ package dev.mateuy.safanoria.tui
 /**
  * Runs [command] (a program and its arguments) in [directory] on this terminal, with its input
  * and output, and waits for it to end. Returns its exit code, or null when it couldn't start.
+ * The CLI uses it too, for `safanoria-cli diff`.
  */
-internal expect fun runHere(directory: String, command: List<String>): Int?
+expect fun runHere(directory: String, command: List<String>): Int?
 
 /** Runs [command] without its output, as for `tmux new-window`; true when it succeeded. */
 internal expect fun runQuietly(command: List<String>): Boolean

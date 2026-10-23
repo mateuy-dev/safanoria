@@ -4,7 +4,7 @@ import java.io.File
 
 private val windows = System.getProperty("os.name").startsWith("Windows")
 
-internal actual fun runHere(directory: String, command: List<String>): Int? = try {
+actual fun runHere(directory: String, command: List<String>): Int? = try {
     ProcessBuilder(command).directory(File(directory)).inheritIO().start().waitFor()
 } catch (e: Exception) {
     null

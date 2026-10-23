@@ -3,6 +3,8 @@ package dev.mateuy.safanoria.gui.ticket
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.mateuy.safanoria.gui.data.Terminal
+import dev.mateuy.safanoria.gui.data.launch
+import dev.mateuy.safanoria.views.DiffOutcome
 import dev.mateuy.safanoria.views.Notice
 import dev.mateuy.safanoria.views.StartOutcome
 import dev.mateuy.safanoria.views.TicketAction
@@ -10,6 +12,7 @@ import dev.mateuy.safanoria.views.TicketStore
 import dev.mateuy.safanoria.views.TicketViewState
 import dev.mateuy.safanoria.views.notice
 import dev.mateuy.safanoria.views.ticketViewState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +20,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okio.Path
 
 
@@ -59,6 +63,7 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
         )
         TicketAction.CHECK_OUT -> checkOut()
         TicketAction.OPEN_TERMINAL -> openTerminal()
+        TicketAction.DIFF -> diff()
         TicketAction.FINISH -> finish()
         TicketAction.MERGE -> merge()
         TicketAction.REOPEN -> reopen(input)
@@ -88,6 +93,19 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
         when (val workspace = store.workspace(id)) {
             null -> Notice("Branch '$id' isn't checked out anywhere: add a worktree for it (git worktree add).", error = true)
             else -> openTerminal(workspace, done = null)
+        }
+    }
+
+    /** Opens the ticket's changes against its target in git's diff tool, which stays open on its own. */
+    private fun diff() = act {
+        when (val outcome = store.diff(id)) {
+            is DiffOutcome.NotShown -> Notice("No diff: ${outcome.reason}", error = true)
+            // Without one git guesses, maybe a terminal tool (vimdiff) that would run unseen here.
+            is DiffOutcome.Ready if !outcome.hasTool -> Notice("No diff tool set: set yours with git config --global diff.tool <tool> (README: Diff)", error = true)
+            is DiffOutcome.Ready -> when (val problem = withContext(Dispatchers.IO) { launch(outcome.directory, outcome.command) }) {
+                null -> Notice((listOf("Changes against ${outcome.target} opened in the diff tool") + outcome.warnings.map { "Warning: $it" }).joinToString("\n"), error = false)
+                else -> Notice("No diff: $problem", error = true)
+            }
         }
     }
 

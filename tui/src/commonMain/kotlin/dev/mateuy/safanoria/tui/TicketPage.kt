@@ -5,6 +5,7 @@ import com.github.ajalt.mordant.markdown.Markdown
 import com.github.ajalt.mordant.rendering.TextStyle
 import dev.mateuy.safanoria.core.Size
 import dev.mateuy.safanoria.views.BoardColumn
+import dev.mateuy.safanoria.views.DiffOutcome
 import dev.mateuy.safanoria.views.Notice
 import dev.mateuy.safanoria.views.StartOutcome
 import dev.mateuy.safanoria.views.TicketAction
@@ -249,7 +250,7 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
                 "Sets the ticket to in-progress again and logs the reason, committing only the ticket on its branch.",
                 "Back to in progress",
             )
-            TicketAction.OPEN_TERMINAL -> Triple("", "", "")
+            TicketAction.OPEN_TERMINAL, TicketAction.DIFF -> Triple("", "", "")
         }
     }
 
@@ -294,6 +295,7 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
                     else -> nav.work(workspace, id, claude = false, size)
                 }
             }
+            TicketAction.DIFF -> act { diff() }
             TicketAction.FINISH -> act { store.finish(id).notice }
             TicketAction.MERGE -> act { store.merge(id).notice }
             TicketAction.REOPEN -> reason.toString().trim().let { r -> act { store.reopen(id, r).notice } }
@@ -305,6 +307,27 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
         is StartOutcome.Started -> when (val workspace = outcome.workspace) {
             null -> Notice("Started, but ${outcome.note}", error = true)
             else -> nav.work(workspace, id, claude, size, done = "Started in $workspace")
+        }
+    }
+
+    /**
+     * The ticket's changes against its target in git's diff tool, on this terminal until it closes:
+     * a terminal one (vimdiff) works too, and so does the one git guesses when none is set.
+     */
+    private suspend fun diff(): Notice? = when (val outcome = nav.store.diff(id)) {
+        is DiffOutcome.NotShown -> Notice("No diff: ${outcome.reason}", error = true)
+        is DiffOutcome.Ready -> {
+            var exit: Int? = 0
+            nav.outside {
+                nav.terminal.println("Safanoria · $id: its changes against ${outcome.target} in the diff tool. Close it to come back.")
+                outcome.warnings.forEach { nav.terminal.println("warning: $it") }
+                exit = runHere(outcome.directory.toString(), outcome.command)
+            }
+            when (exit) {
+                null -> Notice("Couldn't run git", error = true)
+                0 -> outcome.warnings.takeIf { it.isNotEmpty() }?.let { w -> Notice(w.joinToString("\n") { "Warning: $it" }, error = false) }
+                else -> Notice("git difftool ended with $exit", error = true)
+            }
         }
     }
 
@@ -368,6 +391,7 @@ internal val TicketAction.key: String
         TicketAction.START_IN_CLAUDE -> "c"
         TicketAction.CHECK_OUT -> "w"
         TicketAction.OPEN_TERMINAL -> "o"
+        TicketAction.DIFF -> "d"
         TicketAction.FINISH -> "f"
         TicketAction.MERGE -> "m"
         TicketAction.REOPEN -> "i"
@@ -379,6 +403,7 @@ internal val TicketAction.label: String
         TicketAction.START_IN_CLAUDE -> "Start in Claude"
         TicketAction.CHECK_OUT -> "Create worktree"
         TicketAction.OPEN_TERMINAL -> "Open shell"
+        TicketAction.DIFF -> "Diff"
         TicketAction.FINISH -> "Finish"
         TicketAction.MERGE -> "Merge"
         TicketAction.REOPEN -> "Back to in progress"

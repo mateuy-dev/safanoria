@@ -49,6 +49,9 @@ enum class TicketAction(val confirmed: Boolean) {
     /** In progress or review: open a terminal where its branch is checked out. */
     OPEN_TERMINAL(confirmed = false),
 
+    /** Started (here or on another computer): its changes against its target, in git's diff tool. */
+    DIFF(confirmed = false),
+
     /** In progress: the work is complete, set it to review. */
     FINISH(confirmed = true),
 
@@ -117,10 +120,10 @@ fun ticketViewState(id: String, snapshot: TicketsSnapshot): TicketViewState {
         blocks = graph.blocks(ticket).map(::link),
         body = body(ticket),
         // Started on another computer: nothing can be done with it here until it is checked out.
-        actions = if (ticket.remote != null) listOf(TicketAction.CHECK_OUT) else when (f?.status) {
+        actions = if (ticket.remote != null) listOf(TicketAction.CHECK_OUT, TicketAction.DIFF) else when (f?.status) {
             Status.BACKLOG, Status.READY -> listOf(TicketAction.START, TicketAction.START_IN_CLAUDE)
-            Status.IN_PROGRESS -> listOf(TicketAction.OPEN_TERMINAL, TicketAction.FINISH)
-            Status.REVIEW -> listOf(TicketAction.OPEN_TERMINAL, TicketAction.MERGE, TicketAction.REOPEN)
+            Status.IN_PROGRESS -> listOf(TicketAction.OPEN_TERMINAL, TicketAction.DIFF, TicketAction.FINISH)
+            Status.REVIEW -> listOf(TicketAction.OPEN_TERMINAL, TicketAction.DIFF, TicketAction.MERGE, TicketAction.REOPEN)
             else -> emptyList()
         },
         problems = snapshot.diagnostics[id].orEmpty().map { TicketProblem(it.line, it.code, it.message, it.severity == Severity.ERROR) },

@@ -117,7 +117,7 @@ class PagesTest {
         val page = TicketPage(nav, "parent")
         val text = page.render().text()
         assertTrue("parent Title of parent" in text && "In progress" in text, text)
-        assertTrue("[Open shell (o)] [Finish (f)]" in text, text)
+        assertTrue("[Open shell (o)] [Diff (d)] [Finish (f)]" in text, text)
         assertTrue("type feature · priority medium · size S" in text, text)
         assertTrue("Blocks      other" in text, text)
         assertTrue("Children (1)" in text && "child" in text, text)

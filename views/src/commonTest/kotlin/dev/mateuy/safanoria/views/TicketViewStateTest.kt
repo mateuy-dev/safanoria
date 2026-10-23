@@ -102,14 +102,14 @@ class TicketViewStateTest {
         fun actions(status: String) = ticketViewState("the-one", snapshotOf(ticket("the-one", status = status))).actions
         assertEquals(listOf(TicketAction.START, TicketAction.START_IN_CLAUDE), actions("backlog"))
         assertEquals(listOf(TicketAction.START, TicketAction.START_IN_CLAUDE), actions("ready"))
-        assertEquals(listOf(TicketAction.OPEN_TERMINAL, TicketAction.FINISH), actions("in-progress"))
-        assertEquals(listOf(TicketAction.OPEN_TERMINAL, TicketAction.MERGE, TicketAction.REOPEN), actions("review"))
+        assertEquals(listOf(TicketAction.OPEN_TERMINAL, TicketAction.DIFF, TicketAction.FINISH), actions("in-progress"))
+        assertEquals(listOf(TicketAction.OPEN_TERMINAL, TicketAction.DIFF, TicketAction.MERGE, TicketAction.REOPEN), actions("review"))
         assertEquals(emptyList(), actions("done"))
         assertEquals(emptyList(), actions("wontfix"))
         assertEquals(emptyList(), actions("paused"))
-        // Started on another computer: only its worktree can be created here, whatever its status.
+        // Started on another computer: only its worktree can be created here, whatever its status, and its changes seen.
         val remote = ticketViewState("the-one", snapshotOf(ticket("the-one", status = "in-progress", branch = "the-one", remote = "origin")))
-        assertEquals(listOf(TicketAction.CHECK_OUT), remote.actions)
+        assertEquals(listOf(TicketAction.CHECK_OUT, TicketAction.DIFF), remote.actions)
         assertTrue("read from" to "origin/the-one" in remote.facts)
     }
 
