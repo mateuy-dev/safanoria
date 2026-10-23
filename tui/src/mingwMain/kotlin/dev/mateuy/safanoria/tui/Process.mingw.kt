@@ -6,7 +6,7 @@ import platform.posix.getenv
 import platform.posix.system
 
 // system() runs `cmd /c`; its exit code is the command's.
-internal actual fun runHere(directory: String, command: List<String>): Int? =
+actual fun runHere(directory: String, command: List<String>): Int? =
     system("cd /d ${cmdQuoted(directory)} && " + command.joinToString(" ") { cmdQuoted(it) }).takeIf { it != -1 }
 
 internal actual fun runQuietly(command: List<String>): Boolean =

@@ -4,6 +4,7 @@ import dev.mateuy.safanoria.core.BranchView
 import dev.mateuy.safanoria.core.Branches
 import dev.mateuy.safanoria.core.Config
 import dev.mateuy.safanoria.core.Diagnostic
+import dev.mateuy.safanoria.core.DiffResult
 import dev.mateuy.safanoria.core.Finish
 import dev.mateuy.safanoria.core.FinishException
 import dev.mateuy.safanoria.core.FinishResult
@@ -18,6 +19,7 @@ import dev.mateuy.safanoria.core.Start
 import dev.mateuy.safanoria.core.StartException
 import dev.mateuy.safanoria.core.StartResult
 import dev.mateuy.safanoria.core.Status
+import dev.mateuy.safanoria.core.TicketDiff
 import dev.mateuy.safanoria.core.TicketGraph
 import dev.mateuy.safanoria.core.Validator
 import kotlinx.coroutines.Dispatchers
@@ -63,6 +65,17 @@ sealed interface ReopenOutcome {
     data class Reopened(val branch: String) : ReopenOutcome
 
     data class NotReopened(val reason: String) : ReopenOutcome
+}
+
+/** What [TicketStore.diff] found: the command to show the ticket's changes, or why there is none. */
+sealed interface DiffOutcome {
+    /**
+     * [command] opens the changes in git's diff tool (`git difftool --dir-diff`), from [directory]; it ends
+     * when the tool closes. [hasTool] is false when git has none set and would pick one itself.
+     */
+    data class Ready(val directory: Path, val command: List<String>, val target: String, val hasTool: Boolean, val warnings: List<String>) : DiffOutcome
+
+    data class NotShown(val reason: String) : DiffOutcome
 }
 
 /** The project's tickets as last read, and whether a read is running or failed. */
@@ -231,6 +244,23 @@ class TicketStore(val root: Path) {
         }
         if (outcome is ReopenOutcome.Reopened) refresh()
         return outcome
+    }
+
+    /** How to look at ticket [id]'s changes in git's diff tool, as `safanoria-cli diff --tool` does. Changes nothing. */
+    suspend fun diff(id: String): DiffOutcome = withContext(Dispatchers.IO) {
+        try {
+            val repository = Repository(root)
+            val branches = Branches.read(repository)
+                ?: return@withContext DiffOutcome.NotShown("needs a git repository with the branch '${repository.config.mainBranch}' (mainBranch)")
+            when (val r = TicketDiff.prepare(repository, branches, id)) {
+                is DiffResult.Refused -> DiffOutcome.NotShown(r.reason)
+                is DiffResult.Ready -> DiffOutcome.Ready(
+                    repository.root, TicketDiff.command(repository.root, r, tool = true), r.target, TicketDiff.hasTool(repository.git), r.warnings,
+                )
+            }
+        } catch (e: Exception) {
+            DiffOutcome.NotShown(e.message ?: e.toString())
+        }
     }
 
     /** The directory where ticket [id]'s branch is checked out (its worktree), or null. */

@@ -6,7 +6,7 @@ import platform.posix.getenv
 import platform.posix.system
 
 // system() runs `sh -c`, ignoring Ctrl-C here while the command has the terminal.
-internal actual fun runHere(directory: String, command: List<String>): Int? =
+actual fun runHere(directory: String, command: List<String>): Int? =
     exitCode(system("cd ${shellQuoted(directory)} && exec " + command.joinToString(" ") { shellQuoted(it) }))
 
 internal actual fun runQuietly(command: List<String>): Boolean =

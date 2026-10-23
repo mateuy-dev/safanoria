@@ -212,7 +212,7 @@ private fun Confirmation(action: TicketAction, id: String, onConfirm: (String) -
             "Sets the ticket to in-progress again and logs the reason, committing only the ticket on its branch.",
             "Back to in progress",
         )
-        TicketAction.OPEN_TERMINAL -> return
+        TicketAction.OPEN_TERMINAL, TicketAction.DIFF -> return
     }
     val asksReason = action == TicketAction.REOPEN
     AlertDialog(
@@ -249,6 +249,7 @@ private fun ActionBar(state: TicketViewState, onAction: (TicketAction) -> Unit) 
                     TicketAction.START_IN_CLAUDE -> OutlinedButton(onClick, enabled = !state.busy) { Text("Start in Claude") }
                     TicketAction.CHECK_OUT -> Button(onClick, enabled = !state.busy) { Text("Create worktree") }
                     TicketAction.OPEN_TERMINAL -> OutlinedButton(onClick, enabled = !state.busy) { Text("Open terminal") }
+                    TicketAction.DIFF -> OutlinedButton(onClick, enabled = !state.busy) { Text("Diff") }
                     TicketAction.FINISH -> Button(onClick, enabled = !state.busy) { Text("Finish: set to review") }
                     TicketAction.MERGE -> Button(onClick, enabled = !state.busy) { Text("Merge and finish") }
                     TicketAction.REOPEN -> OutlinedButton(onClick, enabled = !state.busy) { Text("Back to in progress") }
