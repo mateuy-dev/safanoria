@@ -29,7 +29,6 @@ class DiffCommand : RepositoryCommand(name = "diff") {
     private val stat by option("--stat", help = "Only the changed files and their line counts").flag()
     private val tool by option("--tool", help = "Open it in git's diff tool (difftool --dir-diff: the changed files, in two temporary directories)").flag()
     private val uncommitted by option("--uncommitted", help = "Up to the files in the ticket's worktree, uncommitted changes included (untracked files aside)").flag()
-    private val dryRun by option("--dry-run", help = "Print the git command, run nothing").flag()
 
     override fun run() {
         if (stat && tool) throw UsageError("--stat and --tool don't go together")
@@ -45,7 +44,6 @@ class DiffCommand : RepositoryCommand(name = "diff") {
             is DiffResult.Ready -> r
         }
         val command = TicketDiff.command(repo.root, ready, tool, stat, uncommitted)
-        if (dryRun) return echo(command.joinToString(" "))
         ready.warnings.forEach { echo("warning: $it", err = true) }
         if (tool && !TicketDiff.hasTool(repo.git)) {
             echo("no diff tool set, so git picks one: set yours with git config --global diff.tool <tool> (README: Diff)", err = true)
