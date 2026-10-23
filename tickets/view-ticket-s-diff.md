@@ -2,7 +2,7 @@
 id: view-ticket-s-diff
 type: feature
 title: "View a ticket's diff in IntelliJ"
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-23
@@ -21,3 +21,4 @@ Wanted: an action that puts the ticket in review mode (or reuses it if already t
 
 ## Work Log
 
+- **2026-10-23** · status · started
