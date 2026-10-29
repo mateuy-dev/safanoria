@@ -30,6 +30,7 @@ valid ticket id (§3). Every other file is ignored. Subdirectories other than `a
 safanoria: 1                          # spec version, required
 dir: tickets                          # ticket directory, default "tickets"
 mainBranch: master                    # branch that releases are made from, default "main"
+defaultAgent: claude                   # ticket session agent: claude (default) or codex
 worktree: ../VacAppKMP--{id}          # required; where `start` creates a ticket's worktree
 components:                           # required, at least one
   app:
@@ -51,6 +52,9 @@ icon: composeApp/icons/app.svg        # optional; the project's icon, for tools 
 - `worktree` is the path of a ticket's worktree, relative to the repository root or absolute.
   It MUST contain `{id}`, which is replaced by the ticket id. A ticket is worked on in its own
   worktree, never in the main checkout (§11).
+- `defaultAgent` is `claude` (default) or `codex`. `safanoria-cli start --agent claude|codex`
+  overrides it for that session, including sessions opened by the Herdr launch skills. Without
+  either preference, sessions use Claude Code. Agent choice does not change ticket or worktree behavior.
 - `components` names are slugs (`^[a-z][a-z0-9-]*$`). They are the allowed values of `area`
   and the allowed keys of `resolvedIn`.
 - `version` tells tools where the component's current version is read from. Supported forms:

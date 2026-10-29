@@ -52,4 +52,22 @@ class ContextTest {
         assertTrue("(format: ${displayPath(skill / "SPEC.md")}," in current, current)
         assertTrue("is from Safanoria" !in current && "isn't installed" !in current, current)
     }
+    @Test
+    fun codexDiscoveryUsesItsOwnLocationsAndFallsBackToUserSkills() {
+        val repo = GitRepo.scenario("context-codex")
+        repo.checkout("beta")
+        val agents = repo.root / "codex-user"
+        fun context() = cli(agentsDir = agents).test(listOf("--root", repo.root.toString(), "context", "--agent", "codex"))
+        repo.write(".claude/skills/safanoria/SKILL.md", "wrong agent\n")
+        assertTrue("isn't installed" in context().stdout)
+        repo.write("codex-user/skills/safanoria/SKILL.md", "old\n<!-- safanoria 0.0.2 -->\n")
+        assertTrue("Safanoria 0.0.2" in context().stdout)
+        repo.write(".agents/skills/safanoria/SKILL.md", "project\n<!-- safanoria ${Embedded.VERSION} -->\n")
+        val project = context()
+        assertEquals(0, project.statusCode, project.output)
+        assertTrue("${Install.CODEX_SKILL_DIR}/SPEC.md" in project.stdout, project.stdout)
+        assertTrue("Safanoria 0.0.2" !in project.stdout)
+        assertTrue("status: in-progress" in project.stdout)
+    }
+
 }

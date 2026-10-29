@@ -12,6 +12,7 @@ import dev.mateuy.safanoria.core.Branches
 import dev.mateuy.safanoria.core.GitException
 import dev.mateuy.safanoria.core.Herdr
 import dev.mateuy.safanoria.core.HerdrException
+import dev.mateuy.safanoria.core.SessionAgent
 import dev.mateuy.safanoria.core.SessionPrompt
 import dev.mateuy.safanoria.core.Size
 import dev.mateuy.safanoria.core.Start
@@ -44,13 +45,15 @@ class StartCommand : RepositoryCommand(name = "start") {
     ).flag()
     private val herdrOption by option(
         "--herdr",
-        help = "Inside Herdr, also open the worktree in a workspace (size L and XL) or a tab (smaller) running Claude Code",
+        help = "Inside Herdr, also open the worktree in a workspace (size L and XL) or a tab (smaller) running the selected agent",
     ).flag()
     private val promptOption by option(
         "--prompt",
-        help = "The first prompt of the Claude session --herdr opens: none (default; it waits for you), chat (discuss the " +
+        help = "The first prompt of the agent session --herdr opens: none (default; it waits for you), chat (discuss the " +
             "ticket before changing anything) or implement (work it to completion and finish it). Implies --herdr",
     ).choice(SessionPrompt.entries.associateBy { it.option })
+    private val agentOption by option("--agent", help = "Session agent: explicit choice, then defaultAgent in safanoria.yaml, then claude")
+        .choice(SessionAgent.entries.associateBy { it.option })
     private val implement by option("--implement", help = "Same as --prompt implement").flag()
     private val into by option("--in", help = "Where --herdr opens it, instead of by the ticket's size").choice("workspace", "tab")
     private val dryRun by option("--dry-run", help = "Show what would be done, change nothing").flag()
@@ -63,6 +66,7 @@ class StartCommand : RepositoryCommand(name = "start") {
 
     override fun run() {
         val repo = repository
+        val agent = SessionAgent.resolve(agentOption, repo.config.defaultAgent)
         val today = date ?: Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
         val branches = Branches.read(repo) ?: throw PrintMessage(
             "Not started: needs a git repository with the branch '${repo.config.mainBranch}' (mainBranch).", 1, true,
@@ -85,6 +89,7 @@ class StartCommand : RepositoryCommand(name = "start") {
         say("${verb}create branch $id from ${ready.base}")
         say("${verb}set status: in-progress and log 'status · started', committed on $id")
         say("${verb}add worktree ${ready.worktree}")
+        say("${verb}${if (herdr) "open a session" else "use launch instructions"} with ${agent.label}${if (herdr) " in a Herdr ${if (workspace) "workspace" else "tab"} (${prompt.option})" else ""}")
         if (dryRun) return
 
         val commit = try { Start.begin(repo, ready, today) } catch (e: StartException) {
@@ -97,10 +102,10 @@ class StartCommand : RepositoryCommand(name = "start") {
         try { Start.addWorktree(repo, ready) } catch (e: GitException) {
             throw PrintMessage("Started, but the worktree wasn't added: ${e.message}\nAdd it with: git worktree add ${ready.worktree} $id", 1, true)
         }
-        say("worktree ${ready.worktree}: open a session there (cd ${ready.worktree} && claude)")
+        say("worktree ${ready.worktree}: open a session there (cd ${ready.worktree} && ${agent.option})")
         if (herdr) {
-            try { say(Herdr().open(ready.worktree, id, prompt.text(id), workspace, claude = true)) } catch (e: HerdrException) {
-                throw PrintMessage("Started, but not opened in Herdr: ${e.message}", 1, true)
+            try { say(Herdr().open(ready.worktree, id, prompt.text(id), workspace, agent = agent)) } catch (e: HerdrException) {
+                throw PrintMessage("Started, but ${agent.label} was not opened in Herdr: ${e.message}", 1, true)
             }
         }
         if (printPath) echo(ready.worktree.toString())

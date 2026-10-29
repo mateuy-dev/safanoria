@@ -25,8 +25,8 @@ import dev.mateuy.safanoria.core.VersionSource
 class Init : CliktCommand(name = "init") {
     override fun help(context: Context) =
         "Set up Safanoria here (or in --root): safanoria.yaml, the ticket directory with templates, " +
-            "the CLAUDE.md paragraph and the SessionStart hook in .claude/settings.json; and the agent skill and SPEC.md in " +
-            "~/.claude/skills/safanoria/, for all your projects. Asks for the components unless given, and whether the project " +
+            "the CLAUDE.md and AGENTS.md instructions and the SessionStart hook in .claude/settings.json; and the agent skill and SPEC.md in " +
+            "~/.claude/skills/safanoria/ and ~/.agents/skills/safanoria/, for all your projects. Asks for the components unless given, and whether the project " +
             "also gets its own copy of the skill."
 
     private val cli by requireObject<CliContext>()
@@ -37,7 +37,7 @@ class Init : CliktCommand(name = "init") {
     private val externals by option("--external", help = "Component released from another repository (repeatable)").multiple()
     private val projectSkill by option(
         "--project-skill",
-        help = "Also put the skill and SPEC.md in the project (.claude/skills/safanoria/, to commit), for Claude Code on the web " +
+        help = "Also put the skill and SPEC.md in the project (.claude/skills/safanoria/ and .agents/skills/safanoria/, to commit), for Claude Code on the web " +
             "and contributors without safanoria-cli",
     ).nullableFlag("--no-project-skill")
     private val yes by option("--yes", help = "Change the project's existing files (e.g. CLAUDE.md) without asking").flag()
@@ -56,7 +56,7 @@ class Init : CliktCommand(name = "init") {
         chosen.groupBy { it.name }.filterValues { it.size > 1 }.keys.firstOrNull()?.let { throw usage("component '$it' given twice") }
         val claudeDir = cli.claudeDir
         val withProjectSkill = projectSkill ?: cli.prompts?.confirm(
-            "Also commit a copy of the skill and SPEC.md in the project (${Install.SKILL_DIR}/)? Claude Code on the web " +
+            "Also commit a copy of the skill and SPEC.md in the project (${Install.SKILL_DIR}/ and ${Install.CODEX_SKILL_DIR}/)? Claude Code on the web " +
                 "and contributors without safanoria-cli need it; you would update it with `safanoria-cli update` on $mainBranch.",
             default = false,
         ) ?: false
@@ -65,7 +65,8 @@ class Init : CliktCommand(name = "init") {
         }
 
         val config = FileChange(root / CONFIG_FILE, Install.config(dir, chosen, worktree, mainBranch), FileAction.CREATE, managed = false)
-        val global = claudeDir?.let { Install.globalPlan(SystemFileSystem, it) }.orEmpty()
+        val global = claudeDir?.let { Install.globalPlan(SystemFileSystem, it) }.orEmpty() +
+            cli.agentsDir?.let { Install.codexGlobalPlan(SystemFileSystem, it) }.orEmpty()
         applyChanges(root, listOf(config) + global + Install.plan(SystemFileSystem, root, dir, withProjectSkill), yes, dryRun, cli.prompts)
         if (dryRun) return
 

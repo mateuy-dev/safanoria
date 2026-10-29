@@ -46,6 +46,8 @@ public data class Config(
     val learningTargets: List<String> = emptyList(),
     /** The project's icon, an image file relative to the repository root. */
     val icon: String? = null,
+    /** Default coding agent; explicit launch selection takes precedence. */
+    val defaultAgent: SessionAgent = SessionAgent.CLAUDE,
     /** File line of each top-level key, for diagnostics. */
     val keyLines: Map<String, Int> = emptyMap(),
 ) {
@@ -120,6 +122,7 @@ public object ConfigLoader {
             refs = refs,
             learningTargets = root.get("learningTargets").textList() ?: emptyList(),
             icon = root.get("icon").text(),
+            defaultAgent = SessionAgent.entries.firstOrNull { it.option == root.get("defaultAgent").text() } ?: SessionAgent.CLAUDE,
             keyLines = root.mapEntries().associate { (key, _) -> key.content to block.lineOf(key) },
         )
         return ConfigResult(config, schemaDiagnostics)

@@ -43,7 +43,12 @@ class InstallTest {
                 "issues/README.md" to FileAction.CREATE,
                 "CLAUDE.md" to FileAction.CREATE,
                 ".claude/settings.json" to FileAction.CREATE,
-            ) + commands(FileAction.CREATE),
+            ) + commands(FileAction.CREATE) +
+                commands(FileAction.CREATE).mapKeys { (path, _) -> path.replace(".claude/", ".agents/") } + mapOf(
+                    ".agents/skills/safanoria/SKILL.md" to FileAction.CREATE,
+                    ".agents/skills/safanoria/SPEC.md" to FileAction.CREATE,
+                    "AGENTS.md" to FileAction.CREATE,
+                ),
             actions("issues"),
         )
         write(plan("issues"))
@@ -73,7 +78,12 @@ class InstallTest {
                 "tickets/README.md" to FileAction.SAME,
                 "CLAUDE.md" to FileAction.SAME,
                 ".claude/settings.json" to FileAction.CREATE,
-            ) + commands(FileAction.CREATE),
+            ) + commands(FileAction.CREATE) +
+                commands(FileAction.CREATE).mapKeys { (path, _) -> path.replace(".claude/", ".agents/") } + mapOf(
+                    ".agents/skills/safanoria/SKILL.md" to FileAction.CREATE,
+                    ".agents/skills/safanoria/SPEC.md" to FileAction.CREATE,
+                    "AGENTS.md" to FileAction.CREATE,
+                ),
             actions(),
         )
     }
@@ -104,6 +114,10 @@ class InstallTest {
         for ((name, text) in Embedded.COMMANDS) {
             assertTrue(text.startsWith("---\nname: $name\n"), name)
             assertTrue("disable-model-invocation: true" in text, name)
+            val frontmatter = text.substringAfter("---\n").substringBefore("\n---")
+            val (block, error) = parseYamlBlock("$name/SKILL.md".toPath(), frontmatter, firstLine = 2)
+            assertNull(error, "$name skill metadata: $error")
+            assertTrue(block != null, name)
         }
         // An older Safanoria's copy is replaced; the user's own skill of that name only after asking.
         val skills = "/home/me/.claude/skills".toPath()
@@ -162,6 +176,24 @@ class InstallTest {
         assertEquals(listOf("app", "rails"), config.components.keys.toList())
         assertEquals(VersionSource.Property("composeApp/gradle.properties", "appVersionName"), config.components.getValue("app").version)
         assertTrue(config.components.getValue("rails").external)
+    }
+
+    @Test
+    fun codexInstallationPreservesProjectInstructionsAndOwnCommands() {
+        fs.write(root / "AGENTS.md") { writeUtf8("# Our instructions\nBuild with Gradle.\n") }
+        val agents = plan().single { it.path.name == "AGENTS.md" }
+        assertEquals(FileAction.DIFFERS, agents.action)
+        assertTrue(agents.text.startsWith("# Our instructions\nBuild with Gradle.\n\n"))
+        assertTrue("Read `CLAUDE.md`" in agents.text)
+        assertTrue("safanoria-cli context --agent codex" in agents.text)
+        write(plan())
+        assertEquals(FileAction.SAME, plan().single { it.path.name == "AGENTS.md" }.action)
+        val user = "/user/.agents".toPath()
+        fs.createDirectories(user / "skills/ssh")
+        fs.write(user / "skills/ssh/SKILL.md") { writeUtf8("My own command\n") }
+        val global = Install.codexGlobalPlan(fs, user)
+        assertEquals(FileAction.DIFFERS, global.single { it.path == user / "skills/ssh/SKILL.md" }.action)
+        assertEquals(Install.managedFiles()["safanoria/SPEC.md"], global.single { it.path.name == "SPEC.md" }.text)
     }
 
     private fun read(path: String) = fs.read(root / path.toPath()) { readUtf8() }

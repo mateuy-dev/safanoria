@@ -27,7 +27,7 @@ import okio.Path.Companion.toPath
  * holds the [prompts] (null when stdin or stdout isn't a terminal: then nothing is asked) and
  * Claude Code's user directory, where the skill is installed ([claudeDir], null when unknown).
  */
-class CliContext(val rootOption: String?, val prompts: Prompts?, val claudeDir: Path? = Install.claudeDir()) {
+class CliContext(val rootOption: String?, val prompts: Prompts?, val claudeDir: Path? = Install.claudeDir(), val agentsDir: Path? = Install.agentsDir()) {
     /** Where `init` sets up a project: `--root` or the working directory. */
     val projectRoot: okio.Path by lazy {
         dev.mateuy.safanoria.core.SystemFileSystem.canonicalize((rootOption ?: ".").toPath())
@@ -55,9 +55,10 @@ class Safanoria(
     private val prompts: Prompts? = null,
     private val tui: (Terminal, Path) -> Unit = ::runTui,
     private val claudeDir: Path? = null,
+    private val agentsDir: Path? = null,
 ) : CliktCommand(name = "safanoria-cli") {
     private val root by option("--root", help = "Repository root (default: the nearest directory with safanoria.yaml)")
-    private val context by findOrSetObject { CliContext(root, prompts ?: terminalPrompts(), claudeDir ?: Install.claudeDir()) }
+    private val context by findOrSetObject { CliContext(root, prompts ?: terminalPrompts(), claudeDir ?: Install.claudeDir(), agentsDir ?: Install.agentsDir()) }
 
     override val invokeWithoutSubcommand = true
 
@@ -107,14 +108,15 @@ abstract class RepositoryCommand(name: String) : CliktCommand(name = name) {
     internal val prompts: Prompts? get() = cli.prompts
     /** Claude Code's user directory, where the skill is installed; null when unknown. */
     protected val claudeDir: Path? get() = cli.claudeDir
+    protected val agentsDir: Path? get() = cli.agentsDir
 }
 
 /**
  * The command tree; tests run it with Clikt's `test()`, and give it [prompts] to answer questions, a
  * [tui] to record it and a [claudeDir] instead of the user's.
  */
-fun cli(prompts: Prompts? = null, tui: (Terminal, Path) -> Unit = ::runTui, claudeDir: Path? = null): CliktCommand =
-    Safanoria(prompts, tui, claudeDir).subcommands(Init(), Update(), New(), ListTickets(), BoardCommand(), ReleaseCommand(), NotesCommand(), StartCommand(), FinishCommand(), MergeCommand(), ReopenCommand(), ReviewCommand(), DiffCommand(), ContextCommand(), Validate(), TuiCommand(), hookCommand(), Version(), Dump())
+fun cli(prompts: Prompts? = null, tui: (Terminal, Path) -> Unit = ::runTui, claudeDir: Path? = null, agentsDir: Path? = claudeDir?.let { it / "agents" }): CliktCommand =
+    Safanoria(prompts, tui, claudeDir, agentsDir).subcommands(Init(), Update(), New(), ListTickets(), BoardCommand(), ReleaseCommand(), NotesCommand(), StartCommand(), FinishCommand(), MergeCommand(), ReopenCommand(), ReviewCommand(), DiffCommand(), ContextCommand(), Validate(), TuiCommand(), hookCommand(), Version(), Dump())
 
 /**
  * Like Clikt's `main`, but usage errors (bad option, missing argument) exit 2 as documented

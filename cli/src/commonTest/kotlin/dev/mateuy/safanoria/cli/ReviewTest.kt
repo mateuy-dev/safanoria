@@ -66,6 +66,8 @@ class ReviewTest {
 
         val context = run(repo, "context", at = wt)
         assertTrue("This worktree is in review mode" in context.stdout && "<ticket file=" in context.stdout, context.stdout)
+        val codexContext = run(repo, "context", "--agent", "codex", at = wt)
+        assertTrue("This worktree is in review mode" in codexContext.stdout && "ticket `beta`" in codexContext.stdout, codexContext.stdout)
 
         assertEquals(0, run(repo, "review", "--end", "beta").statusCode, "--end with an id, from another checkout")
         assertEquals(0, run(repo, "finish", "beta", "--date", "2026-10-05").statusCode)
