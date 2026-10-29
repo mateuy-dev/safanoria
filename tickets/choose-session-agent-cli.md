@@ -2,7 +2,7 @@
 id: choose-session-agent-cli
 type: feature
 title: Choose Claude or Codex in CLI and launch skills
-status: backlog
+status: in-progress
 priority: medium
 size: L
 area: [safanoria]
@@ -60,3 +60,4 @@ Keep agent-specific command construction reusable by the GUI/TUI child. No new s
 
 ## Work Log
 
+- **2026-10-29** · status · started
