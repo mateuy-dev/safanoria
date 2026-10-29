@@ -2,7 +2,7 @@
 id: create-local-worktrees-tickets
 type: feature
 title: Create local worktrees for tickets started on another computer
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-10-29
@@ -33,3 +33,4 @@ After pulling the main branch and fetching ticket branches on another computer, 
 
 - **2026-10-29** · status · started
 - **2026-10-29** · decision · Expose `checkout <id>` separately from `start` so continuing an existing local or remote branch preserves the ticket and commits. Apps offer Check out for local branches without a worktree as well. Refuse registered worktrees and occupied destinations to protect existing work.
+- **2026-10-29** · status · review
