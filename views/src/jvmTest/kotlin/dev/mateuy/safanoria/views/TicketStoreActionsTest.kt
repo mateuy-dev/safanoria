@@ -191,6 +191,21 @@ class TicketStoreActionsTest {
     }
 
     @Test
+    fun localBranchWithoutWorktreeOffersCheckoutAndThenOpenTerminal() = runBlocking<Unit> {
+        repository("first-one" to "backlog")
+        git("checkout", "-q", "-b", "first-one")
+        File(project, "tickets/first-one.md").writeText(ticket("first-one", status = "in-progress").text)
+        git("commit", "-q", "-am", "started elsewhere")
+        git("checkout", "-q", "main")
+        val store = TicketStore(root)
+        store.refresh()
+        assertEquals(listOf(TicketAction.CHECK_OUT, TicketAction.DIFF), ticketViewState("first-one", store.snapshot.value).actions)
+        assertIs<StartOutcome.Started>(store.checkOut("first-one"))
+        assertEquals(listOf(TicketAction.OPEN_TERMINAL, TicketAction.DIFF, TicketAction.FINISH), ticketViewState("first-one", store.snapshot.value).actions)
+        assertEquals("started elsewhere", git("log", "-1", "--format=%s", "first-one"))
+    }
+
+    @Test
     fun aBranchNotCheckedOutHasNoWorkspace() = runBlocking<Unit> {
         repository("first-one" to "backlog")
         git("branch", "first-one")

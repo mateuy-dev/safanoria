@@ -48,9 +48,26 @@ class RemoteBranchesTest {
         val r = run(repo, "start", "beta")
         assertEquals(1, r.statusCode, r.output)
         assertTrue("started on another computer: it is on origin/beta" in r.stderr, r.stderr)
-        val command = r.stderr.lines().first { it.startsWith("Check it out with: ") }.removePrefix("Check it out with: ")
-        assertTrue(command.startsWith("git worktree add --track -b beta ") && command.endsWith(" origin/beta"), command)
+        assertTrue("Check it out with: safanoria-cli checkout beta" in r.stderr, r.stderr)
         assertTrue(repo.git("branch", "--list", "beta").isBlank())
+    }
+
+    @Test
+    fun checkoutTracksRemoteAndPreservesHistoryAndTicket() {
+        val repo = clone("remote-checkout")
+        val before = repo.git("rev-parse", "origin/beta").trim()
+        val text = repo.git("show", "origin/beta:tickets/beta.md")
+        val dry = run(repo, "checkout", "beta", "--dry-run")
+        assertEquals(0, dry.statusCode, dry.output)
+        assertTrue(repo.git("branch", "--list", "beta").isBlank())
+        val result = run(repo, "checkout", "beta", "--print-path")
+        assertEquals(0, result.statusCode, result.output)
+        val path = (repo.root.parent!! / "remote-checkout-origin--beta")
+        assertEquals("$path\n", result.stdout)
+        assertEquals(before, repo.git("rev-parse", "beta").trim())
+        assertEquals("origin/beta", repo.git("rev-parse", "--abbrev-ref", "beta@{upstream}").trim())
+        assertEquals(text, repo.read("tickets/beta.md", at = path))
+        assertEquals(1, run(repo, "checkout", "beta").statusCode)
     }
 
     @Test

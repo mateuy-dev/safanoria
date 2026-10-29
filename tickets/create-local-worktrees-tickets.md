@@ -2,7 +2,7 @@
 id: create-local-worktrees-tickets
 type: feature
 title: Create local worktrees for tickets started on another computer
-status: backlog
+status: done
 priority: medium
 size: S
 created: 2026-10-29
@@ -25,9 +25,13 @@ After pulling the main branch and fetching ticket branches on another computer, 
 
 ## Acceptance Criteria
 
-- [ ] A user can create a local worktree for an already-started ticket whose branch is available locally or as a remote-tracking branch.
-- [ ] The worktree uses the configured path and preserves the existing branch history, ticket status, and work log.
-- [ ] Repeating the action when a local worktree already exists does not create a duplicate or overwrite existing work.
+- [x] A user can create a local worktree for an already-started ticket whose branch is available locally or as a remote-tracking branch.
+- [x] The worktree uses the configured path and preserves the existing branch history, ticket status, and work log.
+- [x] Repeating the action when a local worktree already exists does not create a duplicate or overwrite existing work.
 
 ## Work Log
 
+- **2026-10-29** · status · started
+- **2026-10-29** · decision · Expose `checkout <id>` separately from `start` so continuing an existing local or remote branch preserves the ticket and commits. Apps offer Check out for local branches without a worktree as well. Refuse registered worktrees and occupied destinations to protect existing work.
+- **2026-10-29** · status · review
+- **2026-10-29** · status · done
