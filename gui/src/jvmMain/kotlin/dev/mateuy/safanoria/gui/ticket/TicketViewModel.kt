@@ -12,6 +12,7 @@ import dev.mateuy.safanoria.views.TicketStore
 import dev.mateuy.safanoria.views.TicketViewState
 import dev.mateuy.safanoria.views.notice
 import dev.mateuy.safanoria.views.ticketViewState
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -38,8 +39,9 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
     fun request(action: TicketAction) {
         if (activity.value.busy) return
         // Said before starting anything, rather than by a terminal that fails once the ticket is started.
-        if (action == TicketAction.START_IN_CLAUDE && !terminal.has(CLAUDE)) {
-            activity.value = Activity(notice = Notice("Claude Code isn't installed: no `$CLAUDE` command found. Start opens a plain terminal.", error = true))
+        val agent = action.agent
+        if (agent != null && !terminal.has(agent.option)) {
+            activity.value = Activity(notice = Notice("${agent.label} isn't installed: no `${agent.option}` command found. Start opens a plain terminal.", error = true))
             return
         }
         if (action.confirmed) activity.update { it.copy(confirming = action) } else run(action)
@@ -56,10 +58,8 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
 
     private fun run(action: TicketAction, input: String = "") = when (action) {
         TicketAction.START -> start()
-        TicketAction.START_IN_CLAUDE -> start(
-            // Named after the ticket: Claude Code shows the session's name as the terminal's title. No first
-            // prompt: the SessionStart hook gives the session its ticket, and it waits for the user.
-            command = listOf(CLAUDE, "--name", id),
+        TicketAction.START_IN_CLAUDE, TicketAction.START_IN_CODEX -> start(
+            command = listOf(action.agent!!.option) + action.agent!!.arguments(id, prompt = null),
         )
         TicketAction.CHECK_OUT -> checkOut()
         TicketAction.OPEN_TERMINAL -> openTerminal()
@@ -121,17 +121,19 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
     private fun openTerminal(workspace: Path, done: String?, command: List<String> = emptyList()): Notice? =
         when (val problem = terminal.open(workspace, command)) {
             null -> done?.let { Notice(it, error = false) }
-            else -> Notice(listOfNotNull(done, "No terminal opened: $problem").joinToString(". "), error = true)
+            else -> Notice(listOfNotNull(done, "No terminal opened${command.firstOrNull()?.let { " for $it" }.orEmpty()}: $problem").joinToString(". "), error = true)
         }
 
     /** Runs one action at a time; its result replaces the previous notice. */
     private fun act(action: suspend () -> Notice?) {
         if (activity.value.busy) return
         activity.value = Activity(busy = true)
-        viewModelScope.launch { activity.value = Activity(notice = action()) }
-    }
-
-    private companion object {
-        const val CLAUDE = "claude"
+        viewModelScope.launch {
+            activity.value = Activity(notice = try { action() } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Notice(e.message ?: e.toString(), error = true)
+            })
+        }
     }
 }

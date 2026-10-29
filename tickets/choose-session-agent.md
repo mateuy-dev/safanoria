@@ -2,7 +2,7 @@
 id: choose-session-agent
 type: feature
 title: Choose Claude or Codex for ticket sessions
-status: backlog
+status: done
 priority: medium
 size: XL
 area: [safanoria]
@@ -34,15 +34,19 @@ Let users choose Claude Code or Codex when opening a Safanoria ticket session. D
 
 ## Acceptance Criteria
 
-- [ ] Users can select Claude Code or Codex through CLI and launch skills, GUI, and TUI.
-- [ ] Explicit selection overrides the project default; absent a preference, existing Claude behavior is preserved.
-- [ ] Both agents receive sufficient project and ticket context to work normally.
-- [ ] Both child tickets are complete.
+- [x] Users can select Claude Code or Codex through CLI and launch skills, GUI, and TUI.
+- [x] Explicit selection overrides the project default; absent a preference, existing Claude behavior is preserved.
+- [x] Both agents receive sufficient project and ticket context to work normally.
+- [x] Both child tickets are complete.
 
 ## Plan
 
-- [ ] `choose-session-agent-cli`: Choose Claude or Codex in CLI and launch skills
-- [ ] `choose-session-agent-ui`: Choose Claude or Codex in GUI and TUI
+- [x] `choose-session-agent-cli`: Choose Claude or Codex in CLI and launch skills
+- [x] `choose-session-agent-ui`: Choose Claude or Codex in GUI and TUI
 
 ## Work Log
 
+- **2026-10-29** · status · started
+- **2026-10-29** · validation · Integrated main, preserving the checkout command and existing-branch checkout actions alongside both agent choices. `./gradlew allTests --offline` passed; macOS and Windows test execution is skipped on Linux. The child ticket retains its documented manual GUI validation gap.
+- **2026-10-29** · status · review
+- **2026-10-29** · status · done

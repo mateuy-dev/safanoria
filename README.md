@@ -94,7 +94,26 @@ worktree goes; `--worktree` to choose another place), the ticket directory (`_TE
 `_TEMPLATE.research.md`, `README.md`), the paragraph that points agents to the skill in
 `CLAUDE.md`, and the SessionStart hook in `.claude/settings.json` (see "Working on a ticket").
 
-**The skill and SPEC.md** go to `~/.claude/skills/safanoria/` (`$CLAUDE_CONFIG_DIR/skills/safanoria/`
+**Codex setup.** `init` and `update` also install the same skill, spec, and command sources in
+`~/.agents/skills/`; Codex's `CODEX_HOME` does not change that discovery path. With
+`init --project-skill`, copies for both agents go into `.claude/skills/` and `.agents/skills/`.
+`update` refreshes installed project copies and adds the Codex copy to projects that already
+carry the Claude skill. `update --global` updates both user skill directories without a project.
+Existing unmarked command skills require confirmation before replacement, in either directory.
+
+`AGENTS.md` receives Safanoria guidance that tells Codex to read shared `CLAUDE.md` instructions
+and run `safanoria-cli context --agent codex` before working. Existing instructions are preserved;
+adding the paragraph to an existing file requires confirmation or `--yes`. Codex launches also
+recognize `CLAUDE.md` as a fallback when no `AGENTS.md` exists. Codex has no dependency on
+Claude's SessionStart hook. If the CLI is unavailable, the instructions direct it to the branch's
+ticket file. `context --agent codex` discovers the project `.agents/skills/safanoria` copy first,
+then the user copy; because Codex can discover both, keep both updated. The context command also
+reports detached review state. Waiting mode starts no initial turn.
+
+Discovery follows [Codex skills documentation](https://learn.chatgpt.com/docs/build-skills) and
+[AGENTS.md documentation](https://learn.chatgpt.com/docs/agent-configuration/agents-md).
+
+**The Claude skill and SPEC.md** go to `~/.claude/skills/safanoria/` (`$CLAUDE_CONFIG_DIR/skills/safanoria/`
 when that is set), and the slash commands (see "Slash commands") next to it, each in a
 `~/.claude/skills/<name>/` of its own, shared by every project and worktree: updating the CLI (the install scripts
 run `safanoria-cli update --global`) updates the skill every session reads, so it always matches
@@ -275,6 +294,13 @@ in the taskbar. Without it, or when the file can't be read, it has Safanoria's.
 The app reads the tickets again when its window gets the focus back, and on Refresh. **Fetch**
 runs `git fetch --all --prune` first, the only time the app fetches.
 
+Both ticket screens offer **Start in Claude Code** and **Start in Codex**, alongside **Start**
+for a plain terminal. The project’s `defaultAgent` appears first among the agents and is marked
+“default”; without a setting, Claude Code is preferred. Choose either agent explicitly to
+override that preference. Sessions wait for your instructions in the ticket worktree.
+A missing agent is reported before the ticket is started. If opening the session fails after
+starting, the notice identifies the created worktree so you can continue there yourself.
+
 ### The terminal app
 
 `safanoria-cli tui`, or `safanoria-cli` alone on a terminal, opens the desktop app's screens in
@@ -285,13 +311,13 @@ or by mouse: click cards, chips, buttons and tabs, and scroll with the wheel. `?
 - Board: arrows or `hjkl` move between columns and cards, Enter opens a ticket, Space collapses a
   column, Tab goes to the filter chips, `v` Versions, `F` Fetch, `r` reads the tickets again, `q` quits.
 - Ticket: arrows scroll, Tab and Enter go through its links and buttons, and each action has a
-  key (`s` Start, `c` Start in Claude, `o` Open shell, `d` Diff, `f` Finish, `m` Merge, `i` Back to in
+  key (`s` Start, `c` Start in Claude Code, `x` Start in Codex, `o` Open shell, `d` Diff, `f` Finish, `m` Merge, `i` Back to in
   progress, `w` Create worktree); Esc goes back.
 
 Where a desktop app opens a terminal window, the terminal app opens a new tab inside Herdr, a new
-window inside tmux, and otherwise runs the shell (or Claude Code) in the same terminal, coming
+window inside tmux, and otherwise runs the shell (or selected agent) in the same terminal, coming
 back to the ticket when it exits. Diff runs git's diff tool in the same terminal too, until it
-closes, so a terminal one (`vimdiff`) works. In Herdr, Start in Claude on a large ticket (L, XL) gets a
+closes, so a terminal one (`vimdiff`) works. In Herdr, starting either agent on a large ticket (L, XL) gets a
 workspace of its own, as `start --herdr` does.
 
 ## Working on a ticket
@@ -336,15 +362,33 @@ or occupied destination is refused without overwriting work. Use `--dry-run` to 
 or `--print-path` to get only the created worktree's path on stdout.
 
 **In Herdr.** Inside a [Herdr](https://herdr.dev) pane, `start <id> --herdr` also opens the worktree
-there running Claude Code (`claude --name <id>`), without taking focus: a workspace for tickets of
+there running the selected agent (Claude Code by default), without taking focus: a workspace for tickets of
 size L and XL, a tab of the current workspace for smaller ones (`--in workspace|tab` overrides).
-The session waits for you: the SessionStart hook has already given it the ticket. `--prompt chat`
+The session waits for you. Claude receives ticket context from its SessionStart hook; Codex
+reads `AGENTS.md` and runs `safanoria-cli context --agent codex` when work begins. `--prompt chat`
 starts it discussing the ticket before changing anything, and `--prompt implement` (or `--implement`)
 working the ticket to completion and finishing it; either implies `--herdr`.
 `merge` then closes the workspace or tab whose panes are in that ticket's worktree (a workspace only
 when all its tabs are), from whichever pane you run it; `--keep-herdr` leaves it open.
 
-**Work.** Open Claude Code in the worktree yourself. The session belongs to that worktree, so
+Choose an agent with `--agent claude|codex`, or set `defaultAgent: codex` in `safanoria.yaml`.
+The flag overrides the project default; without either, Claude Code is used. `--agent` alone
+selects the agent for the printed launch instructions; use `--herdr` or `--prompt` to launch it.
+For example:
+
+```sh
+safanoria-cli start herd-photos --herdr --agent codex
+safanoria-cli start herd-photos --prompt implement --agent claude
+```
+
+All six launch skills (`ssh`, `sshc`, `sshi`, `scsh`, `scshc`, `scshi`) accept the same optional
+`--agent claude|codex`. For create skills, the option is removed before writing the ticket;
+put `--` before literal ticket text containing `--agent`. Omit the option to use the project default.
+Codex is started through Herdr's `--kind codex`, without Claude's `--name` flag. The initial
+prompt modes and workspace/tab size rules are the same for both agents. A launch failure leaves
+the started ticket and new pane available, and identifies the agent that failed.
+
+**Work.** Open Claude Code or Codex in the worktree yourself. The session belongs to that worktree, so
 `claude --resume` there finds it again after a restart. The SessionStart hook that `init`
 installs runs `safanoria-cli context`: on a ticket's branch it gives the session the ticket and
 what to do with it; elsewhere it prints nothing. From there it's an ordinary session: you

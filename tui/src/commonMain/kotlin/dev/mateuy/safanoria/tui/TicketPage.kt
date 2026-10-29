@@ -3,7 +3,9 @@ package dev.mateuy.safanoria.tui
 import com.github.ajalt.mordant.input.KeyboardEvent
 import com.github.ajalt.mordant.markdown.Markdown
 import com.github.ajalt.mordant.rendering.TextStyle
+import dev.mateuy.safanoria.core.SessionAgent
 import dev.mateuy.safanoria.core.Size
+import dev.mateuy.safanoria.views.agentLabel
 import dev.mateuy.safanoria.views.BoardColumn
 import dev.mateuy.safanoria.views.DiffOutcome
 import dev.mateuy.safanoria.views.Notice
@@ -54,7 +56,7 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
         var y = 1
         x = 1
         for (action in state.actions) {
-            val label = "${action.label} (${action.key})"
+            val label = "${action.agentLabel(state.defaultAgent) ?: action.label} (${action.key})"
             if (x > 1 && x + buttonWidth(label) > p.width) { x = 1; y++ }
             val isFocused = focused()
             x = p.button(x, y, label, focused = isFocused, enabled = !busy) { request(action) } + 1
@@ -226,11 +228,11 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
                 "Creates the branch $id with the ticket committed as in-progress, and its worktree. Then opens a shell there, $where.",
                 "Start",
             )
-            TicketAction.START_IN_CLAUDE -> Triple(
-                "Start $id in Claude?",
+            TicketAction.START_IN_CLAUDE, TicketAction.START_IN_CODEX -> Triple(
+                "Start $id in ${action.agent!!.label}?",
                 "Creates the branch $id with the ticket committed as in-progress, and its worktree. " +
-                    "Then runs Claude Code there, $where, told to start working on the ticket.",
-                "Start in Claude",
+                    "Then runs ${action.agent!!.label} there, $where, waiting for your instructions.",
+                "Start in ${action.agent!!.label}",
             )
             TicketAction.CHECK_OUT -> Triple(
                 "Create the worktree for $id?",
@@ -258,8 +260,9 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
     private fun request(action: TicketAction) {
         if (busy) return
         // Said before starting anything, rather than by a shell that fails once the ticket is started.
-        if (action == TicketAction.START_IN_CLAUDE && !installed(CLAUDE)) {
-            notice = Notice("Claude Code isn't installed: no `$CLAUDE` command found. Start opens a shell.", error = true)
+        val agent = action.agent
+        if (agent != null && !nav.workplace.has(agent.option)) {
+            notice = Notice("${agent.label} isn't installed: no `${agent.option}` command found. Start opens a shell.", error = true)
             return
         }
         if (action.confirmed) {
@@ -281,18 +284,18 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
         val size = nav.store.snapshot.value.graph?.ticket(id)?.frontmatter?.size
         val store = nav.store
         when (action) {
-            TicketAction.START -> act { start(claude = false, size) }
-            TicketAction.START_IN_CLAUDE -> act { start(claude = true, size) }
+            TicketAction.START -> act { start(agent = null, size) }
+            TicketAction.START_IN_CLAUDE, TicketAction.START_IN_CODEX -> act { start(action.agent, size) }
             TicketAction.CHECK_OUT -> act {
                 when (val outcome = store.checkOut(id)) {
                     is StartOutcome.NotStarted -> Notice("No worktree added: ${outcome.reason}", error = true)
-                    is StartOutcome.Started -> outcome.workspace?.let { nav.work(it, id, claude = false, size, done = "Worktree added in $it") }
+                    is StartOutcome.Started -> outcome.workspace?.let { nav.work(it, id, agent = null, size, done = "Worktree added in $it") }
                 }
             }
             TicketAction.OPEN_TERMINAL -> act {
                 when (val workspace: Path? = store.workspace(id)) {
                     null -> Notice("Branch '$id' isn't checked out anywhere: add a worktree for it (git worktree add).", error = true)
-                    else -> nav.work(workspace, id, claude = false, size)
+                    else -> nav.work(workspace, id, agent = null, size)
                 }
             }
             TicketAction.DIFF -> act { diff() }
@@ -302,11 +305,11 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
         }
     }
 
-    private suspend fun start(claude: Boolean, size: Size?): Notice? = when (val outcome = nav.store.start(id)) {
+    private suspend fun start(agent: SessionAgent?, size: Size?): Notice? = when (val outcome = nav.store.start(id)) {
         is StartOutcome.NotStarted -> Notice("Not started: ${outcome.reason}", error = true)
         is StartOutcome.Started -> when (val workspace = outcome.workspace) {
             null -> Notice("Started, but ${outcome.note}", error = true)
-            else -> nav.work(workspace, id, claude, size, done = "Started in $workspace")
+            else -> nav.work(workspace, id, agent, size, done = "Started in $workspace")
         }
     }
 
@@ -389,6 +392,7 @@ internal val TicketAction.key: String
     get() = when (this) {
         TicketAction.START -> "s"
         TicketAction.START_IN_CLAUDE -> "c"
+        TicketAction.START_IN_CODEX -> "x"
         TicketAction.CHECK_OUT -> "w"
         TicketAction.OPEN_TERMINAL -> "o"
         TicketAction.DIFF -> "d"
@@ -400,7 +404,8 @@ internal val TicketAction.key: String
 internal val TicketAction.label: String
     get() = when (this) {
         TicketAction.START -> "Start"
-        TicketAction.START_IN_CLAUDE -> "Start in Claude"
+        TicketAction.START_IN_CLAUDE -> "Start in Claude Code"
+        TicketAction.START_IN_CODEX -> "Start in Codex"
         TicketAction.CHECK_OUT -> "Create worktree"
         TicketAction.OPEN_TERMINAL -> "Open shell"
         TicketAction.DIFF -> "Diff"

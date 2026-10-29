@@ -49,6 +49,8 @@ public object Install {
     public const val SKILL_DIR: String = ".claude/skills/safanoria"
     /** The user's copy of the skill, relative to [claudeDir]. */
     public const val GLOBAL_SKILL_DIR: String = "skills/safanoria"
+    public const val CODEX_SKILL_DIR: String = ".agents/skills/safanoria"
+    public const val AGENTS_FILE: String = "AGENTS.md"
     public const val CLAUDE_FILE: String = "CLAUDE.md"
     public const val SETTINGS_FILE: String = ".claude/settings.json"
 
@@ -78,6 +80,16 @@ public object Install {
         return home.toPath() / ".claude"
     }
 
+    /** Codex discovers user skills in ~/.agents/skills, independently of CODEX_HOME. */
+    public fun agentsDir(): Path? = (environmentVariable("HOME") ?: environmentVariable("USERPROFILE"))
+        ?.takeIf { it.isNotEmpty() }?.toPath()?.let { it / ".agents" }
+
+    /** Codex reads this alongside the project's existing AGENTS.md instructions. */
+    public fun agentsParagraph(dir: String): String = claudeParagraph(dir) +
+        "Read `CLAUDE.md` if present for shared project instructions. Before working, run " +
+        "`safanoria-cli context --agent codex` to discover the current ticket and review state. " +
+        "If the CLI is unavailable, read `$dir/<branch>.md` and the safanoria skill's SPEC.md directly.\n"
+
     /** The Safanoria version of the skill in [skillDir]: null when there is none, "installed by hand" when unmarked. */
     public fun skillVersion(fileSystem: FileSystem, skillDir: Path): String? {
         val skill = skillDir / "SKILL.md"
@@ -104,7 +116,7 @@ public object Install {
     public fun ticketReadme(): String =
         "# Tickets\n\nThis directory is tracked with [Safanoria](https://github.com/mateuy-dev/safanoria):\n" +
             "one markdown file per ticket, `<id>.md`. The format is in the `SPEC.md` of the `safanoria` skill\n" +
-            "(`~/.claude/$GLOBAL_SKILL_DIR/`, or the project's `$SKILL_DIR/`).\n\n" +
+            "(`~/.claude/$GLOBAL_SKILL_DIR/` for Claude, `~/.agents/$GLOBAL_SKILL_DIR/` for Codex, or the project's `$SKILL_DIR/` / `$CODEX_SKILL_DIR/`).\n\n" +
             "- `_TEMPLATE.md`: template for new tickets; `_TEMPLATE.<type>.md` for one type.\n" +
             "- `attachments/<id>/`: files a ticket links to.\n\n" +
             "`safanoria-cli list`, `safanoria-cli board` and `safanoria-cli validate` show and check them.\n"
@@ -176,11 +188,15 @@ public object Install {
     public fun globalPlan(fileSystem: FileSystem, claudeDir: Path): List<FileChange> =
         managedChanges(fileSystem, (claudeDir / GLOBAL_SKILL_DIR).parent!!)
 
+    /** Same source content installed in Codex's agent skills directory. */
+    public fun codexGlobalPlan(fileSystem: FileSystem, agentsDir: Path): List<FileChange> =
+        managedChanges(fileSystem, agentsDir / "skills")
+
     /**
      * Every file Safanoria installs or creates in [root], and what to do with each; the project's
      * copy of the skill, spec and slash commands only with [projectSkill].
      */
-    public fun plan(fileSystem: FileSystem, root: Path, dir: String, projectSkill: Boolean): List<FileChange> {
+    public fun plan(fileSystem: FileSystem, root: Path, dir: String, projectSkill: Boolean, codexProjectSkill: Boolean = projectSkill): List<FileChange> {
         fun read(path: Path) = read(fileSystem, path)
         fun change(path: Path, wanted: String, managed: Boolean) = change(fileSystem, path, wanted, managed)
 
@@ -199,14 +215,22 @@ public object Install {
             null, settingsText -> FileChange(settings, settingsText.orEmpty(), FileAction.SAME, managed = false) // not JSON we can edit: left alone
             else -> FileChange(settings, wanted, if (settingsText == null) FileAction.CREATE else FileAction.DIFFERS, managed = false)
         }
+        val agents = root / AGENTS_FILE
+        val agentsText = read(agents)
+        val agentsChange = when {
+            agentsText == null -> FileChange(agents, agentsParagraph(dir), FileAction.CREATE, managed = false)
+            "safanoria-cli context --agent codex" in agentsText -> FileChange(agents, agentsText, FileAction.SAME, managed = false)
+            else -> FileChange(agents, agentsText.trimEnd('\n') + "\n\n" + agentsParagraph(dir), FileAction.DIFFERS, managed = false)
+        }
+        val codexSkill = if (codexProjectSkill) managedChanges(fileSystem, (root / CODEX_SKILL_DIR).parent!!) else emptyList()
         val skill = if (projectSkill) managedChanges(fileSystem, skillDir.parent!!) else emptyList()
-        return skill +
+        return skill + codexSkill +
             templates().map { (name, text) -> change(ticketDir / name, text, managed = false) } +
             listOf(change(ticketDir / "README.md", ticketReadme(), managed = false)).map {
                 // A README that exists is the project's, whatever it says.
                 if (it.action == FileAction.DIFFERS) it.copy(action = FileAction.SAME) else it
             } +
             claudeChange +
-            settingsChange
+            settingsChange + agentsChange
     }
 }

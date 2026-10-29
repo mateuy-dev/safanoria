@@ -37,7 +37,7 @@ class UpdateTest {
     private fun write(path: String, text: String) = SystemFileSystem.write(work / path) { writeUtf8(text) }
     private fun read(path: String) = SystemFileSystem.read(work / path) { readUtf8() }
     private fun run(vararg args: String, prompts: Prompts? = null) =
-        cli(prompts, claudeDir = claude).test(listOf("--root", work.toString(), "update") + args.toList())
+        cli(prompts, claudeDir = claude, agentsDir = claude / "agents").test(listOf("--root", work.toString(), "update") + args.toList())
 
     @Test
     fun replacesSkillKeepsTheProjectsFiles() {
@@ -85,11 +85,13 @@ class UpdateTest {
 
     @Test
     fun globalOnlyNeedsNoProject() {
-        val r = cli(claudeDir = claude).test(listOf("--root", (work / "tickets").toString(), "update", "--global"))
+        val r = cli(claudeDir = claude, agentsDir = claude / "agents").test(listOf("--root", (work / "tickets").toString(), "update", "--global"))
         assertEquals(0, r.statusCode, r.output)
         assertEquals(
             "create $globalSkill/SKILL.md\ncreate $globalSkill/SPEC.md\n" +
                 Embedded.COMMANDS.keys.joinToString("") { "create ${globalSkill.parent}/$it/SKILL.md\n" } +
+                "create $claude/agents/skills/safanoria/SKILL.md\ncreate $claude/agents/skills/safanoria/SPEC.md\n" +
+                Embedded.COMMANDS.keys.joinToString("") { "create $claude/agents/skills/$it/SKILL.md\n" } +
                 "skill and spec in $globalSkill: not installed → ${Embedded.VERSION}\n",
             r.stdout,
         )

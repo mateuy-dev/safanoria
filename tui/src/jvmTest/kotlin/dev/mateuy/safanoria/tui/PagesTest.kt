@@ -138,8 +138,8 @@ class PagesTest {
         runBlocking { nav.store.refresh() }
         val page = TicketPage(nav, "child")
         page.render()
-        // Start, Start in Claude, then the parent.
-        repeat(3) { page.key(KeyboardEvent("Tab")) }
+        // Start, Claude, Codex, then the parent.
+        repeat(4) { page.key(KeyboardEvent("Tab")) }
         page.render()
         page.key(KeyboardEvent("Enter"))
         page.key(KeyboardEvent("p"))

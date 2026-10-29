@@ -1,6 +1,9 @@
 package dev.mateuy.safanoria.cli
 
 import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.choice
+import dev.mateuy.safanoria.core.SessionAgent
 import dev.mateuy.safanoria.core.Repository
 import dev.mateuy.safanoria.core.Review
 import dev.mateuy.safanoria.core.Status
@@ -21,6 +24,9 @@ class ContextCommand : RepositoryCommand(name = "context") {
         "Print the ticket of the current branch for an agent session (the SessionStart hook). Prints nothing " +
             "when the branch isn't a ticket id."
 
+    private val agent by option("--agent", help = "Agent whose installed skill to discover (default: claude)")
+        .choice(SessionAgent.entries.associateBy { it.option })
+
     override fun run() {
         val text = runCatching { context(repository) }.getOrNull() ?: return
         echo(text, trailingNewline = false)
@@ -33,7 +39,9 @@ class ContextCommand : RepositoryCommand(name = "context") {
         val ticket = repo.ticket(branch) ?: return null
         val file = displayPath(ticket.path)
         // Claude Code prefers the user's skill to the project's when both exist.
-        val skillDir = listOfNotNull(claudeDir?.let { it / Install.GLOBAL_SKILL_DIR }, repo.root / Install.SKILL_DIR)
+        val skillDir = (if (agent == SessionAgent.CODEX)
+            listOfNotNull(repo.root / Install.CODEX_SKILL_DIR, agentsDir?.let { it / Install.GLOBAL_SKILL_DIR })
+        else listOfNotNull(claudeDir?.let { it / Install.GLOBAL_SKILL_DIR }, repo.root / Install.SKILL_DIR))
             .firstOrNull { SystemFileSystem.exists(it / "SKILL.md") }
         val skillVersion = skillDir?.let { Install.skillVersion(SystemFileSystem, it) }
         return buildString {
@@ -62,7 +70,7 @@ class ContextCommand : RepositoryCommand(name = "context") {
                 skillVersion != Embedded.VERSION -> append(
                     "The `safanoria` skill in ${displayPath(skillDir)} is from Safanoria $skillVersion, but safanoria-cli is " +
                         "${Embedded.VERSION}: they may disagree. Tell the user: `safanoria-cli update --global` installs the " +
-                        "current one for all projects (and takes precedence over a project's copy).\n\n",
+                        "current one for all projects; update an installed project copy with `safanoria-cli update`.\n\n",
                 )
             }
             append("<ticket file=\"$file\">\n")
