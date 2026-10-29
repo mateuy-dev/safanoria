@@ -1,1 +1,0 @@
-../../../skill/commands/sm.md
