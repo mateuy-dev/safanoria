@@ -9,6 +9,7 @@
     "safanoria": { "const": 1, "description": "Spec version." },
     "dir": { "type": "string", "minLength": 1, "default": "tickets", "description": "Ticket directory." },
     "mainBranch": { "type": "string", "minLength": 1, "default": "main", "description": "Branch that releases are made from." },
+    "defaultAgent": { "type": "string", "enum": ["claude", "codex"], "default": "claude", "description": "Default ticket session agent; start --agent overrides it." },
     "worktree": {
       "type": "string",
       "pattern": "\\{id\\}",

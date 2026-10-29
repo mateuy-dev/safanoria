@@ -24,12 +24,13 @@ public data class HerdrTarget(
 
 /**
  * Safanoria inside Herdr (a terminal multiplexer for coding agents): opens a ticket's worktree as a
- * workspace or tab running Claude Code, and finds what to close when the ticket is merged. It talks to
+ * workspace or tab running a coding agent, and finds what to close when the ticket is merged. It talks to
  * the `herdr` CLI of the session this process runs in (`HERDR_ENV=1`); [currentPane] is the one this process runs in and [run]
  * how it runs a command line (tests give fakes).
  */
 public class Herdr(
     private val currentPane: String? = environmentVariable("HERDR_PANE_ID"),
+    private val currentWorkspace: String? = environmentVariable("HERDR_WORKSPACE_ID"),
     private val run: (String) -> ProcessResult = ::runCommand,
 ) {
     public companion object {
@@ -46,7 +47,7 @@ public class Herdr(
     private val json = Json
 
     private fun herdr(vararg args: String): JsonObject {
-        val result = run((listOf("herdr") + args).joinToString(" ") { quote(it) } + " 2>&1")
+        val result = run((listOf("herdr") + args).joinToString(" ") { launchQuote(it) } + " 2>&1")
         if (result.exitCode != 0) throw HerdrException("herdr ${args.take(2).joinToString(" ")} failed (${result.exitCode}): ${result.output.trim()}")
         return try {
             json.parseToJsonElement(result.output).jsonObject["result"]!!.jsonObject
@@ -58,26 +59,26 @@ public class Herdr(
     private fun JsonElement.string(key: String): String? = jsonObject[key]?.jsonPrimitive?.contentOrNull
 
     /**
-     * Opens [dir] in a new Herdr workspace, or a tab of the current one, labelled [id], and starts Claude Code there
-     * named [id], with [prompt] as its first prompt when given; without [claude], a shell is left there. Focus stays
-     * where it is. Returns what it opened. Nothing is closed when Claude can't start: the shell is left for the user.
+     * Opens [dir] in a new Herdr workspace, or a tab of the current one, labelled [id], and starts the selected agent there
+     * named [id], with [prompt] as its first prompt when given; without [agent], a shell is left there. Focus stays
+     * where it is. Returns what it opened. Nothing is closed when the agent can't start: the shell is left for the user.
      */
-    public fun open(dir: Path, id: String, prompt: String?, workspace: Boolean, claude: Boolean = prompt != null): String {
+    public fun open(dir: Path, id: String, prompt: String?, workspace: Boolean, agent: SessionAgent? = if (prompt != null) SessionAgent.CLAUDE else null): String {
         val created = if (workspace) {
             herdr("workspace", "create", "--cwd", dir.toString(), "--label", id, "--no-focus")
         } else {
-            val current = environmentVariable("HERDR_WORKSPACE_ID") ?: throw HerdrException("HERDR_WORKSPACE_ID isn't set: not in a Herdr pane?")
+            val current = currentWorkspace ?: throw HerdrException("HERDR_WORKSPACE_ID isn't set: not in a Herdr pane?")
             herdr("tab", "create", "--workspace", current, "--cwd", dir.toString(), "--label", id, "--no-focus")
         }
         val pane = created["root_pane"]?.string("pane_id") ?: throw HerdrException("herdr didn't return the new pane")
         val kind = if (workspace) "workspace" else "tab"
-        if (!claude) return "opened a $kind '$id'"
+        if (agent == null) return "opened a $kind '$id'"
         try {
-            herdr("agent", "start", agentName(id), "--kind", "claude", "--pane", pane, "--", "--name", id, *listOfNotNull(prompt).toTypedArray())
+            herdr("agent", "start", agentName(id), "--kind", agent.option, "--pane", pane, "--", *agent.arguments(id, prompt).toTypedArray())
         } catch (e: HerdrException) {
-            throw HerdrException("opened a $kind for $id (pane $pane) but Claude didn't start there: ${e.message}")
+            throw HerdrException("opened a $kind for $id (pane $pane) but ${agent.label} didn't start there: ${e.message}")
         }
-        return "opened a $kind '$id' running Claude Code"
+        return "opened a $kind '$id' running ${agent.label}"
     }
 
     /**
@@ -109,4 +110,17 @@ public class Herdr(
     public fun close(target: HerdrTarget) {
         herdr(target.kind.text, "close", target.id)
     }
+}
+
+/** Shell quoting for agent prompts and paths, including TOML's embedded quotes. */
+internal fun launchQuote(arg: String): String {
+    if (Regex("[A-Za-z0-9_./:=-]+").matches(arg)) return arg
+    if (environmentVariable("OS") == "Windows_NT") {
+        // cmd expands these even inside quotes; refuse rather than execute altered instructions.
+        if (arg.any { it == '%' || it == '!' || it == '\n' || it == '\r' })
+            throw HerdrException("Herdr launch arguments cannot contain %, ! or newlines on Windows")
+        return "\"" + arg.replace("\"", "\\\"") + "\""
+    }
+    return "\"" + arg.replace("\\", "\\\\").replace("\"", "\\\"")
+        .replace("$", "\\$").replace("`", "\\`") + "\""
 }

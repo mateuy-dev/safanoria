@@ -119,4 +119,22 @@ class StartTest {
         assertTrue("would create branch alpha from main" in r.stdout, r.stdout)
         assertFalse("alpha" in branches(repo))
     }
+    @Test
+    fun agentSelectionAndInvalidValues() {
+        val repo = GitRepo.scenario("start-agent-choice")
+        repo.write("safanoria.yaml", repo.read("safanoria.yaml") + "defaultAgent: codex\n")
+        repo.commit("codex default")
+        val default = run(repo, "start", "alpha", "--dry-run")
+        assertEquals(0, default.statusCode, default.output)
+        assertTrue("with Codex" in default.stdout, default.stdout)
+        val override = run(repo, "start", "alpha", "--dry-run", "--agent", "claude")
+        assertEquals(0, override.statusCode, override.output)
+        assertTrue("with Claude Code" in override.stdout, override.stdout)
+        for (args in listOf(listOf("--agent", "unsupported"), listOf("--agent"))) {
+            val invalid = run(repo, "start", "alpha", *args.toTypedArray())
+            assertTrue(invalid.statusCode != 0, invalid.output)
+            assertFalse("alpha" in branches(repo))
+        }
+    }
+
 }

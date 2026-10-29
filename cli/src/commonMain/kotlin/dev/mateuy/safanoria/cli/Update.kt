@@ -16,23 +16,24 @@ import dev.mateuy.safanoria.core.SystemFileSystem
  */
 class Update : RepositoryCommand(name = "update") {
     override fun help(context: Context) =
-        "Install this version's skill and SPEC.md in ~/.claude/skills/safanoria/ (all your projects and worktrees), replace " +
+        "Install this version's skill and SPEC.md in ~/.claude/skills/safanoria/ and ~/.agents/skills/safanoria/ (all your projects and worktrees), replace " +
             "the project's own copy if it has one, and add missing templates. With --global, only the first, from anywhere. " +
-            "Templates, the ticket README, CLAUDE.md and .claude/settings.json (the SessionStart hook) are the project's: " +
+            "Templates, the ticket README, CLAUDE.md, AGENTS.md and .claude/settings.json (the SessionStart hook) are the project's: " +
             "changed only after asking (or --yes)."
 
-    private val global by option("--global", help = "Only the skill and SPEC.md in ~/.claude/skills/safanoria/; no project needed").flag()
+    private val global by option("--global", help = "Only the skill and SPEC.md in ~/.claude/skills/safanoria/ and ~/.agents/skills/safanoria/; no project needed").flag()
     private val yes by option("--yes", help = "Replace the project's templates and add the CLAUDE.md paragraph without asking").flag()
     private val dryRun by option("--dry-run", help = "Show what would change, write nothing").flag()
 
     override fun run() {
         val claudeDir = claudeDir
+        val codexGlobal = agentsDir?.let { Install.codexGlobalPlan(SystemFileSystem, it) }.orEmpty()
         if (global) {
             claudeDir ?: throw PrintMessage("No home directory to install the skill in (HOME, CLAUDE_CONFIG_DIR).", 1, true)
             val skillDir = claudeDir / Install.GLOBAL_SKILL_DIR
             val before = Install.skillVersion(SystemFileSystem, skillDir)
             val changes = Install.globalPlan(SystemFileSystem, claudeDir)
-            applyChanges(null, changes, yes, dryRun, prompts)
+            applyChanges(null, changes + codexGlobal, yes, dryRun, prompts)
             summary(skillDir.toString(), before, changes)
             return
         }
@@ -42,8 +43,9 @@ class Update : RepositoryCommand(name = "update") {
         val globalSkillDir = claudeDir?.let { it / Install.GLOBAL_SKILL_DIR }
         val globalBefore = globalSkillDir?.let { Install.skillVersion(SystemFileSystem, it) }
         val globalChanges = claudeDir?.let { Install.globalPlan(SystemFileSystem, it) }.orEmpty()
-        val changes = Install.plan(SystemFileSystem, repo.root, repo.config.dir, projectSkill = projectBefore != null)
-        applyChanges(repo.root, globalChanges + changes, yes, dryRun, prompts)
+        val changes = Install.plan(SystemFileSystem, repo.root, repo.config.dir, projectSkill = projectBefore != null,
+            codexProjectSkill = projectBefore != null || SystemFileSystem.exists(repo.root / Install.CODEX_SKILL_DIR / "SKILL.md"))
+        applyChanges(repo.root, globalChanges + codexGlobal + changes, yes, dryRun, prompts)
         if (globalSkillDir != null) summary(globalSkillDir.toString(), globalBefore, globalChanges)
         else echo("no home directory to install the skill in (HOME, CLAUDE_CONFIG_DIR)", err = true)
         if (projectBefore != null) summary(Install.SKILL_DIR, projectBefore, changes.filter { it.managed })

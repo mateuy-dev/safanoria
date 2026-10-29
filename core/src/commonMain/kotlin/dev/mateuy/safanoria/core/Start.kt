@@ -131,8 +131,8 @@ public object Start {
 }
 
 /**
- * The first prompt of a Claude Code session opened on a started ticket's worktree (`start --herdr --prompt`).
- * The SessionStart hook gives the session its ticket either way, so [NONE] loses nothing: it waits for the user.
+ * The first prompt of a coding agent session opened on a started ticket's worktree (`start --herdr --prompt`).
+ * [NONE] waits for the user; installed agent instructions provide ticket discovery.
  */
 public enum class SessionPrompt(public val option: String) {
     NONE("none"),

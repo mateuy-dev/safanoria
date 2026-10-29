@@ -39,7 +39,7 @@ internal suspend fun Navigator.work(dir: Path, id: String, claude: Boolean, size
     fun told(text: String?, error: Boolean = false) = listOfNotNull(done, text).joinToString(". ").ifEmpty { null }?.let { Notice(it, error) }
     return when (Workplace.current()) {
         Workplace.HERDR -> try {
-            told(Herdr().open(dir, id, prompt = null, workspace = claude && size in setOf(Size.L, Size.XL), claude = claude))
+            told(Herdr().open(dir, id, prompt = null, workspace = claude && size in setOf(Size.L, Size.XL), agent = if (claude) dev.mateuy.safanoria.core.SessionAgent.CLAUDE else null))
         } catch (e: HerdrException) {
             told("Not opened in Herdr: ${e.message}", error = true)
         }

@@ -44,7 +44,7 @@ class HerdrTest {
     @Test
     fun claudeCanStartWithoutAPrompt() {
         val log = mutableListOf<String>()
-        val r = herdr(emptyList(), emptyMap(), log).open(dir, "alpha", prompt = null, workspace = true, claude = true)
+        val r = herdr(emptyList(), emptyMap(), log).open(dir, "alpha", prompt = null, workspace = true, agent = SessionAgent.CLAUDE)
         assertEquals("opened a workspace 'alpha' running Claude Code", r)
         assertEquals("herdr agent start alpha --kind claude --pane w9:p1 -- --name alpha 2>&1", log[1])
     }

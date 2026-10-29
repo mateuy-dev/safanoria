@@ -27,7 +27,7 @@ class InitTest {
     }
 
     private fun run(vararg args: String, prompts: Prompts? = null) =
-        cli(prompts, claudeDir = claude).test(listOf("--root", work.toString(), "init") + args.toList())
+        cli(prompts, claudeDir = claude, agentsDir = claude / "agents").test(listOf("--root", work.toString(), "init") + args.toList())
     private fun read(path: String) = SystemFileSystem.read(work / path) { readUtf8() }
     private fun exists(path: String) = SystemFileSystem.exists(work / path)
 

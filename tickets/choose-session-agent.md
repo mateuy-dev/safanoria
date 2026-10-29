@@ -41,7 +41,7 @@ Let users choose Claude Code or Codex when opening a Safanoria ticket session. D
 
 ## Plan
 
-- [ ] `choose-session-agent-cli`: Choose Claude or Codex in CLI and launch skills
+- [x] `choose-session-agent-cli`: Choose Claude or Codex in CLI and launch skills
 - [ ] `choose-session-agent-ui`: Choose Claude or Codex in GUI and TUI
 
 ## Work Log

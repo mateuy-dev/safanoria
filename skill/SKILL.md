@@ -10,7 +10,7 @@ description: >
 
 The format is defined in `SPEC.md` next to this file; read it before writing a ticket. Its title
 names its spec version; if `safanoria:` in `safanoria.yaml` is another one, follow the project's
-own `.claude/skills/safanoria/SPEC.md` instead (or tell the user, when it has none). Project
+own `.agents/skills/safanoria/SPEC.md` (Codex) or `.claude/skills/safanoria/SPEC.md` (Claude) instead (or tell the user, when it has none). Project
 settings (ticket directory, components, channels, worktree path, main branch) are in
 `safanoria.yaml` at the repository root.
 
@@ -79,7 +79,9 @@ set `status: backlog`, today's dates, and for a child `parent` plus its item in 
 
 When the current branch is a ticket id (a SessionStart hook usually gives you the ticket; else
 read `<dir>/<id>.md`), the session belongs to that ticket. Work normally, as the user directs.
-Along the way:
+For Codex, read `CLAUDE.md` if present for shared project instructions and run
+`safanoria-cli context --agent codex` before working to discover ticket context and review mode.
+If the CLI is unavailable, read the branch ticket directly. Along the way:
 
 - **Decisions** go into the Work Log: `- **<date>** · decision · <what and why>`. One or two
   lines, for choices a later reader would wonder about: an approach taken or rejected, a
