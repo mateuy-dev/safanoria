@@ -2,7 +2,7 @@
 id: choose-session-agent-cli
 type: feature
 title: Choose Claude or Codex in CLI and launch skills
-status: in-progress
+status: review
 priority: medium
 size: L
 area: [safanoria]
@@ -72,3 +72,4 @@ Keep agent-specific command construction reusable by the GUI/TUI child. No new s
 - **2026-10-29** · decision · Install the same skill/spec/command sources in both agents' discovery directories. Codex uses additive AGENTS.md instructions and explicit context discovery instead of relying on Claude's SessionStart hook; existing project guidance and unmarked user commands retain the existing confirmation behavior.
 - **2026-10-29** · validation · Native CLI launches of both agents in disposable ticket worktrees exercised first-use trust failures and retained their panes. Matching Herdr launch arguments in this already trusted worktree then reached idle/interactive-ready for both Claude and Codex without an initial prompt; new workspace/tab placement kept focus unchanged. Closed only the smoke-test workspaces and left trust dialogs unanswered.
 - **2026-10-29** · validation · `./gradlew allTests` passed: 298 JVM tests and 268 Linux native tests, with no failures. Coverage includes selection precedence and invalid values, both agents and all prompt modes, workspace/tab construction, literal shell quoting, startup failures, skill metadata, Codex installation/discovery, preserved instructions, and detached review context.
+- **2026-10-29** · status · review
