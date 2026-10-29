@@ -354,6 +354,13 @@ safanoria-start() {
 
 `safanoria-start herd-photos && claude` then starts the ticket and opens the session in its worktree.
 
+**Continue on another computer.** After fetching ticket branches, run
+`safanoria-cli checkout <id>` to create the ticket's worktree at the configured path.
+It reuses an existing local branch, or creates a local branch tracking the remote ticket
+branch. Ticket status, work log and branch history stay as they are. An existing worktree
+or occupied destination is refused without overwriting work. Use `--dry-run` to preview,
+or `--print-path` to get only the created worktree's path on stdout.
+
 **In Herdr.** Inside a [Herdr](https://herdr.dev) pane, `start <id> --herdr` also opens the worktree
 there running the selected agent (Claude Code by default), without taking focus: a workspace for tickets of
 size L and XL, a tab of the current workspace for smaller ones (`--in workspace|tab` overrides).
@@ -571,10 +578,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - uses: mateuy-dev/safanoria@v0.6.0      # installs the CLI, fetches the other branches, validates the tickets
+      - uses: mateuy-dev/safanoria@v0.7.0      # installs the CLI, fetches the other branches, validates the tickets
 ```
 
-Pin the version (`@v0.6.0`, or `with: version: 0.6.0`): a new Safanoria release then can't fail
+Pin the version (`@v0.7.0`, or `with: version: 0.7.0`): a new Safanoria release then can't fail
 your CI until you move to it. `with: args: …` runs another command, e.g. `list --blocked`.
 Elsewhere, install with `SAFANORIA_CLI_ONLY=1` and `install.sh`, and run `safanoria-cli validate`.
 

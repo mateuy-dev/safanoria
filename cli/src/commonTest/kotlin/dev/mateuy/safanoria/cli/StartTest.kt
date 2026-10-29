@@ -112,6 +112,33 @@ class StartTest {
     }
 
     @Test
+    fun checkoutReusesLocalBranchAndRefusesDuplicateOrOccupiedPaths() {
+        val repo = GitRepo.scenario("checkout-local")
+        val before = repo.git("rev-parse", "beta").trim()
+        val text = repo.git("show", "beta:tickets/beta.md")
+        val occupied = worktreeOf(repo, "beta")
+        repo.write("keep.txt", "existing work", at = occupied)
+        val refused = cli().test(listOf("--root", repo.root.toString(), "checkout", "beta"))
+        assertEquals(1, refused.statusCode, refused.output)
+        assertEquals("existing work", repo.read("keep.txt", at = occupied))
+        SystemFileSystem.deleteRecursively(occupied)
+        // A locally diverged branch wins even if a remote-tracking copy is visible.
+        repo.git("update-ref", "refs/remotes/origin/beta", "main")
+        val result = cli().test(listOf("--root", repo.root.toString(), "checkout", "beta"))
+        assertEquals(0, result.statusCode, result.output)
+        assertEquals(before, repo.git("rev-parse", "beta").trim())
+        assertEquals(text, repo.read("tickets/beta.md", at = occupied))
+        repo.write("uncommitted.txt", "keep", at = occupied)
+        val duplicate = cli().test(listOf("--root", repo.root.toString(), "checkout", "beta"))
+        assertEquals(1, duplicate.statusCode, duplicate.output)
+        assertTrue("already has a worktree" in duplicate.stderr, duplicate.stderr)
+        assertEquals("keep", repo.read("uncommitted.txt", at = occupied))
+        val missing = cli().test(listOf("--root", repo.root.toString(), "checkout", "alpha"))
+        assertEquals(1, missing.statusCode, missing.output)
+        assertFalse("alpha" in branches(repo))
+    }
+
+    @Test
     fun dryRunChangesNothing() {
         val repo = GitRepo.scenario("start-dry")
         val r = run(repo, "start", "alpha", "--dry-run")

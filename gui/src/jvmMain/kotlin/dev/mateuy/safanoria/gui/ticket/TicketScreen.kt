@@ -193,8 +193,8 @@ private fun Confirmation(action: TicketAction, id: String, onConfirm: (String) -
         )
         TicketAction.CHECK_OUT -> Triple(
             "Create the worktree for $id?",
-            "$id was started on another computer. Adds its worktree here, with a local branch $id tracking the remote one, " +
-                "as last fetched. Then opens a terminal there. Nothing is committed.",
+            "Adds a worktree here from the existing local branch, or tracks the remote branch " +
+                "as last fetched. Preserves the ticket and its history. Then opens a terminal there. Nothing is committed.",
             "Create worktree",
         )
         TicketAction.FINISH -> Triple(

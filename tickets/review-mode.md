@@ -6,7 +6,9 @@ status: done
 priority: medium
 size: M
 created: 2026-10-22
-updated: 2026-10-22
+updated: 2026-10-29
+resolvedIn:
+  safanoria: 0.7.0
 ---
 
 ## Objective
@@ -46,3 +48,4 @@ Also:
 - **2026-10-22** · status · review
 - **2026-10-22** · review · `review` without an id takes this worktree's ticket without asking (no `--current` flag), like `review --end`: it only moves HEAD and `--end` undoes it, so there's nothing to confirm. `finish`/`merge`/`reopen` keep asking.
 - **2026-10-22** · status · done
+- **2026-10-29** · release · safanoria 0.7.0

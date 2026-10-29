@@ -2,11 +2,11 @@
 id: new-crashes-ticket-directory
 type: bug
 title: "new crashes when the ticket directory doesn't exist"
-status: backlog
+status: done
 priority: medium
 size: S
 created: 2026-10-06
-updated: 2026-10-06
+updated: 2026-10-29
 ---
 
 ## Objective
@@ -26,16 +26,15 @@ In a repository whose `safanoria.yaml` is valid but whose ticket directory (`dir
 
 `okio.FileNotFoundException: No such file or directory`, a stack trace, exit by abort.
 
-### Steps to reproduce
-
-1.
-
-### Expected
-
-### Actual
-
-<!-- Error messages, refs (e.g. sentry) and the version where it happens. Screenshots and logs: attachments/<id>/ (SPEC §7.8), without personal data. -->
-
 ## Acceptance Criteria
 
+- [x] `new` creates a missing default ticket directory and writes a valid ticket.
+- [x] `new` creates missing parent directories for a nested custom `dir`.
+- [x] `new --dry-run` leaves missing ticket directories absent.
+
 ## Work Log
+
+- **2026-10-29** · status · started
+- **2026-10-29** · decision · Create parent directories when writing the prepared files in the CLI, so preparation and dry runs remain free of filesystem changes.
+- **2026-10-29** · status · review
+- **2026-10-29** · status · done

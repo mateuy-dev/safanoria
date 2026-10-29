@@ -34,10 +34,10 @@ Let users choose Claude Code or Codex when opening a Safanoria ticket session. D
 
 ## Acceptance Criteria
 
-- [ ] Users can select Claude Code or Codex through CLI and launch skills, GUI, and TUI.
-- [ ] Explicit selection overrides the project default; absent a preference, existing Claude behavior is preserved.
-- [ ] Both agents receive sufficient project and ticket context to work normally.
-- [ ] Both child tickets are complete.
+- [x] Users can select Claude Code or Codex through CLI and launch skills, GUI, and TUI.
+- [x] Explicit selection overrides the project default; absent a preference, existing Claude behavior is preserved.
+- [x] Both agents receive sufficient project and ticket context to work normally.
+- [x] Both child tickets are complete.
 
 ## Plan
 
@@ -47,3 +47,4 @@ Let users choose Claude Code or Codex when opening a Safanoria ticket session. D
 ## Work Log
 
 - **2026-10-29** · status · started
+- **2026-10-29** · validation · Integrated main, preserving the checkout command and existing-branch checkout actions alongside both agent choices. `./gradlew allTests --offline` passed; macOS and Windows test execution is skipped on Linux. The child ticket retains its documented manual GUI validation gap.

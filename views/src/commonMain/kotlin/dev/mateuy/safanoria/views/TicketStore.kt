@@ -89,6 +89,8 @@ data class TicketsSnapshot(
     val projectDiagnostics: List<Diagnostic> = emptyList(),
     val loading: Boolean = false,
     val error: String? = null,
+    /** Local branches that have no registered worktree. */
+    val branchesWithoutWorktrees: Set<String> = emptySet(),
 )
 
 /**
@@ -137,8 +139,8 @@ class TicketStore(val root: Path) {
     }
 
     /**
-     * Continues here ticket [id], started on another computer: its worktree, with a local branch
-     * `<id>` tracking `origin/<id>` (nothing is committed). The tickets are read again afterwards.
+     * Adds ticket [id]'s worktree from its existing local or remote branch without committing.
+     * The tickets are read again afterwards.
      */
     suspend fun checkOut(id: String): StartOutcome {
         val outcome = withContext(Dispatchers.IO) {
@@ -279,7 +281,12 @@ class TicketStore(val root: Path) {
                 val graph = branches?.graph ?: repository.graph
                 // Parse now, off the UI thread: tickets parse lazily.
                 graph.tickets.forEach { it.frontmatter; it.body }
-                snapshot(graph, repository.config, Validator(repository, branches).validate(), repository.ticketDir, branches?.branches?.firstOrNull())
+                snapshot(graph, repository.config, Validator(repository, branches).validate(), repository.ticketDir, branches?.branches?.firstOrNull()).copy(
+                    branchesWithoutWorktrees = if (branches == null) emptySet() else {
+                        val checkedOut = repository.git.worktrees().mapNotNull { it.branch }.toSet()
+                        repository.git.branches().toSet() - checkedOut
+                    },
+                )
             }
         }
         state.update {
