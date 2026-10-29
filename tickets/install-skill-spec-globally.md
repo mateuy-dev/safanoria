@@ -6,8 +6,10 @@ status: done
 priority: medium
 size: M
 created: 2026-10-22
-updated: 2026-10-22
+updated: 2026-10-29
 related: [slash-commands-most-often]
+resolvedIn:
+  safanoria: 0.7.0
 ---
 
 ## Objective
@@ -46,3 +48,4 @@ Out of scope:
 - **2026-10-22** · decision · Tests set `CLAUDE_CONFIG_DIR` (build/test-claude) so `init`/`update` tests never write the developer's `~/.claude`; tests that check it pass their own directory to `cli()`.
 - **2026-10-22** · status · review
 - **2026-10-22** · status · done
+- **2026-10-29** · release · safanoria 0.7.0

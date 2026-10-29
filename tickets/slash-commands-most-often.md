@@ -6,7 +6,9 @@ status: done
 priority: medium
 size: S
 created: 2026-10-22
-updated: 2026-10-22
+updated: 2026-10-29
+resolvedIn:
+  safanoria: 0.7.0
 ---
 
 ## Objective
@@ -28,3 +30,4 @@ Many workflows are typed to Claude over and over in nearly the same words, e.g. 
 - **2026-10-22** · decision · After merging install-skill-spec-globally: the commands go wherever the skill does, `~/.claude/skills/<name>/` (`update --global`, run by the install scripts) and, when the project keeps its own copy, `.claude/skills/<name>/`.
 - **2026-10-22** · status · review
 - **2026-10-22** · status · done
+- **2026-10-29** · release · safanoria 0.7.0

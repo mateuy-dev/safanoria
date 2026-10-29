@@ -7,7 +7,9 @@ priority: medium
 size: L
 area: [safanoria]
 created: 2026-10-21
-updated: 2026-10-22
+updated: 2026-10-29
+resolvedIn:
+  safanoria: 0.7.0
 ---
 
 ## Objective
@@ -37,3 +39,4 @@ Safanoria has a desktop GUI (gui module: board, ticket screen, versions screen, 
 - **2026-10-21** · decision · `safanoria-cli` alone on a terminal in a project opens the TUI instead of the command menu; outside a project it still offers `init`.
 - **2026-10-21** · status · review
 - **2026-10-22** · status · done
+- **2026-10-29** · release · safanoria 0.7.0
