@@ -234,8 +234,8 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
             )
             TicketAction.CHECK_OUT -> Triple(
                 "Create the worktree for $id?",
-                "$id was started on another computer. Adds its worktree here, with a local branch $id tracking the remote one, " +
-                    "as last fetched. Then opens a shell there, $where. Nothing is committed.",
+                "Adds a worktree here from the existing local branch, or tracks the remote branch " +
+                    "as last fetched. Preserves the ticket and its history. Then opens a shell there, $where. Nothing is committed.",
                 "Create worktree",
             )
             TicketAction.FINISH -> Triple("Set $id to review?", "Sets the ticket to review, logs it, and commits only the ticket on its branch.", "Set to review")

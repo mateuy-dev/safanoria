@@ -6,7 +6,7 @@ import okio.Path.Companion.toPath
 public sealed interface StartResult {
     public data class Ready(
         val id: String,
-        /** The branch `<id>` is created from: the parent's branch, or mainBranch; for [Start.prepareCheckout], `origin/<id>`. */
+        /** The branch `<id>` is created from: the parent's branch, or mainBranch; for [Start.prepareCheckout], the existing local or remote branch. */
         val base: String,
         /** Where to add the worktree (`worktree` in safanoria.yaml, `{id}` replaced). */
         val worktree: Path,
@@ -57,26 +57,30 @@ public object Start {
     }
 
     /**
-     * For a ticket started on another computer (its real copy is on `origin/<id>` and there is no
-     * local branch `<id>`): its worktree here, where [Start.prepare] would put it, with a local
-     * branch `<id>` tracking the remote one. Nothing is committed: the ticket is started already.
+     * Add a worktree for an existing ticket branch without changing its history or ticket.
+     * Prefer the local branch; otherwise create one tracking the ticket's remote branch.
      */
     public fun prepareCheckout(repository: Repository, branches: Branches, id: String): StartResult {
         if (!isValidId(id)) return refused("'$id' is not a ticket id (SPEC §3)")
         val config = repository.configResult.config
             ?: return refused(repository.configResult.diagnostics.joinToString("; ") { it.message }.ifEmpty { "$CONFIG_FILE can't be read" })
         val ticket = branches.graph.ticket(id) ?: return refused("no ticket '$id' on any branch")
-        val remote = ticket.remoteBranch ?: return refused(
-            if (repository.git.commitId("refs/heads/$id") != null) "branch '$id' is here already" else "'$id' isn't on a remote branch: start it instead",
-        )
+        val git = repository.git
+        val base = if (git.commitId("refs/heads/$id") != null) id
+            else ticket.remoteBranch?.takeIf { ticket.branch == id }
+                ?: return refused("'$id' has no existing ticket branch: start it instead")
+        git.worktrees().firstOrNull { it.branch == id }?.let {
+            return refused("branch '$id' already has a worktree at ${it.path}")
+        }
         val worktree = worktree(repository, config, id)
         if (repository.fileSystem.exists(worktree)) return refused("the worktree path $worktree already exists")
-        return StartResult.Ready(id, remote, worktree)
+        return StartResult.Ready(id, base, worktree)
     }
 
-    /** Adds the worktree [prepareCheckout] decided on, creating local branch `<id>` to track the remote one. */
+    /** Adds the worktree [prepareCheckout] decided on, reusing the local branch when present. */
     public fun checkOut(repository: Repository, ready: StartResult.Ready) {
-        repository.git.run("worktree", "add", "--track", "-b", ready.id, ready.worktree.toString(), ready.base)
+        if (ready.base == ready.id) addWorktree(repository, ready)
+        else repository.git.run("worktree", "add", "--track", "-b", ready.id, ready.worktree.toString(), ready.base)
     }
 
     /** Where ticket [id]'s worktree goes: `worktree` in safanoria.yaml, `{id}` replaced. */

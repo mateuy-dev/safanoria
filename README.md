@@ -328,6 +328,13 @@ safanoria-start() {
 
 `safanoria-start herd-photos && claude` then starts the ticket and opens the session in its worktree.
 
+**Continue on another computer.** After fetching ticket branches, run
+`safanoria-cli checkout <id>` to create the ticket's worktree at the configured path.
+It reuses an existing local branch, or creates a local branch tracking the remote ticket
+branch. Ticket status, work log and branch history stay as they are. An existing worktree
+or occupied destination is refused without overwriting work. Use `--dry-run` to preview,
+or `--print-path` to get only the created worktree's path on stdout.
+
 **In Herdr.** Inside a [Herdr](https://herdr.dev) pane, `start <id> --herdr` also opens the worktree
 there running Claude Code (`claude --name <id>`), without taking focus: a workspace for tickets of
 size L and XL, a tab of the current workspace for smaller ones (`--in workspace|tab` overrides).

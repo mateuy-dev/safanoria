@@ -72,7 +72,7 @@ class StartCommand : RepositoryCommand(name = "start") {
             is StartResult.Refused -> {
                 // Started on another computer: say how to continue it here.
                 val checkout = (Start.prepareCheckout(repo, branches, id) as? StartResult.Ready)
-                    ?.let { "\nCheck it out with: git worktree add --track -b $id ${it.worktree} ${it.base}" }.orEmpty()
+                    ?.let { "\nCheck it out with: safanoria-cli checkout $id" }.orEmpty()
                 throw PrintMessage("Not started: ${r.reason}$checkout", 1, true)
             }
             is StartResult.Ready -> r

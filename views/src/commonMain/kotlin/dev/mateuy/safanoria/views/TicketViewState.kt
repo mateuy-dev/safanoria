@@ -43,7 +43,7 @@ enum class TicketAction(val confirmed: Boolean) {
     /** Backlog or ready: start it like [START], with Claude Code running in the terminal, told to work on the ticket. */
     START_IN_CLAUDE(confirmed = true),
 
-    /** Started on another computer (only on `origin/<id>`): add its worktree here, with a local branch tracking it, and open a terminal there. */
+    /** Existing ticket branch without a local worktree: add its worktree and open a terminal there. */
     CHECK_OUT(confirmed = true),
 
     /** In progress or review: open a terminal where its branch is checked out. */
@@ -119,8 +119,8 @@ fun ticketViewState(id: String, snapshot: TicketsSnapshot): TicketViewState {
         blockedBy = f?.blockedBy.orEmpty().map { it.value }.distinct().map(::link),
         blocks = graph.blocks(ticket).map(::link),
         body = body(ticket),
-        // Started on another computer: nothing can be done with it here until it is checked out.
-        actions = if (ticket.remote != null) listOf(TicketAction.CHECK_OUT, TicketAction.DIFF) else when (f?.status) {
+        // Existing branches without worktrees can be continued here without starting again.
+        actions = if (ticket.remote != null || (ticket.branch == id && id in snapshot.branchesWithoutWorktrees)) listOf(TicketAction.CHECK_OUT, TicketAction.DIFF) else when (f?.status) {
             Status.BACKLOG, Status.READY -> listOf(TicketAction.START, TicketAction.START_IN_CLAUDE)
             Status.IN_PROGRESS -> listOf(TicketAction.OPEN_TERMINAL, TicketAction.DIFF, TicketAction.FINISH)
             Status.REVIEW -> listOf(TicketAction.OPEN_TERMINAL, TicketAction.DIFF, TicketAction.MERGE, TicketAction.REOPEN)
