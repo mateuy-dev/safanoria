@@ -33,6 +33,36 @@ class NewTest {
     private fun read(path: Path) = SystemFileSystem.read(path) { readUtf8() }
 
     @Test
+    fun createsMissingTicketDirectory() {
+        checkMissingTicketDirectory("tickets")
+    }
+
+    @Test
+    fun createsMissingNestedTicketDirectory() {
+        checkMissingTicketDirectory("tracking/issues")
+    }
+
+    private fun checkMissingTicketDirectory(directory: String) {
+        val r = GitRepo("new-missing-${directory.replace('/', '-')}")
+        r.write("safanoria.yaml", GitRepo.config(r.root.name) + "dir: $directory\n")
+        r.commit("configuration without a ticket directory")
+        fun create(vararg extra: String) = cli().test(
+            listOf("--root", r.root.toString(), "new", "First thing", "--objective", "Create the first ticket.") + extra,
+        )
+
+        val dry = create("--dry-run")
+        assertEquals(0, dry.statusCode, dry.output)
+        assertFalse(SystemFileSystem.exists(r.root / directory))
+
+        val result = create()
+        assertEquals(0, result.statusCode, result.output)
+        val ticket = r.root / directory / "first-thing.md"
+        assertTrue(SystemFileSystem.exists(ticket))
+        assertTrue(read(ticket).contains("Create the first ticket."))
+        assertEquals(emptyList(), Validator(Repository(r.root)).validate().map { it.toString() })
+    }
+
+    @Test
     fun createsATicket() {
         val r = run("new", "Herd photos from the field", "--size", "M", "--objective", "Users attach photos to a herd.", "--date", "2026-10-02")
         assertEquals(0, r.statusCode, r.output)
