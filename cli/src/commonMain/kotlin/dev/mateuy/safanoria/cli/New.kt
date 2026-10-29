@@ -98,7 +98,10 @@ class New : RepositoryCommand(name = "new") {
             echo("committed ${commit.take(7)} on ${view.branch}: ${ready.id}: create")
             return
         }
-        ready.files.forEach { f -> repo.fileSystem.write(f.path) { writeUtf8(f.text) } }
+        ready.files.forEach { f ->
+            f.path.parent?.let { repo.fileSystem.createDirectories(it) }
+            repo.fileSystem.write(f.path) { writeUtf8(f.text) }
+        }
         report(Validator(Repository(repo.root, repo.fileSystem)).validate(ready.files.map { it.path }))
     }
 
