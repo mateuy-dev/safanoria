@@ -2,7 +2,7 @@
 id: new-crashes-ticket-directory
 type: bug
 title: "new crashes when the ticket directory doesn't exist"
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-10-06
@@ -36,3 +36,4 @@ In a repository whose `safanoria.yaml` is valid but whose ticket directory (`dir
 
 - **2026-10-29** · status · started
 - **2026-10-29** · decision · Create parent directories when writing the prepared files in the CLI, so preparation and dry runs remain free of filesystem changes.
+- **2026-10-29** · status · review
