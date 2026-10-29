@@ -2,7 +2,7 @@
 id: choose-session-agent-ui
 type: feature
 title: Choose Claude or Codex in GUI and TUI
-status: backlog
+status: in-progress
 priority: medium
 size: L
 area: [safanoria]
@@ -53,3 +53,4 @@ Inspect the shared action/view-state definitions and terminal abstractions befor
 
 ## Work Log
 
+- **2026-10-29** · status · started
