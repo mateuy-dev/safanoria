@@ -294,6 +294,13 @@ in the taskbar. Without it, or when the file can't be read, it has Safanoria's.
 The app reads the tickets again when its window gets the focus back, and on Refresh. **Fetch**
 runs `git fetch --all --prune` first, the only time the app fetches.
 
+Both ticket screens offer **Start in Claude Code** and **Start in Codex**, alongside **Start**
+for a plain terminal. The project’s `defaultAgent` appears first among the agents and is marked
+“default”; without a setting, Claude Code is preferred. Choose either agent explicitly to
+override that preference. Sessions wait for your instructions in the ticket worktree.
+A missing agent is reported before the ticket is started. If opening the session fails after
+starting, the notice identifies the created worktree so you can continue there yourself.
+
 ### The terminal app
 
 `safanoria-cli tui`, or `safanoria-cli` alone on a terminal, opens the desktop app's screens in
@@ -304,13 +311,13 @@ or by mouse: click cards, chips, buttons and tabs, and scroll with the wheel. `?
 - Board: arrows or `hjkl` move between columns and cards, Enter opens a ticket, Space collapses a
   column, Tab goes to the filter chips, `v` Versions, `F` Fetch, `r` reads the tickets again, `q` quits.
 - Ticket: arrows scroll, Tab and Enter go through its links and buttons, and each action has a
-  key (`s` Start, `c` Start in Claude, `o` Open shell, `d` Diff, `f` Finish, `m` Merge, `i` Back to in
+  key (`s` Start, `c` Start in Claude Code, `x` Start in Codex, `o` Open shell, `d` Diff, `f` Finish, `m` Merge, `i` Back to in
   progress, `w` Create worktree); Esc goes back.
 
 Where a desktop app opens a terminal window, the terminal app opens a new tab inside Herdr, a new
-window inside tmux, and otherwise runs the shell (or Claude Code) in the same terminal, coming
+window inside tmux, and otherwise runs the shell (or selected agent) in the same terminal, coming
 back to the ticket when it exits. Diff runs git's diff tool in the same terminal too, until it
-closes, so a terminal one (`vimdiff`) works. In Herdr, Start in Claude on a large ticket (L, XL) gets a
+closes, so a terminal one (`vimdiff`) works. In Herdr, starting either agent on a large ticket (L, XL) gets a
 workspace of its own, as `start --herdr` does.
 
 ## Working on a ticket

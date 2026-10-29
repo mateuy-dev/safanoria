@@ -35,6 +35,7 @@ internal interface Page {
 internal interface Navigator {
     val store: TicketStore
     val terminal: Terminal
+    val workplace: WorkplaceLauncher get() = WorkplaceLauncher()
     fun open(page: Page)
     fun back()
 
@@ -206,8 +207,9 @@ internal class Tui(override val terminal: Terminal, override val store: TicketSt
             Ticket
               ↑ ↓, PgUp PgDn    scroll
               Tab, Enter        go through the links and buttons, open one
-              s c w o f m i     start, start in Claude, create worktree,
-                                open a shell, finish, merge, back to in progress
+              s c x             start a shell, start Claude Code, start Codex
+              w o d f m i       create worktree, open a shell, diff, finish,
+                                merge, back to in progress
               p                 the parent ticket
 
             Versions

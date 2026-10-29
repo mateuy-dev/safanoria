@@ -50,6 +50,7 @@ import dev.mateuy.safanoria.gui.board.ChildrenBoard
 import dev.mateuy.safanoria.gui.theme.WarningColor
 import dev.mateuy.safanoria.gui.theme.color
 import dev.mateuy.safanoria.gui.theme.label
+import dev.mateuy.safanoria.views.agentLabel
 import dev.mateuy.safanoria.views.TicketAction
 import dev.mateuy.safanoria.views.TicketLink
 import dev.mateuy.safanoria.views.TicketProblem
@@ -184,11 +185,11 @@ private fun Confirmation(action: TicketAction, id: String, onConfirm: (String) -
                 "Then opens a terminal there.",
             "Start",
         )
-        TicketAction.START_IN_CLAUDE -> Triple(
-            "Start $id in Claude?",
+        TicketAction.START_IN_CLAUDE, TicketAction.START_IN_CODEX -> Triple(
+            "Start $id in ${action.agent!!.label}?",
             "Creates the branch $id with the ticket committed as in-progress, and its worktree. " +
-                "Then opens a terminal there running Claude Code, told to start working on the ticket.",
-            "Start in Claude",
+                "Then opens a terminal there running ${action.agent!!.label}, waiting for your instructions.",
+            "Start in ${action.agent!!.label}",
         )
         TicketAction.CHECK_OUT -> Triple(
             "Create the worktree for $id?",
@@ -246,7 +247,7 @@ private fun ActionBar(state: TicketViewState, onAction: (TicketAction) -> Unit) 
                 val onClick = { onAction(action) }
                 when (action) {
                     TicketAction.START -> Button(onClick, enabled = !state.busy) { Text("Start") }
-                    TicketAction.START_IN_CLAUDE -> OutlinedButton(onClick, enabled = !state.busy) { Text("Start in Claude") }
+                    TicketAction.START_IN_CLAUDE, TicketAction.START_IN_CODEX -> OutlinedButton(onClick, enabled = !state.busy) { Text(action.agentLabel(state.defaultAgent)!!) }
                     TicketAction.CHECK_OUT -> Button(onClick, enabled = !state.busy) { Text("Create worktree") }
                     TicketAction.OPEN_TERMINAL -> OutlinedButton(onClick, enabled = !state.busy) { Text("Open terminal") }
                     TicketAction.DIFF -> OutlinedButton(onClick, enabled = !state.busy) { Text("Diff") }
