@@ -12,6 +12,8 @@ requests:
     who: Project maintainer
     channel: other
     date: 2026-10-29
+resolvedIn:
+  safanoria: 0.8.0
 ---
 
 ## Objective
@@ -35,3 +37,4 @@ After pulling the main branch and fetching ticket branches on another computer, 
 - **2026-10-29** · decision · Expose `checkout <id>` separately from `start` so continuing an existing local or remote branch preserves the ticket and commits. Apps offer Check out for local branches without a worktree as well. Refuse registered worktrees and occupied destinations to protect existing work.
 - **2026-10-29** · status · review
 - **2026-10-29** · status · done
+- **2026-10-29** · release · safanoria 0.8.0

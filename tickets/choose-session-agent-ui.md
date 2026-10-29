@@ -15,6 +15,8 @@ requests:
     who: Project maintainer
     channel: other
     date: 2026-10-29
+resolvedIn:
+  safanoria: 0.8.0
 ---
 
 ## Objective
@@ -65,3 +67,4 @@ Inspect the shared action/view-state definitions and terminal abstractions befor
 - **2026-10-29** · validation · `./gradlew allTests --offline` passed (JVM and Linux native tests; macOS and Windows execution skipped on Linux). Both TUI choices passed isolated PTY process smoke checks with stand-in agents; manual GUI and real-agent sessions remain open for review.
 - **2026-10-29** · status · review
 - **2026-10-29** · status · done
+- **2026-10-29** · release · safanoria 0.8.0

@@ -7,6 +7,8 @@ priority: medium
 size: S
 created: 2026-10-06
 updated: 2026-10-29
+resolvedIn:
+  safanoria: 0.8.0
 ---
 
 ## Objective
@@ -38,3 +40,4 @@ In a repository whose `safanoria.yaml` is valid but whose ticket directory (`dir
 - **2026-10-29** · decision · Create parent directories when writing the prepared files in the CLI, so preparation and dry runs remain free of filesystem changes.
 - **2026-10-29** · status · review
 - **2026-10-29** · status · done
+- **2026-10-29** · release · safanoria 0.8.0

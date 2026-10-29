@@ -17,6 +17,8 @@ requests:
     who: Project maintainer
     channel: other
     date: 2026-10-29
+resolvedIn:
+  safanoria: 0.8.0
 ---
 
 ## Objective
@@ -50,3 +52,4 @@ Let users choose Claude Code or Codex when opening a Safanoria ticket session. D
 - **2026-10-29** · validation · Integrated main, preserving the checkout command and existing-branch checkout actions alongside both agent choices. `./gradlew allTests --offline` passed; macOS and Windows test execution is skipped on Linux. The child ticket retains its documented manual GUI validation gap.
 - **2026-10-29** · status · review
 - **2026-10-29** · status · done
+- **2026-10-29** · release · safanoria 0.8.0

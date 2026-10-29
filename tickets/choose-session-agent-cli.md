@@ -14,6 +14,8 @@ requests:
     who: Project maintainer
     channel: other
     date: 2026-10-29
+resolvedIn:
+  safanoria: 0.8.0
 ---
 
 ## Objective
@@ -74,3 +76,4 @@ Keep agent-specific command construction reusable by the GUI/TUI child. No new s
 - **2026-10-29** · validation · `./gradlew allTests` passed: 298 JVM tests and 268 Linux native tests, with no failures. Coverage includes selection precedence and invalid values, both agents and all prompt modes, workspace/tab construction, literal shell quoting, startup failures, skill metadata, Codex installation/discovery, preserved instructions, and detached review context.
 - **2026-10-29** · status · review
 - **2026-10-29** · status · done
+- **2026-10-29** · release · safanoria 0.8.0
