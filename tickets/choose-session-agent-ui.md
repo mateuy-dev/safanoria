@@ -2,7 +2,7 @@
 id: choose-session-agent-ui
 type: feature
 title: Choose Claude or Codex in GUI and TUI
-status: in-progress
+status: review
 priority: medium
 size: L
 area: [safanoria]
@@ -63,3 +63,4 @@ Inspect the shared action/view-state definitions and terminal abstractions befor
 - **2026-10-29** · decision · Show both explicit agent actions, ordering and marking the project default (Claude Code when absent); keep Start as a plain terminal action. Agent sessions wait for instructions, using the shared argument builder with no initial prompt.
 - **2026-10-29** · decision · Preserve the created worktree in launch failure notices so users can recover without changing the selected agent; shell-quote the tmux agent command to preserve Codex configuration arguments.
 - **2026-10-29** · validation · `./gradlew allTests --offline` passed (JVM and Linux native tests; macOS and Windows execution skipped on Linux). Both TUI choices passed isolated PTY process smoke checks with stand-in agents; manual GUI and real-agent sessions remain open for review.
+- **2026-10-29** · status · review
