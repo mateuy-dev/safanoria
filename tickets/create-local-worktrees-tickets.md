@@ -2,7 +2,7 @@
 id: create-local-worktrees-tickets
 type: feature
 title: Create local worktrees for tickets started on another computer
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-29
@@ -31,3 +31,4 @@ After pulling the main branch and fetching ticket branches on another computer, 
 
 ## Work Log
 
+- **2026-10-29** · status · started
