@@ -1,5 +1,6 @@
 package dev.mateuy.safanoria.views
 
+import dev.mateuy.safanoria.core.SessionAgent
 import dev.mateuy.safanoria.core.Severity
 import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.core.Ticket
@@ -27,6 +28,7 @@ data class TicketViewState(
     val problems: List<TicketProblem> = emptyList(),
     /** What can be done with the ticket in its status. */
     val actions: List<TicketAction> = emptyList(),
+    val defaultAgent: SessionAgent = SessionAgent.CLAUDE,
     /** The action waiting for the user to confirm it, or null. */
     val confirming: TicketAction? = null,
     /** True while one of the [actions] runs. */
@@ -36,12 +38,13 @@ data class TicketViewState(
 )
 
 /** [confirmed] actions change the repository (a branch, a commit), so the user is asked first. */
-enum class TicketAction(val confirmed: Boolean) {
+enum class TicketAction(val confirmed: Boolean, val agent: SessionAgent? = null) {
     /** Backlog or ready: start it (branch, worktree) and open a terminal there. */
     START(confirmed = true),
 
-    /** Backlog or ready: start it like [START], with Claude Code running in the terminal, told to work on the ticket. */
-    START_IN_CLAUDE(confirmed = true),
+    /** Start an agent session waiting for the user in the ticket worktree. */
+    START_IN_CLAUDE(confirmed = true, agent = SessionAgent.CLAUDE),
+    START_IN_CODEX(confirmed = true, agent = SessionAgent.CODEX),
 
     /** Started on another computer (only on `origin/<id>`): add its worktree here, with a local branch tracking it, and open a terminal there. */
     CHECK_OUT(confirmed = true),
@@ -100,6 +103,7 @@ fun ticketViewState(id: String, snapshot: TicketsSnapshot): TicketViewState {
     return TicketViewState(
         id = id,
         loading = false,
+        defaultAgent = snapshot.config?.defaultAgent ?: SessionAgent.CLAUDE,
         title = f?.title?.value ?: "(no title)",
         status = f?.status,
         facts = listOfNotNull(
@@ -121,7 +125,8 @@ fun ticketViewState(id: String, snapshot: TicketsSnapshot): TicketViewState {
         body = body(ticket),
         // Started on another computer: nothing can be done with it here until it is checked out.
         actions = if (ticket.remote != null) listOf(TicketAction.CHECK_OUT, TicketAction.DIFF) else when (f?.status) {
-            Status.BACKLOG, Status.READY -> listOf(TicketAction.START, TicketAction.START_IN_CLAUDE)
+            Status.BACKLOG, Status.READY -> listOf(TicketAction.START) + listOf(TicketAction.START_IN_CLAUDE, TicketAction.START_IN_CODEX)
+                .sortedBy { it.agent != (snapshot.config?.defaultAgent ?: SessionAgent.CLAUDE) }
             Status.IN_PROGRESS -> listOf(TicketAction.OPEN_TERMINAL, TicketAction.DIFF, TicketAction.FINISH)
             Status.REVIEW -> listOf(TicketAction.OPEN_TERMINAL, TicketAction.DIFF, TicketAction.MERGE, TicketAction.REOPEN)
             else -> emptyList()
@@ -136,4 +141,9 @@ private fun body(ticket: Ticket): String {
     val close = lines.drop(1).indexOfFirst { it.trimEnd() == "---" }
     val start = if (lines.firstOrNull()?.trimEnd() == "---" && close >= 0) close + 2 else 0
     return lines.drop(start).joinToString("\n").trim()
+}
+
+/** Agent action labels are identical in both interfaces; the preferred agent is marked. */
+fun TicketAction.agentLabel(defaultAgent: SessionAgent): String? = agent?.let {
+    "Start in ${it.label}" + if (it == defaultAgent) " (default)" else ""
 }

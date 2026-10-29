@@ -100,8 +100,8 @@ class TicketViewStateTest {
     @Test
     fun theActionsDependOnTheStatus() {
         fun actions(status: String) = ticketViewState("the-one", snapshotOf(ticket("the-one", status = status))).actions
-        assertEquals(listOf(TicketAction.START, TicketAction.START_IN_CLAUDE), actions("backlog"))
-        assertEquals(listOf(TicketAction.START, TicketAction.START_IN_CLAUDE), actions("ready"))
+        assertEquals(listOf(TicketAction.START, TicketAction.START_IN_CLAUDE, TicketAction.START_IN_CODEX), actions("backlog"))
+        assertEquals(listOf(TicketAction.START, TicketAction.START_IN_CLAUDE, TicketAction.START_IN_CODEX), actions("ready"))
         assertEquals(listOf(TicketAction.OPEN_TERMINAL, TicketAction.DIFF, TicketAction.FINISH), actions("in-progress"))
         assertEquals(listOf(TicketAction.OPEN_TERMINAL, TicketAction.DIFF, TicketAction.MERGE, TicketAction.REOPEN), actions("review"))
         assertEquals(emptyList(), actions("done"))
@@ -111,6 +111,19 @@ class TicketViewStateTest {
         val remote = ticketViewState("the-one", snapshotOf(ticket("the-one", status = "in-progress", branch = "the-one", remote = "origin")))
         assertEquals(listOf(TicketAction.CHECK_OUT, TicketAction.DIFF), remote.actions)
         assertTrue("read from" to "origin/the-one" in remote.facts)
+    }
+
+    @Test
+    fun defaultAgentIsFirstAndExplicitActionsKeepTheirIdentity() {
+        val snapshot = snapshotOf(ticket("the-one"))
+        val fallback = ticketViewState("the-one", snapshot.copy(config = null))
+        assertEquals(dev.mateuy.safanoria.core.SessionAgent.CLAUDE, fallback.defaultAgent)
+        val codex = dev.mateuy.safanoria.core.SessionAgent.CODEX
+        val state = ticketViewState("the-one", snapshot.copy(config = snapshot.config!!.copy(defaultAgent = codex)))
+        assertEquals(codex, state.defaultAgent)
+        assertEquals(listOf(TicketAction.START, TicketAction.START_IN_CODEX, TicketAction.START_IN_CLAUDE), state.actions)
+        assertEquals("Start in Codex (default)", state.actions[1].agentLabel(state.defaultAgent))
+        assertEquals(dev.mateuy.safanoria.core.SessionAgent.CLAUDE, state.actions[2].agent)
     }
 
     @Test

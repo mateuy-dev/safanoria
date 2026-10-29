@@ -28,14 +28,20 @@ Expose Claude Code and Codex as session choices in both the desktop GUI and term
 
 ## Acceptance Criteria
 
-- [ ] Both GUI and TUI let users choose Claude Code or Codex when starting an agent session.
-- [ ] Both interfaces honor the shared project default and allow explicit selection to override it, retaining Claude as the fallback.
-- [ ] Both interfaces use the shared agent launch construction rather than maintaining separate hardcoded CLI arguments.
-- [ ] GUI sessions open in the ticket worktree through the existing platform terminal integration.
-- [ ] TUI launches the selected agent through its existing Herdr and non-Herdr paths; returning from a local session restores the TUI normally.
-- [ ] Plain terminal actions remain available.
-- [ ] Missing selected executables are reported before starting the ticket where possible; failures after starting clearly describe the resulting ticket/worktree state without silently switching agents.
+- [x] Both GUI and TUI let users choose Claude Code or Codex when starting an agent session.
+- [x] Both interfaces honor the shared project default and allow explicit selection to override it, retaining Claude as the fallback.
+- [x] Both interfaces use the shared agent launch construction rather than maintaining separate hardcoded CLI arguments.
+- [x] GUI sessions open in the ticket worktree through the existing platform terminal integration.
+- [x] TUI launches the selected agent through its existing Herdr and non-Herdr paths; returning from a local session restores the TUI normally.
+- [x] Plain terminal actions remain available.
+- [x] Missing selected executables are reported before starting the ticket where possible; failures after starting clearly describe the resulting ticket/worktree state without silently switching agents.
 - [ ] Tests cover selection/defaults, launch arguments, missing executables, and failures in both interfaces; GUI and TUI launches are manually smoke-tested.
+
+Automated coverage for the final criterion passes in views, GUI and TUI JVM tests. An isolated
+PTY smoke test also exercised both TUI agent choices through real process launching using
+stand-in executables, verified their arguments and worktree, and navigated the restored TUI.
+Manual GUI launches and sessions with the real agents remain unchecked: desktop control tools
+are unavailable in this session.
 
 ## Plan
 
@@ -54,3 +60,6 @@ Inspect the shared action/view-state definitions and terminal abstractions befor
 ## Work Log
 
 - **2026-10-29** · status · started
+- **2026-10-29** · decision · Show both explicit agent actions, ordering and marking the project default (Claude Code when absent); keep Start as a plain terminal action. Agent sessions wait for instructions, using the shared argument builder with no initial prompt.
+- **2026-10-29** · decision · Preserve the created worktree in launch failure notices so users can recover without changing the selected agent; shell-quote the tmux agent command to preserve Codex configuration arguments.
+- **2026-10-29** · validation · `./gradlew allTests --offline` passed (JVM and Linux native tests; macOS and Windows execution skipped on Linux). Both TUI choices passed isolated PTY process smoke checks with stand-in agents; manual GUI and real-agent sessions remain open for review.
