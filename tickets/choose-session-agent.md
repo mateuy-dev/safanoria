@@ -2,7 +2,7 @@
 id: choose-session-agent
 type: feature
 title: Choose Claude or Codex for ticket sessions
-status: backlog
+status: in-progress
 priority: medium
 size: XL
 area: [safanoria]
@@ -46,3 +46,4 @@ Let users choose Claude Code or Codex when opening a Safanoria ticket session. D
 
 ## Work Log
 
+- **2026-10-29** · status · started
