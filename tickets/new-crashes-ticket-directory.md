@@ -2,11 +2,11 @@
 id: new-crashes-ticket-directory
 type: bug
 title: "new crashes when the ticket directory doesn't exist"
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-10-06
-updated: 2026-10-06
+updated: 2026-10-29
 ---
 
 ## Objective
@@ -39,3 +39,5 @@ In a repository whose `safanoria.yaml` is valid but whose ticket directory (`dir
 ## Acceptance Criteria
 
 ## Work Log
+
+- **2026-10-29** · status · started
