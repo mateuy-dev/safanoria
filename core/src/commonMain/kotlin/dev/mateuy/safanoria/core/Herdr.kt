@@ -91,10 +91,18 @@ public class Herdr(
         val pane = created["root_pane"]?.string("pane_id") ?: throw HerdrException("herdr didn't return the new pane")
         val kind = if (workspace) "workspace" else "tab"
         if (agent == null) return "opened a $kind '$id'"
+        val name = agentName(id)
         try {
-            herdr("agent", "start", agentName(id), "--kind", agent.option, "--pane", pane, "--", *agent.arguments(id, prompt).toTypedArray())
+            // Started without the prompt: `agent start` waits until the agent is ready for input, which an agent
+            // already working on a first prompt may not be within its timeout.
+            herdr("agent", "start", name, "--kind", agent.option, "--pane", pane, "--", *agent.arguments(id, prompt = null).toTypedArray())
         } catch (e: HerdrException) {
             throw HerdrException("opened a $kind for $id (pane $pane) but ${agent.label} didn't start there: ${e.message}")
+        }
+        if (prompt != null) try {
+            herdr("agent", "prompt", name, agent.firstPrompt(prompt))
+        } catch (e: HerdrException) {
+            throw HerdrException("opened a $kind for $id (pane $pane) running ${agent.label} as '$name', but its first prompt wasn't sent: ${e.message}")
         }
         return "opened a $kind '$id' running ${agent.label}"
     }

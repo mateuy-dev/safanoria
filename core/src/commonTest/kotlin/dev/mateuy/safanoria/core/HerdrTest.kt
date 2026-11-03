@@ -63,10 +63,28 @@ class HerdrTest {
         val r = herdr(emptyList(), emptyMap(), log).open(dir, "alpha", "Start working on ticket alpha", workspace = true)
         assertEquals("opened a workspace 'alpha' running Claude Code", r)
         assertEquals("herdr workspace create --cwd /work/proj--alpha --label alpha --no-focus 2>&1", log[0])
-        assertEquals(
-            "herdr agent start alpha --kind claude --pane w9:p1 -- --name alpha \"Start working on ticket alpha\" 2>&1",
-            log[1],
-        )
+        assertEquals("herdr agent start alpha --kind claude --pane w9:p1 -- --name alpha 2>&1", log[1])
+        assertEquals("herdr agent prompt alpha \"Start working on ticket alpha\" 2>&1", log[2])
+        assertEquals(3, log.size)
+    }
+
+    @Test
+    fun codexGetsItsFirstPromptAfterStarting() {
+        val log = mutableListOf<String>()
+        val r = herdr(emptyList(), emptyMap(), log).open(dir, "alpha", "Go", workspace = true, agent = SessionAgent.CODEX)
+        assertEquals("opened a workspace 'alpha' running Codex", r)
+        assertEquals("herdr agent start alpha --kind codex --pane w9:p1 -- -c \"project_doc_fallback_filenames=[\\\"CLAUDE.md\\\"]\" 2>&1", log[1])
+        assertEquals("herdr agent prompt alpha ${launchQuote(SessionAgent.CODEX.firstPrompt("Go"))} 2>&1", log[2])
+    }
+
+    @Test
+    fun aPromptThatFailsNamesTheRunningAgent() {
+        val h = Herdr(null, "w1") { line ->
+            if ("agent prompt" in line) ProcessResult(1, "nope")
+            else ProcessResult(0, """{"id":"x","result":{"root_pane":{"pane_id":"w1:p2"}}}""")
+        }
+        val e = assertFailsWith<HerdrException> { h.open(dir, "alpha", "Go", workspace = false) }
+        assertEquals("opened a tab for alpha (pane w1:p2) running Claude Code as 'alpha', but its first prompt wasn't sent: herdr agent prompt failed (1): nope", e.message)
     }
 
     @Test
@@ -75,6 +93,7 @@ class HerdrTest {
         val r = herdr(emptyList(), emptyMap(), log).open(dir, "alpha", prompt = null, workspace = true, agent = SessionAgent.CLAUDE)
         assertEquals("opened a workspace 'alpha' running Claude Code", r)
         assertEquals("herdr agent start alpha --kind claude --pane w9:p1 -- --name alpha 2>&1", log[1])
+        assertEquals(2, log.size)
     }
 
     @Test
