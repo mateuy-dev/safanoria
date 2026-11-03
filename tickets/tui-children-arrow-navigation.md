@@ -2,7 +2,7 @@
 id: tui-children-arrow-navigation
 type: bug
 title: "TUI: arrows don't navigate the children board"
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-11-03
@@ -52,3 +52,4 @@ Up/Down scroll the page and Left goes back to the previous screen; focus stays o
 - **2026-11-03** · status · started
 - **2026-11-03** · decision · Read the report as the children board on a parent's page, as the Objective describes, not a child ticket's own page (whose arrows already scroll).
 - **2026-11-03** · decision · Leaving the board: where an arrow has no card to go to it keeps its usual meaning, so left from the first column goes back and up/down at a column's ends scroll the page; Tab still leaves too. Moving across columns keeps the row, clamped to the shorter column.
+- **2026-11-03** · status · review
