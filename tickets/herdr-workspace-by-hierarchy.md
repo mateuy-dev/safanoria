@@ -2,7 +2,7 @@
 id: herdr-workspace-by-hierarchy
 type: feature
 title: Herdr workspace or tab by ticket hierarchy and size
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-11-03
@@ -36,4 +36,5 @@ A ticket that is both a child and a parent counts as a parent. A ticket without 
 ## Work Log
 
 - **2026-11-03** · decision · Open shell follows the same workspace/tab rule as agent sessions: the shell-always-tab behavior had no recorded reason, and a ticket's panes should live together in its workspace.
+- **2026-11-03** · status · started
 
