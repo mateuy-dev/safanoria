@@ -2,7 +2,7 @@
 id: herdr-workspace-by-hierarchy
 type: feature
 title: Herdr workspace or tab by ticket hierarchy and size
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-11-03
@@ -43,4 +43,5 @@ A ticket that is both a child and a parent counts as a parent. A ticket without 
 - **2026-11-03** · decision · Open shell follows the same workspace/tab rule as agent sessions: the shell-always-tab behavior had no recorded reason, and a ticket's panes should live together in its workspace.
 - **2026-11-03** · status · started
 - **2026-11-03** · decision · A child is a ticket with `parent` in its frontmatter (even if the parent file is missing); a parent is one with children in the graph. A ticket not in the graph opens in a tab. The GUI is unaffected: it opens a desktop terminal, not Herdr.
+- **2026-11-03** · status · review
 
