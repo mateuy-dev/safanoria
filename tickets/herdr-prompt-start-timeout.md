@@ -2,7 +2,7 @@
 id: herdr-prompt-start-timeout
 type: bug
 title: Herdr start with a first prompt reports a false timeout
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-11-03
@@ -47,3 +47,4 @@ Exit 1: `Started, but not opened in Herdr: opened a tab for <id> (pane …) but 
 
 - **2026-11-03** · status · started
 - **2026-11-03** · decision · Codex's instruction preamble moved into `SessionAgent.firstPrompt`, so it now reaches Codex in the prompt sent with `agent prompt` and not as a launch argument.
+- **2026-11-03** · status · review
