@@ -2,7 +2,7 @@
 id: tui-children-arrow-navigation
 type: bug
 title: "TUI: arrows don't navigate the children board"
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-11-03
@@ -44,3 +44,5 @@ Up/Down scroll the page and Left goes back to the previous screen; focus stays o
 ## Acceptance Criteria
 
 ## Work Log
+
+- **2026-11-03** · status · started
