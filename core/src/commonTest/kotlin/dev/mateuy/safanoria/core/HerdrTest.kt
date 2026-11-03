@@ -23,6 +23,34 @@ class HerdrTest {
     }
 
     @Test
+    fun parentsGetAWorkspaceChildrenOnlyWhenLargeOthersUnlessXs() {
+        for (size in listOf(null) + Size.entries) {
+            assertEquals(true, Herdr.opensWorkspace(size, child = false, parent = true), "parent $size")
+            assertEquals(true, Herdr.opensWorkspace(size, child = true, parent = true), "child and parent $size")
+            assertEquals(size == Size.L || size == Size.XL, Herdr.opensWorkspace(size, child = true, parent = false), "child $size")
+            assertEquals(size != null && size != Size.XS, Herdr.opensWorkspace(size, child = false, parent = false), "other $size")
+        }
+    }
+
+    @Test
+    fun theRuleReadsTheHierarchyFromTheGraph() {
+        fun ticket(id: String, size: String, extra: String = "") = Ticket(
+            "/t/$id.md".toPath(),
+            "---\nid: $id\ntype: feature\ntitle: $id\nstatus: backlog\npriority: medium\nsize: $size\n" +
+                "created: 2026-10-01\nupdated: 2026-10-01\n$extra---\n\n## Objective\n\nWhy.\n",
+        )
+        val graph = TicketGraph(listOf(
+            ticket("lone-xs", "XS"), ticket("lone-s", "S"), ticket("top", "XS"),
+            ticket("mid", "S", "parent: top\n"), ticket("leaf-m", "M", "parent: mid\n"), ticket("leaf-l", "L", "parent: mid\n"),
+        ))
+        assertEquals(
+            mapOf("lone-xs" to false, "lone-s" to true, "top" to true, "mid" to true, "leaf-m" to false, "leaf-l" to true, "missing" to false),
+            listOf("lone-xs", "lone-s", "top", "mid", "leaf-m", "leaf-l", "missing").associateWith { Herdr.opensWorkspace(graph, it) },
+        )
+        assertEquals(false, Herdr.opensWorkspace(null, "top"))
+    }
+
+    @Test
     fun agentNamesFollowHerdrsRules() {
         assertEquals("alpha-1", Herdr.agentName("alpha.1"))
         assertEquals("t-2fa", Herdr.agentName("2fa"))

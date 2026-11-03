@@ -42,6 +42,24 @@ public class Herdr(
             val name = id.lowercase().map { if (it in 'a'..'z' || it in '0'..'9' || it == '-' || it == '_') it else '-' }.joinToString("")
             return (if (name.firstOrNull() in 'a'..'z') name else "t-$name").take(32)
         }
+
+        /**
+         * Whether ticket [id] opens in a workspace of its own rather than a tab of the current one, by where it
+         * sits in the hierarchy: a parent (it has children) always; a child (it has `parent`) when L or XL;
+         * any other ticket unless XS. Without `size`, a ticket that isn't a parent opens in a tab.
+         */
+        public fun opensWorkspace(graph: TicketGraph?, id: String): Boolean {
+            val ticket = graph?.ticket(id) ?: return false
+            return opensWorkspace(ticket.frontmatter?.size, child = ticket.frontmatter?.parent != null, parent = graph.children(ticket).isNotEmpty())
+        }
+
+        /** [opensWorkspace] for a ticket of [size] that is a [child], a [parent], both or neither. */
+        public fun opensWorkspace(size: Size?, child: Boolean, parent: Boolean): Boolean = when {
+            parent -> true
+            size == null -> false
+            child -> size >= Size.L
+            else -> size > Size.XS
+        }
     }
 
     private val json = Json

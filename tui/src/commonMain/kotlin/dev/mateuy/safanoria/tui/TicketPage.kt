@@ -4,7 +4,7 @@ import com.github.ajalt.mordant.input.KeyboardEvent
 import com.github.ajalt.mordant.markdown.Markdown
 import com.github.ajalt.mordant.rendering.TextStyle
 import dev.mateuy.safanoria.core.SessionAgent
-import dev.mateuy.safanoria.core.Size
+import dev.mateuy.safanoria.core.Herdr
 import dev.mateuy.safanoria.views.agentLabel
 import dev.mateuy.safanoria.views.BoardColumn
 import dev.mateuy.safanoria.views.DiffOutcome
@@ -221,7 +221,10 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
 
     /** The question for [action]: title, what it does, and its button. */
     private fun confirmation(action: TicketAction): Triple<String, String, String> {
-        val where = Workplace.current().text
+        val where = when (val place = Workplace.current()) {
+            Workplace.HERDR -> "in a new Herdr ${if (Herdr.opensWorkspace(nav.store.snapshot.value.graph, id)) "workspace" else "tab"}"
+            else -> place.text
+        }
         return when (action) {
             TicketAction.START -> Triple(
                 "Start $id?",
@@ -281,21 +284,21 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
     }
 
     private fun run(action: TicketAction) {
-        val size = nav.store.snapshot.value.graph?.ticket(id)?.frontmatter?.size
+        val workspace = Herdr.opensWorkspace(nav.store.snapshot.value.graph, id)
         val store = nav.store
         when (action) {
-            TicketAction.START -> act { start(agent = null, size) }
-            TicketAction.START_IN_CLAUDE, TicketAction.START_IN_CODEX -> act { start(action.agent, size) }
+            TicketAction.START -> act { start(agent = null, workspace) }
+            TicketAction.START_IN_CLAUDE, TicketAction.START_IN_CODEX -> act { start(action.agent, workspace) }
             TicketAction.CHECK_OUT -> act {
                 when (val outcome = store.checkOut(id)) {
                     is StartOutcome.NotStarted -> Notice("No worktree added: ${outcome.reason}", error = true)
-                    is StartOutcome.Started -> outcome.workspace?.let { nav.work(it, id, agent = null, size, done = "Worktree added in $it") }
+                    is StartOutcome.Started -> outcome.workspace?.let { nav.work(it, id, agent = null, workspace, done = "Worktree added in $it") }
                 }
             }
             TicketAction.OPEN_TERMINAL -> act {
-                when (val workspace: Path? = store.workspace(id)) {
+                when (val dir: Path? = store.workspace(id)) {
                     null -> Notice("Branch '$id' isn't checked out anywhere: add a worktree for it (git worktree add).", error = true)
-                    else -> nav.work(workspace, id, agent = null, size)
+                    else -> nav.work(dir, id, agent = null, workspace)
                 }
             }
             TicketAction.DIFF -> act { diff() }
@@ -305,11 +308,11 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
         }
     }
 
-    private suspend fun start(agent: SessionAgent?, size: Size?): Notice? = when (val outcome = nav.store.start(id)) {
+    private suspend fun start(agent: SessionAgent?, workspace: Boolean): Notice? = when (val outcome = nav.store.start(id)) {
         is StartOutcome.NotStarted -> Notice("Not started: ${outcome.reason}", error = true)
-        is StartOutcome.Started -> when (val workspace = outcome.workspace) {
+        is StartOutcome.Started -> when (val dir = outcome.workspace) {
             null -> Notice("Started, but ${outcome.note}", error = true)
-            else -> nav.work(workspace, id, agent, size, done = "Started in $workspace")
+            else -> nav.work(dir, id, agent, workspace, done = "Started in $dir")
         }
     }
 

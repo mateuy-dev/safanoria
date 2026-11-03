@@ -314,11 +314,11 @@ or by mouse: click cards, chips, buttons and tabs, and scroll with the wheel. `?
   key (`s` Start, `c` Start in Claude Code, `x` Start in Codex, `o` Open shell, `d` Diff, `f` Finish, `m` Merge, `i` Back to in
   progress, `w` Create worktree); Esc goes back.
 
-Where a desktop app opens a terminal window, the terminal app opens a new tab inside Herdr, a new
+Where a desktop app opens a terminal window, the terminal app opens a new tab or workspace inside Herdr, a new
 window inside tmux, and otherwise runs the shell (or selected agent) in the same terminal, coming
 back to the ticket when it exits. Diff runs git's diff tool in the same terminal too, until it
-closes, so a terminal one (`vimdiff`) works. In Herdr, starting either agent on a large ticket (L, XL) gets a
-workspace of its own, as `start --herdr` does.
+closes, so a terminal one (`vimdiff`) works. In Herdr, a shell or agent opens in a workspace of its own or a
+tab by the same rule as `start --herdr`.
 
 ## Working on a ticket
 
@@ -362,8 +362,10 @@ or occupied destination is refused without overwriting work. Use `--dry-run` to 
 or `--print-path` to get only the created worktree's path on stdout.
 
 **In Herdr.** Inside a [Herdr](https://herdr.dev) pane, `start <id> --herdr` also opens the worktree
-there running the selected agent (Claude Code by default), without taking focus: a workspace for tickets of
-size L and XL, a tab of the current workspace for smaller ones (`--in workspace|tab` overrides).
+there running the selected agent (Claude Code by default), without taking focus, in a workspace of its own
+or a tab of the current workspace by where the ticket sits: a parent ticket (one with children) always gets a
+workspace; a child ticket gets one when it is L or XL; any other ticket unless it is XS. A ticket without `size`
+opens in a tab unless it is a parent. `--in workspace|tab` overrides.
 The session waits for you. Claude receives ticket context from its SessionStart hook; Codex
 reads `AGENTS.md` and runs `safanoria-cli context --agent codex` when work begins. `--prompt chat`
 starts it discussing the ticket before changing anything, and `--prompt implement` (or `--implement`)

@@ -14,7 +14,6 @@ import dev.mateuy.safanoria.core.Herdr
 import dev.mateuy.safanoria.core.HerdrException
 import dev.mateuy.safanoria.core.SessionAgent
 import dev.mateuy.safanoria.core.SessionPrompt
-import dev.mateuy.safanoria.core.Size
 import dev.mateuy.safanoria.core.Start
 import dev.mateuy.safanoria.core.StartException
 import dev.mateuy.safanoria.core.StartResult
@@ -45,7 +44,8 @@ class StartCommand : RepositoryCommand(name = "start") {
     ).flag()
     private val herdrOption by option(
         "--herdr",
-        help = "Inside Herdr, also open the worktree in a workspace (size L and XL) or a tab (smaller) running the selected agent",
+        help = "Inside Herdr, also open the worktree running the selected agent, in a workspace (a parent ticket; a child of size L or XL; " +
+            "any other ticket of size S to XL) or else a tab",
     ).flag()
     private val promptOption by option(
         "--prompt",
@@ -55,7 +55,7 @@ class StartCommand : RepositoryCommand(name = "start") {
     private val agentOption by option("--agent", help = "Session agent: explicit choice, then defaultAgent in safanoria.yaml, then claude")
         .choice(SessionAgent.entries.associateBy { it.option })
     private val implement by option("--implement", help = "Same as --prompt implement").flag()
-    private val into by option("--in", help = "Where --herdr opens it, instead of by the ticket's size").choice("workspace", "tab")
+    private val into by option("--in", help = "Where --herdr opens it, instead of by the ticket's place in the hierarchy and size").choice("workspace", "tab")
     private val dryRun by option("--dry-run", help = "Show what would be done, change nothing").flag()
     private val date by option("--date", hidden = true, help = "Today's date (tests)")
 
@@ -84,7 +84,7 @@ class StartCommand : RepositoryCommand(name = "start") {
         val prompt = if (implement) SessionPrompt.IMPLEMENT else promptOption ?: SessionPrompt.NONE
         val herdr = herdrOption || implement || promptOption != null || into != null
         if (herdr && !Herdr.inside()) throw PrintMessage("Not started: --herdr needs a Herdr pane (HERDR_ENV=1).", 1, true)
-        val workspace = (into ?: if (branches.graph.ticket(id)?.frontmatter?.size in setOf(Size.L, Size.XL)) "workspace" else "tab") == "workspace"
+        val workspace = into?.let { it == "workspace" } ?: Herdr.opensWorkspace(branches.graph, id)
         val verb = if (dryRun) "would " else ""
         say("${verb}create branch $id from ${ready.base}")
         say("${verb}set status: in-progress and log 'status · started', committed on $id")
