@@ -2,7 +2,7 @@
 id: herdr-prompt-start-timeout
 type: bug
 title: Herdr start with a first prompt reports a false timeout
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-11-03
@@ -40,3 +40,5 @@ Exit 1: `Started, but not opened in Herdr: opened a tab for <id> (pane …) but 
 ## Acceptance Criteria
 
 ## Work Log
+
+- **2026-11-03** · status · started
