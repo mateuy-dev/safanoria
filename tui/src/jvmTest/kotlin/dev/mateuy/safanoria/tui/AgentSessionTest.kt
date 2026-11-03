@@ -15,7 +15,6 @@ import com.github.ajalt.mordant.rendering.AnsiLevel
 import com.github.ajalt.mordant.terminal.Terminal
 import com.github.ajalt.mordant.terminal.TerminalRecorder
 import dev.mateuy.safanoria.core.HerdrException
-import dev.mateuy.safanoria.core.Size
 
 class AgentSessionTest {
     private val base = Files.createTempDirectory("safanoria-agent-ui").toRealPath().toFile()
@@ -62,15 +61,15 @@ class AgentSessionTest {
         var command = emptyList<String>()
         var directory: Path? = null
         var agent: SessionAgent? = null
-        var size: Size? = null
+        var workspace: Boolean? = null
         override fun has(program: String) = available
         override fun current() = place
         override fun here(dir: Path, command: List<String>): Int? {
             directory = dir; this.command = command; return exit
         }
         override fun quiet(command: List<String>): Boolean { this.command = command; return !fails }
-        override fun herdr(dir: Path, id: String, agent: SessionAgent?, size: Size?): String {
-            directory = dir; this.agent = agent; this.size = size
+        override fun herdr(dir: Path, id: String, agent: SessionAgent?, workspace: Boolean): String {
+            directory = dir; this.agent = agent; this.workspace = workspace
             if (fails) throw HerdrException("opened pane but ${agent?.label} failed")
             return "opened ${agent?.label}"
         }
@@ -117,6 +116,17 @@ class AgentSessionTest {
         assertEquals(Status.IN_PROGRESS, store.snapshot.value.graph!!.ticket("example")!!.frontmatter!!.status)
     }
 
+    @Test fun aShellOnALargeTopLevelTicketOpensAWorkspaceInHerdr() = runBlocking {
+        val store = project()
+        val launcher = Launcher(Workplace.HERDR)
+        val page = TicketPage(Nav(store, launcher), "example")
+        page.render()
+        page.key(KeyboardEvent("s"))
+        page.key(KeyboardEvent("Enter"))
+        assertEquals(null, launcher.agent)
+        assertEquals(true, launcher.workspace)
+    }
+
     @Test fun everyAgentAndPlainShellUseEachWorkplace() = runBlocking {
         val store = project()
         val launcher = Launcher()
@@ -124,9 +134,9 @@ class AgentSessionTest {
         val dir = root.toOkioPath()
         for (place in Workplace.entries) for (agent in listOf(null) + SessionAgent.entries) {
             launcher.place = place
-            nav.work(dir, "example", agent, Size.L)
+            nav.work(dir, "example", agent, workspace = true)
             when (place) {
-                Workplace.HERDR -> { assertEquals(agent, launcher.agent); assertEquals(dir, launcher.directory); assertEquals(Size.L, launcher.size) }
+                Workplace.HERDR -> { assertEquals(agent, launcher.agent); assertEquals(dir, launcher.directory); assertEquals(true, launcher.workspace) }
                 Workplace.TMUX -> assertEquals(listOf("tmux", "new-window", "-c", dir.toString(), "-n", "example") + (agent?.let { listOf((listOf(it.option) + it.arguments("example", null)).joinToString(" ", transform = ::shellQuoted)) } ?: emptyList()), launcher.command)
                 Workplace.HERE -> { assertEquals(agent?.let { listOf(it.option) + it.arguments("example", null) } ?: listOf(userShell()), launcher.command); assertTrue(nav.returned) }
             }
@@ -134,12 +144,12 @@ class AgentSessionTest {
         launcher.fails = true
         for (place in listOf(Workplace.HERDR, Workplace.TMUX)) {
             launcher.place = place
-            val notice = nav.work(dir, "example", SessionAgent.CODEX, Size.L, "Started in $dir")!!
+            val notice = nav.work(dir, "example", SessionAgent.CODEX, workspace = true, "Started in $dir")!!
             assertTrue(notice.error)
             assertTrue("Started in $dir" in notice.text && "Codex" in notice.text, notice.text)
         }
         launcher.place = Workplace.HERE
         launcher.exit = null
-        assertTrue(nav.work(dir, "example", SessionAgent.CLAUDE, Size.S)!!.error)
+        assertTrue(nav.work(dir, "example", SessionAgent.CLAUDE, workspace = false)!!.error)
     }
 }

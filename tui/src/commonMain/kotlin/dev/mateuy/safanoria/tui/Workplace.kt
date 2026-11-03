@@ -3,7 +3,6 @@ package dev.mateuy.safanoria.tui
 import dev.mateuy.safanoria.core.Herdr
 import dev.mateuy.safanoria.core.HerdrException
 import dev.mateuy.safanoria.core.SessionAgent
-import dev.mateuy.safanoria.core.Size
 import dev.mateuy.safanoria.core.environmentVariable
 import dev.mateuy.safanoria.views.Notice
 import okio.Path
@@ -31,23 +30,23 @@ internal enum class Workplace(val text: String) {
 internal open class WorkplaceLauncher {
     open fun has(program: String): Boolean = installed(program)
     open fun current(): Workplace = Workplace.current()
-    open fun herdr(dir: Path, id: String, agent: SessionAgent?, size: Size?): String =
-        Herdr().open(dir, id, prompt = null, workspace = agent != null && size in setOf(Size.L, Size.XL), agent = agent)
+    open fun herdr(dir: Path, id: String, agent: SessionAgent?, workspace: Boolean): String =
+        Herdr().open(dir, id, prompt = null, workspace = workspace, agent = agent)
     open fun quiet(command: List<String>): Boolean = runQuietly(command)
     open fun here(dir: Path, command: List<String>): Int? = runHere(dir.toString(), command)
 }
 
 /**
  * Opens [dir], the worktree of ticket [id], to work in: a shell, or the selected [agent], with
- * no first prompt (the installed instructions supply ticket context). In Herdr, an agent on a large ticket (L, XL) gets a workspace
- * of its own, as `safanoria-cli start --herdr` does. Returns what to tell the user, after [done].
+ * no first prompt (the installed instructions supply ticket context). In Herdr, it gets a [workspace] of its own
+ * or a tab, by [Herdr.opensWorkspace] as `safanoria-cli start --herdr` does. Returns what to tell the user, after [done].
  */
-internal suspend fun Navigator.work(dir: Path, id: String, agent: SessionAgent?, size: Size?, done: String? = null): Notice? {
+internal suspend fun Navigator.work(dir: Path, id: String, agent: SessionAgent?, workspace: Boolean, done: String? = null): Notice? {
     val command = agent?.let { listOf(it.option) + it.arguments(id, prompt = null) }
     fun told(text: String?, error: Boolean = false) = listOfNotNull(done, text).joinToString(". ").ifEmpty { null }?.let { Notice(it, error) }
     return when (workplace.current()) {
         Workplace.HERDR -> try {
-            told(workplace.herdr(dir, id, agent, size))
+            told(workplace.herdr(dir, id, agent, workspace))
         } catch (e: HerdrException) {
             told("Not opened in Herdr: ${e.message}", error = true)
         }
