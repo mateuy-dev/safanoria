@@ -24,7 +24,7 @@ Change the rule to depend on where the ticket sits in the hierarchy:
 - **Child ticket** (has `parent`): a tab if XS, S or M; a workspace if L or XL (same as today).
 - **Other tickets** (no parent, no children): a tab only if XS; S, M, L and XL get a workspace.
 
-A ticket that is both a child and a parent counts as a parent. A ticket without `size` keeps opening in a tab unless it is a parent. `start --in workspace|tab` still overrides the rule. The TUI keeps opening a plain shell (no agent) in a tab; the rule applies when it opens an agent. The decision should live in one place in core, shared by the CLI and the TUI, and README/SPEC/help text describing the size rule must be updated.
+A ticket that is both a child and a parent counts as a parent. A ticket without `size` keeps opening in a tab unless it is a parent. `start --in workspace|tab` still overrides the rule. The rule applies to everything that opens a ticket in Herdr, including the TUI's Open shell (no agent): today the TUI only applies the size rule when starting an agent, which was inherited from `start --herdr` (always an agent) rather than decided, and it scatters a ticket's panes across workspaces. The decision should live in one place in core, shared by the CLI and the TUI, and README/SPEC/help text describing the size rule must be updated.
 
 ## User Requests
 
@@ -34,4 +34,6 @@ A ticket that is both a child and a parent counts as a parent. A ticket without 
 ## Acceptance Criteria
 
 ## Work Log
+
+- **2026-11-03** · decision · Open shell follows the same workspace/tab rule as agent sessions: the shell-always-tab behavior had no recorded reason, and a ticket's panes should live together in its workspace.
 
