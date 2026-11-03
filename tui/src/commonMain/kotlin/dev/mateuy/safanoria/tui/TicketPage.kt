@@ -37,6 +37,9 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
     private var focus = -1
     private var followFocus = false
 
+    /** The child cards as the board shows them: per column, their indices in [focusables]. */
+    private var childGrid = listOf<List<Int>>()
+
     private var body: Pair<Pair<String, Int>, List<List<Cell>>>? = null
 
     override val typing: Boolean get() = confirming == TicketAction.REOPEN
@@ -44,6 +47,7 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
     override fun draw(p: Painter) {
         state = ticketViewState(id, nav.store.snapshot.value)
         val found = mutableListOf<Focusable>()
+        childGrid = emptyList()
         fun focused() = focus == found.size
 
         var x = p.button(1, 0, "← Back") { nav.back() } + 1
@@ -76,7 +80,7 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
         focusables = found
         followFocus = false
 
-        val hints = listOf("↑↓ scroll", "tab/⏎ links", "esc back", "r refresh", "? keys") +
+        val hints = listOf(if (childGrid.any { focus in it }) "←→↑↓ children" else "↑↓ scroll", "tab/⏎ links", "esc back", "r refresh", "? keys") +
             state.actions.map { "${it.key} ${it.label.lowercase()}" }
         p.statusBar(hints.joinToString(" · "))
         confirming?.let { drawConfirmation(p, it) }
@@ -164,7 +168,10 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
         // As tall as the most cards; the strips show as much of their names as fits.
         val height = COLUMN_HEADER + (columns.filter { !it.collapsed }.maxOfOrNull { col -> col.cards.sumOf { cardHeight(it, openWidth) } } ?: 0)
         var x = 0
+        val grid = mutableListOf<List<Int>>()
         for (col in columns) {
+            val cards = mutableListOf<Int>()
+            grid += cards
             if (col.collapsed) {
                 c.collapsedColumn(x, top, height, col, selected = false, click = null)
                 x += STRIP_WIDTH + 1
@@ -175,11 +182,13 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
             for (card in col.cards) {
                 val open = { nav.openTicket(card.id) }
                 val h = c.card(x, y, openWidth, card, selected = focus == found.size, click = open)
+                cards += found.size
                 found += Focusable(y, h, open)
                 y += h
             }
             x += openWidth + 1
         }
+        childGrid = grid
         return top + height
     }
 
@@ -350,6 +359,7 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
 
     override fun key(e: KeyboardEvent): Boolean {
         confirming?.let { return confirmKey(e, it) }
+        if (childKey(e)) return true
         when (e.key) {
             "ArrowUp", "k" -> scroll -= 1
             "ArrowDown", "j" -> scroll += 1
@@ -366,6 +376,19 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
                 request(action)
             }
         }
+        return true
+    }
+
+    /**
+     * On a focused child card, arrows and `hjkl` move between the cards as on the board. Where there
+     * is no card that way they keep their meaning: up and down scroll, left from the first column goes back.
+     */
+    private fun childKey(e: KeyboardEvent): Boolean {
+        val column = childGrid.indexOfFirst { focus in it }
+        if (column < 0) return false
+        val (c, row) = boardStep(e.key, column, childGrid[column].indexOf(focus), childGrid.map { it.size }, skipEmpty = true) ?: return false
+        focus = childGrid[c][row.coerceAtMost(childGrid[c].size - 1)]
+        followFocus = true
         return true
     }
 

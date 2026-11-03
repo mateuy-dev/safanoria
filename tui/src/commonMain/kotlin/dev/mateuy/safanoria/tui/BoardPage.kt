@@ -181,10 +181,8 @@ internal class BoardPage(private val nav: Navigator) : Page {
         val at = columns.indexOfFirst { it.group == column }.coerceAtLeast(0)
         val cards = columns.getOrNull(at)?.cards.orEmpty()
         when (e.key) {
-            "ArrowLeft", "h" -> if (at > 0) select(columns[at - 1].group)
-            "ArrowRight", "l" -> if (at < columns.size - 1) select(columns[at + 1].group)
-            "ArrowUp", "k" -> if (cardIndex > 0) select(column, cardIndex - 1)
-            "ArrowDown", "j" -> if (cardIndex < cards.size - 1) select(column, cardIndex + 1)
+            "ArrowLeft", "h", "ArrowRight", "l", "ArrowUp", "k", "ArrowDown", "j" ->
+                boardStep(e.key, at, cardIndex, columns.map { it.cards.size })?.let { (c, row) -> select(columns[c].group, row) }
             "PageUp" -> select(column, (cardIndex - 5).coerceAtLeast(0))
             "PageDown" -> select(column, (cardIndex + 5).coerceAtMost((cards.size - 1).coerceAtLeast(0)))
             "Home", "g" -> select(column, 0)

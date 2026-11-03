@@ -2,7 +2,7 @@
 id: tui-children-arrow-navigation
 type: bug
 title: "TUI: arrows don't navigate the children board"
-status: backlog
+status: done
 priority: medium
 size: S
 created: 2026-11-03
@@ -43,4 +43,14 @@ Up/Down scroll the page and Left goes back to the previous screen; focus stays o
 
 ## Acceptance Criteria
 
+- [x] On a focused child card, arrows and `hjkl` move between the cards: left/right across columns (skipping those without children), up/down within a column; Enter opens the focused child.
+- [x] Off the cards, the keys keep their meaning (scroll, back); the scroll follows the focused card.
+- [x] The Board screen and the children board share the same step logic (`boardStep`).
+
 ## Work Log
+
+- **2026-11-03** · status · started
+- **2026-11-03** · decision · Read the report as the children board on a parent's page, as the Objective describes, not a child ticket's own page (whose arrows already scroll).
+- **2026-11-03** · decision · Leaving the board: where an arrow has no card to go to it keeps its usual meaning, so left from the first column goes back and up/down at a column's ends scroll the page; Tab still leaves too. Moving across columns keeps the row, clamped to the shorter column.
+- **2026-11-03** · status · review
+- **2026-11-03** · status · done

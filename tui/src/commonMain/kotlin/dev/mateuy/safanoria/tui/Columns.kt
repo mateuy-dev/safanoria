@@ -107,3 +107,25 @@ internal fun columnLayout(columns: List<BoardColumn>, available: Int): List<Pair
         (x to w).also { x += w + 1 }
     }
 }
+
+/**
+ * Where an arrow or `hjkl` [key] moves a selection on card [row] of column [column], over columns
+ * of [sizes] cards: left and right go to the next column in that direction (with [skipEmpty], to
+ * the next one with cards) and keep the row, up and down move within the column. Rows aren't
+ * clamped to the column's size here. Null when [key] isn't one of these or there is nowhere to go.
+ */
+internal fun boardStep(key: String, column: Int, row: Int, sizes: List<Int>, skipEmpty: Boolean = false): Pair<Int, Int>? {
+    fun across(by: Int): Pair<Int, Int>? {
+        var c = column + by
+        while (c in sizes.indices && skipEmpty && sizes[c] == 0) c += by
+        return if (c in sizes.indices) c to row else null
+    }
+    val size = sizes.getOrElse(column) { 0 }
+    return when (key) {
+        "ArrowLeft", "h" -> across(-1)
+        "ArrowRight", "l" -> across(1)
+        "ArrowUp", "k" -> if (row > 0) column to row - 1 else null
+        "ArrowDown", "j" -> if (row < size - 1) column to row + 1 else null
+        else -> null
+    }
+}
