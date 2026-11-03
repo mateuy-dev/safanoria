@@ -12,6 +12,8 @@ requests:
     who: Project maintainer
     channel: other
     date: 2026-11-03
+resolvedIn:
+  safanoria: 0.9.0
 ---
 
 ## Objective
@@ -54,3 +56,4 @@ Up/Down scroll the page and Left goes back to the previous screen; focus stays o
 - **2026-11-03** · decision · Leaving the board: where an arrow has no card to go to it keeps its usual meaning, so left from the first column goes back and up/down at a column's ends scroll the page; Tab still leaves too. Moving across columns keeps the row, clamped to the shorter column.
 - **2026-11-03** · status · review
 - **2026-11-03** · status · done
+- **2026-11-03** · release · safanoria 0.9.0

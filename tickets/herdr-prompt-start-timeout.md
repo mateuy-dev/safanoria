@@ -12,6 +12,8 @@ requests:
     who: Project maintainer
     channel: other
     date: 2026-11-03
+resolvedIn:
+  safanoria: 0.9.0
 ---
 
 ## Objective
@@ -49,3 +51,4 @@ Exit 1: `Started, but not opened in Herdr: opened a tab for <id> (pane …) but 
 - **2026-11-03** · decision · Codex's instruction preamble moved into `SessionAgent.firstPrompt`, so it now reaches Codex in the prompt sent with `agent prompt` and not as a launch argument.
 - **2026-11-03** · status · review
 - **2026-11-03** · status · done
+- **2026-11-03** · release · safanoria 0.9.0

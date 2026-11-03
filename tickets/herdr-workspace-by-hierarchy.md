@@ -12,6 +12,8 @@ requests:
     who: Project maintainer
     channel: other
     date: 2026-11-03
+resolvedIn:
+  safanoria: 0.9.0
 ---
 
 ## Objective
@@ -45,4 +47,5 @@ A ticket that is both a child and a parent counts as a parent. A ticket without 
 - **2026-11-03** · decision · A child is a ticket with `parent` in its frontmatter (even if the parent file is missing); a parent is one with children in the graph. A ticket not in the graph opens in a tab. The GUI is unaffected: it opens a desktop terminal, not Herdr.
 - **2026-11-03** · status · review
 - **2026-11-03** · status · done
+- **2026-11-03** · release · safanoria 0.9.0
 
