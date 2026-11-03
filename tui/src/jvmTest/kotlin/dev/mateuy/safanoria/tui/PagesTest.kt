@@ -147,6 +147,33 @@ class PagesTest {
     }
 
     @Test
+    fun arrowsMoveBetweenTheChildCards() {
+        val nav = project()
+        ticket("parent", status = "in-progress")
+        ticket("child-a", extra = "parent: parent")
+        ticket("child-b", extra = "parent: parent")
+        ticket("child-c", status = "in-progress", extra = "parent: parent")
+        runBlocking { nav.store.refresh() }
+        val page = TicketPage(nav, "parent")
+        page.render()
+        // Open shell, Diff, Finish, then the first card: child-a in Backlog.
+        repeat(4) { page.key(KeyboardEvent("Tab")) }
+        assertTrue("←→↑↓ children" in page.render().text())
+        page.key(KeyboardEvent("ArrowRight"))
+        page.render()
+        page.key(KeyboardEvent("Enter"))
+        page.key(KeyboardEvent("h"))
+        page.key(KeyboardEvent("j"))
+        page.render()
+        page.key(KeyboardEvent("Enter"))
+        // Up from the top scrolls, as off the cards; left from the first column goes back.
+        page.key(KeyboardEvent("ArrowUp"))
+        page.key(KeyboardEvent("ArrowUp"))
+        page.key(KeyboardEvent("ArrowLeft"))
+        assertEquals(listOf("child-c", "child-b", "back"), nav.opened)
+    }
+
+    @Test
     fun reopeningAsksForTheReason() {
         val nav = project()
         ticket("done-soon", status = "review")

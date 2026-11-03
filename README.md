@@ -310,7 +310,8 @@ or by mouse: click cards, chips, buttons and tabs, and scroll with the wheel. `?
 
 - Board: arrows or `hjkl` move between columns and cards, Enter opens a ticket, Space collapses a
   column, Tab goes to the filter chips, `v` Versions, `F` Fetch, `r` reads the tickets again, `q` quits.
-- Ticket: arrows scroll, Tab and Enter go through its links and buttons, and each action has a
+- Ticket: arrows scroll, Tab and Enter go through its links and buttons (on a child card, arrows or
+  `hjkl` move between the children as on the Board), and each action has a
   key (`s` Start, `c` Start in Claude Code, `x` Start in Codex, `o` Open shell, `d` Diff, `f` Finish, `m` Merge, `i` Back to in
   progress, `w` Create worktree); Esc goes back.
 

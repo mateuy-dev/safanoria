@@ -207,6 +207,7 @@ internal class Tui(override val terminal: Terminal, override val store: TicketSt
             Ticket
               ↑ ↓, PgUp PgDn    scroll
               Tab, Enter        go through the links and buttons, open one
+              ← → ↑ ↓, h l k j  on a child card: move between the children
               s c x             start a shell, start Claude Code, start Codex
               w o d f m i       create worktree, open a shell, diff, finish,
                                 merge, back to in progress
