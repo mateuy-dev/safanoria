@@ -2,7 +2,7 @@
 id: ship-no-stamp
 type: feature
 title: "Ship without stamping; release stamps shipped children"
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-11-04
@@ -23,3 +23,4 @@ Update SPEC (§8.1 partial release, §9 stamping), the skill and README where th
 
 ## Work Log
 
+- **2026-11-04** · status · started
