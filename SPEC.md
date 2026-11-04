@@ -325,18 +325,20 @@ merged into its branch before it is `done`, without changing how the rest procee
    commit, not a landing (§11.5): the parent stays `in-progress`. Its Work Log gets an entry
    (`ship · shipped to <mainBranch>: <children>`), committed on branch `<parent>` before the
    merge or in the merge commit.
-2. Release and stamp on `mainBranch` as usual (§9).
-3. Merge `mainBranch` back into branch `<parent>` with a merge commit (`--no-ff`) after the
-   stamping. It brings the stamps to the children's copies there, which are their real copies
-   (§14.1), and gives the branch a commit `mainBranch` lacks, so it is not merged again: until
-   then branch `<parent>` counts as merged and the parent's children target `mainBranch`.
+2. Merge `mainBranch` back into branch `<parent>` with a merge commit (`--no-ff`). It gives the
+   branch a commit `mainBranch` lacks, so it is not merged again: until then branch `<parent>`
+   counts as merged and the parent's children target `mainBranch`.
+
+Shipping doesn't stamp: the children reach `mainBranch` `done` without `resolvedIn`, and the
+next release stamps them with the rest of that release (§9), like any other ticket. Their real
+copies are still on branch `<parent>` (§14.1), so the stamps reach them by merging `mainBranch`
+into branch `<parent>` again (§9).
 
 Remaining children then branch from and merge into branch `<parent>`, its own steps continue
 there, and it merges into `mainBranch` when `done`. Everything on branch `<parent>` ships, the
-parent's own partial work included, so it MUST be releasable at that point. A tool MAY do these
-steps in one go (merge, stamping, merge back), with the same rules as landing: it MUST change
-nothing when a branch has uncommitted work or a merge conflicts, and MUST NOT push. Stamping done
-later than the merge back reaches branch `<parent>` at its next merge of `mainBranch`.
+parent's own partial work included, so it MUST be releasable at that point. A tool MAY do both
+steps in one go, with the same rules as landing: it MUST change nothing when a branch has
+uncommitted work or a merge conflicts, and MUST NOT push.
 
 ### 8.2 `blockedBy`
 
@@ -365,8 +367,16 @@ resolvedIn:
   set `resolvedIn.<c>: <v>` and add a Work Log entry `release · <c> <v>`. Stamping SHOULD be part
   of the release commit.
 - Because stamping reads `mainBranch`, children merged into a parent's branch are stamped together
-  with the parent, or earlier in a partial release of the parent (§8.1), which brings their
-  stamps back to the parent's branch. A child's version MUST NOT be later than its parent's.
+  with the parent, or earlier, by the first release after a partial release of the parent (§8.1)
+  brought them to `mainBranch`. A child's version MUST NOT be later than its parent's.
+- A shipped child's real copy is on its parent's branch (§14.1), which lacks the stamps until it
+  merges `mainBranch` again. A tool that stamps SHOULD then merge `mainBranch`, with the stamps,
+  back (`--no-ff`) into the local branch of every `in-progress` parent with
+  `childrenMergeInto: parent` that has a stamped child there. If the stamps aren't committed yet,
+  it merges the committed `mainBranch` with the stamped files on top, so that the release commit,
+  making the same changes, merges cleanly later. It MUST NOT push, and MUST leave unchanged, with a
+  warning but without failing the release, a branch with uncommitted work in its worktree or
+  whose merge conflicts.
 - A parent's own `resolvedIn` is stamped normally; the feature as a whole shipped at the highest
   version among the parent and its children.
 - Versions only go up: stamping `<c>` at a version lower than one already in a ticket's

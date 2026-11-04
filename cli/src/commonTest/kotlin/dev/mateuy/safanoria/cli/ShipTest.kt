@@ -41,28 +41,27 @@ class ShipTest {
     }
 
     @Test
-    fun shipMergesIntoMainStampsAndMergesBack() {
+    fun shipMergesIntoMainAndBackWithoutStamping() {
         val (repo, wt) = scenario("ship-flow")
-        val r = run(repo, "ship", "big", "--release", "app=1.2.0")
+        val r = run(repo, "ship", "big")
         assertEquals(0, r.statusCode, r.output)
-        assertTrue("app 1.2.0: stamped one" in r.stdout, r.stdout)
         assertTrue("nothing was pushed" in r.stdout, r.stdout)
 
-        assertEquals("big: ship one (app 1.2.0)", repo.git("log", "-1", "--format=%s", "main").trim())
+        assertEquals("big: ship one", repo.git("log", "-1", "--format=%s", "main").trim())
         assertEquals("one\n", repo.read("one.txt"), "main is checked out here and moved")
-        assertTrue("resolvedIn:\n  app: 1.2.0" in repo.read("tickets/one.md"), repo.read("tickets/one.md"))
+        assertTrue("status: done" in repo.read("tickets/one.md"))
+        assertTrue("resolvedIn" !in repo.read("tickets/one.md"), "ship doesn't stamp: release does")
         assertTrue("status: in-progress" in repo.read("tickets/big.md"))
-        assertTrue("· ship · shipped to main: `one`, released in app 1.2.0" in repo.read("tickets/big.md"))
+        assertTrue("· ship · shipped to main: `one`\n" in repo.read("tickets/big.md"))
 
-        // The parent's branch got the stamps and is not merged into main: still the children's target.
+        // The parent's branch is not merged into main: still the children's target.
         assertEquals("big: merge main back", repo.git("log", "-1", "--format=%s", "big").trim())
-        assertTrue("app: 1.2.0" in repo.read("tickets/one.md", at = wt), "the worktree moved too")
+        assertTrue("shipped to main" in repo.read("tickets/big.md", at = wt), "the worktree moved too")
         assertEquals("", repo.git("status", "--porcelain", at = wt).trim())
         assertEquals(1, repo.git("rev-list", "--count", "main..big").trim().toInt(), "big has a commit main lacks")
         val branches = Branches.read(Repository(repo.root))!!
         assertEquals("big", branches.targetBranch("two"))
         assertEquals("big", branches.graph.ticket("one")!!.branch)
-        assertTrue("app: 1.2.0" in branches.graph.ticket("one")!!.text)
 
         // Nothing new to ship until another child is done.
         val again = run(repo, "ship", "big")
@@ -71,12 +70,46 @@ class ShipTest {
     }
 
     @Test
-    fun shipWithoutReleaseOnlyLogs() {
-        val (repo, _) = scenario("ship-no-release")
-        val r = run(repo, "ship", "big")
+    fun releaseStampsShippedChildrenAndMergesBack() {
+        val (repo, wt) = scenario("ship-release")
+        assertEquals(0, run(repo, "ship", "big").statusCode)
+        val big = repo.git("rev-parse", "big").trim()
+
+        val dry = run(repo, "release", "app", "1.2.0", "--dry-run")
+        assertTrue("would merge main, with the stamps, back into 'big'" in dry.stdout, dry.output)
+        assertEquals(big, repo.git("rev-parse", "big").trim())
+
+        val r = run(repo, "release", "app", "1.2.0")
         assertEquals(0, r.statusCode, r.output)
-        assertTrue("resolvedIn" !in repo.read("tickets/one.md"))
-        assertTrue("· ship · shipped to main: `one`\n" in repo.read("tickets/big.md"))
+        assertTrue("merged main, with the stamps, back into 'big'" in r.stdout, r.stdout)
+        // On main the stamps are uncommitted, for the release commit; on big they are merged.
+        assertTrue("resolvedIn:\n  app: 1.2.0" in repo.read("tickets/one.md"), repo.read("tickets/one.md"))
+        assertEquals("big: merge main back (released app 1.2.0)", repo.git("log", "-1", "--format=%s", "big").trim())
+        assertTrue("app: 1.2.0" in repo.read("tickets/one.md", at = wt), "the worktree moved too")
+        assertEquals("", repo.git("status", "--porcelain", at = wt).trim())
+        val branches = Branches.read(Repository(repo.root))!!
+        assertEquals("big", branches.graph.ticket("one")!!.branch)
+        assertTrue("app: 1.2.0" in branches.graph.ticket("one")!!.text)
+
+        // The release commit makes the same changes: merging it into big later is clean.
+        repo.commit("Release 1.2.0")
+        repo.git("merge", "-q", "--no-edit", "main", at = wt)
+        assertTrue("app: 1.2.0" in repo.read("tickets/one.md", at = wt))
+    }
+
+    @Test
+    fun releaseSkipsADirtyParentBranch() {
+        val (repo, wt) = scenario("ship-release-dirty")
+        assertEquals(0, run(repo, "ship", "big").statusCode)
+        val big = repo.git("rev-parse", "big").trim()
+        repo.write("scratch.txt", "x\n", at = wt)
+
+        val r = run(repo, "release", "app", "1.2.0")
+        assertEquals(0, r.statusCode, r.output)
+        assertTrue("warning: 'big' not merged back" in r.stderr, r.stderr)
+        assertTrue("uncommitted changes" in r.stderr, r.stderr)
+        assertTrue("app: 1.2.0" in repo.read("tickets/one.md"), "the release itself goes on")
+        assertEquals(big, repo.git("rev-parse", "big").trim())
     }
 
     @Test
@@ -93,7 +126,6 @@ class ShipTest {
         repo.git("clean", "-fq", at = wt)
 
         assertTrue("is not a parent" in run(repo, "ship", "one").stderr)
-        assertTrue("'nope' is not a component" in run(repo, "ship", "big", "--release", "nope").stderr)
         assertEquals(main, repo.git("rev-parse", "main").trim())
 
         repo.write("one.txt", "main\n")

@@ -22,12 +22,17 @@ import kotlinx.datetime.todayIn
 import okio.Path.Companion.toPath
 import kotlin.time.Clock
 
-/** `safanoria-cli release <component> [<version>]`: SPEC §9 stamping. Doesn't commit. */
+/**
+ * `safanoria-cli release <component> [<version>]`: SPEC §9 stamping. Doesn't commit. Then merges
+ * the main branch, with the stamps, back into the branch of every parent that shipped (§8.1).
+ */
 class ReleaseCommand : RepositoryCommand(name = "release") {
     override fun help(context: Context) =
         "Stamp resolvedIn.<component> on every done ticket with the component in its area and no " +
             "version for it yet, and log it. Tickets merged but still in review are set done first. " +
-            "Run on the main branch, as part of the release commit."
+            "Run on the main branch, as part of the release commit. Then merges the main branch, with the stamps, " +
+            "back into the local branch of every parent in progress that shipped children with ship, so they show " +
+            "released there too; skips, with a warning, a branch with uncommitted changes or a conflict. Pushes nothing."
 
     private val componentArgument by argument(name = "component", help = "Component from safanoria.yaml (on a terminal: asks)").optional()
     private val version by argument(help = "MAJOR.MINOR.PATCH (default: read from the component's version source; required for external ones)").optional()
@@ -40,7 +45,8 @@ class ReleaseCommand : RepositoryCommand(name = "release") {
         val repo = repository
         val today = date ?: Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
         val component = componentArgument ?: askComponent(repo)
-        val ready = when (val r = Release.prepare(repo, ReleaseRequest(component, version, tickets.ifEmpty { null }), today, Branches.read(repo))) {
+        val branches = Branches.read(repo)
+        val ready = when (val r = Release.prepare(repo, ReleaseRequest(component, version, tickets.ifEmpty { null }), today, branches)) {
             is ReleaseResult.Refused -> throw PrintMessage("Not stamped: ${r.reason}", 1, true)
             is ReleaseResult.Ready -> r
         }
@@ -58,7 +64,11 @@ class ReleaseCommand : RepositoryCommand(name = "release") {
             echo("${if (dryRun) "would stamp" else "stamped"} $what on ${ready.stamped.size} ticket${if (ready.stamped.size == 1) "" else "s"}:")
             ready.stamped.forEach { id -> echo("  ${displayPath(repo.ticketDir / "$id.md")}") }
         }
-        if (dryRun || ready.files.isEmpty()) return
+        if (dryRun) {
+            if (branches != null) mergeBack(repo, branches, ready, dryRun = true)
+            return
+        }
+        if (ready.files.isEmpty()) return
 
         ready.files.forEach { f -> repo.fileSystem.write(f.path) { writeUtf8(f.text) } }
         val problems = Validator(Repository(repo.root, repo.fileSystem)).validate(ready.files.map { it.path })
@@ -67,6 +77,19 @@ class ReleaseCommand : RepositoryCommand(name = "release") {
             throw ProgramResult(1)
         }
         ready.promoted.forEach { id -> Land.cleanUp(repo, id, repo.config.mainBranch).forEach { echo(it) } }
+        if (branches != null) mergeBack(repo, branches, ready, dryRun = false)
+    }
+
+    /** §8.1: the shipped children are read from their parent's branch, so the stamps go there too. */
+    private fun mergeBack(repo: Repository, branches: Branches, ready: ReleaseResult.Ready, dryRun: Boolean) {
+        val main = repo.config.mainBranch
+        Release.mergeBack(repo, branches, ready, dryRun).forEach { m ->
+            when {
+                m.warning != null -> echo("warning: '${m.parent}' ${m.warning}", err = true)
+                dryRun -> echo("would merge $main, with the stamps, back into '${m.parent}'")
+                else -> echo("merged $main, with the stamps, back into '${m.parent}': ${m.commit!!.take(7)} (nothing pushed)")
+            }
+        }
     }
 
     private fun askComponent(repo: Repository): String {

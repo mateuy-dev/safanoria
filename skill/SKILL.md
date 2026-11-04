@@ -145,10 +145,10 @@ Without the CLI: merge with `git merge --no-ff --no-commit <id>` on the target, 
 and log `status · done` (and check the item in the parent's Plan) before committing the merge.
 
 **"Ship what's done" of a parent in progress** (children merging into its branch; only when the
-user asks, like merging): `safanoria-cli ship <parent> [--release <component>[=<version>]]`. It
-merges the parent's branch into the main branch (the parent stays `in-progress`), logs it, stamps
-with `--release`, and merges the main branch back into the parent's branch; the remaining
-children carry on there. Everything on that branch ships, the parent's own unfinished work too:
+user asks, like merging): `safanoria-cli ship <parent>`. It merges the parent's branch into the
+main branch (the parent stays `in-progress`), logs it, and merges the main branch back into the
+parent's branch; the remaining children carry on there. It doesn't stamp: the shipped children
+are stamped by the next `release`, like any other ticket. Everything on that branch ships, the parent's own unfinished work too:
 say so if that work isn't releasable. It pushes nothing. Without the CLI: SPEC §8.1.
 
 ## Release notes
