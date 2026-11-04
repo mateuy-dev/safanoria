@@ -20,6 +20,13 @@ Stamping is optional: ask whether to stamp, which component(s) (default: all com
 
 ## Acceptance Criteria
 
+- [x] `TicketStore` ships a parent through core `Ship` (prepare, plan, perform) and refreshes after, as merge does.
+- [x] The TUI (`S`) and the desktop app (Ship to main branch) offer it on an in-progress parent with a child done on its branch, and show `Ship.prepare`'s refusal reason when there is nothing to ship.
+- [x] The confirmation says everything on the branch ships, its own unfinished work too, and nothing is pushed; shipping without stamping is the default.
+- [x] Stamping asks the components (all chosen to start with) and versions (as their sources read them on the merged branches; required for external ones).
+
 ## Work Log
 
 - **2026-11-04** · status · started
+- **2026-11-04** · decision · The action shows from the snapshot alone (in-progress parent on its branch, children not `childrenMergeInto: main`, a child done there); `Ship.prepare` runs when it is asked, not on every refresh, since it needs git (merge-tree, worktree status). A refusal (e.g. already on main) is shown then.
+- **2026-11-04** · decision · Default versions come from the new core `Ship.versions`, read on the merged tree as `Ship.plan` would; a version left unchanged is sent as null so `Release` reads it from source itself. The TUI key is `S` (`s` is start).

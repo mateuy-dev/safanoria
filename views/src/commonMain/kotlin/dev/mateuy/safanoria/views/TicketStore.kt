@@ -14,7 +14,12 @@ import dev.mateuy.safanoria.core.LandException
 import dev.mateuy.safanoria.core.LandResult
 import dev.mateuy.safanoria.core.Reopen
 import dev.mateuy.safanoria.core.ReopenResult
+import dev.mateuy.safanoria.core.ReleaseRequest
 import dev.mateuy.safanoria.core.Repository
+import dev.mateuy.safanoria.core.Ship
+import dev.mateuy.safanoria.core.ShipException
+import dev.mateuy.safanoria.core.ShipResult
+import dev.mateuy.safanoria.core.VersionRead
 import dev.mateuy.safanoria.core.Start
 import dev.mateuy.safanoria.core.StartException
 import dev.mateuy.safanoria.core.StartResult
@@ -96,7 +101,7 @@ data class TicketsSnapshot(
 /**
  * The single source of the project's tickets for every screen: reads them through `core` (each
  * ticket's real copy from every branch, remote-tracking ones too, SPEC §14, as `safanoria-cli list` does) and keeps the
- * last result. Operations that change tickets ([start], [finish], [merge], [reopen]) are here too, followed by
+ * last result. Operations that change tickets ([start], [finish], [merge], [reopen], [ship]) are here too, followed by
  * a [refresh].
  */
 class TicketStore(val root: Path) {
@@ -245,6 +250,66 @@ class TicketStore(val root: Path) {
             }
         }
         if (outcome is ReopenOutcome.Reopened) refresh()
+        return outcome
+    }
+
+    /**
+     * Whether parent [id] can be shipped now (SPEC §8.1), as `safanoria-cli ship --dry-run` checks,
+     * and the question to ask: its children that would ship and its components to stamp, with
+     * their versions as their sources read them. Changes nothing.
+     */
+    suspend fun prepareShip(id: String): ShipCheck = withContext(Dispatchers.IO) {
+        try {
+            val repository = Repository(root)
+            val branches = Branches.read(repository)
+                ?: return@withContext ShipCheck.Refused("needs a git repository with the branch '${repository.config.mainBranch}' (mainBranch)")
+            val ready = when (val r = Ship.prepare(repository, branches, id)) {
+                is ShipResult.Refused -> return@withContext ShipCheck.Refused(r.reason)
+                is ShipResult.Ready -> r
+            }
+            val versions = Ship.versions(repository, ready)
+            val components = repository.config.components.values.map { c ->
+                when (val read = versions[c.name]) {
+                    is VersionRead.Found -> ShipComponent(c.name, c.external, read.version.toString())
+                    is VersionRead.Failed -> ShipComponent(c.name, c.external, null, note = "can't read its version: ${read.reason}")
+                    null -> ShipComponent(c.name, c.external, null, note = if (c.external) "external: give the version it was released as" else "no version source")
+                }
+            }
+            ShipCheck.Ready(ShipForm(id, ready.mainBranch, ready.children, components = components))
+        } catch (e: Exception) {
+            ShipCheck.Refused(e.message ?: e.toString())
+        }
+    }
+
+    /**
+     * Ships parent [id] as `safanoria-cli ship` does (SPEC §8.1): its branch merges into the main
+     * branch, logged in its Work Log and stamped with [releases], then merges back. Checked again
+     * first, as the branches may have moved since [prepareShip]. Nothing is pushed.
+     */
+    suspend fun ship(id: String, releases: List<ReleaseRequest>, today: String = today()): ShipOutcome {
+        val outcome = withContext(Dispatchers.IO) {
+            try {
+                val repository = Repository(root)
+                val branches = Branches.read(repository)
+                    ?: return@withContext ShipOutcome.NotShipped("needs a git repository with the branch '${repository.config.mainBranch}' (mainBranch)")
+                val ready = when (val r = Ship.prepare(repository, branches, id)) {
+                    is ShipResult.Refused -> return@withContext ShipOutcome.NotShipped(r.reason)
+                    is ShipResult.Ready -> r
+                }
+                val plan = Ship.plan(repository, ready, releases, today)
+                val shipped = Ship.perform(repository, plan)
+                ShipOutcome.Shipped(
+                    ready.mainBranch, ready.children, shipped.commit,
+                    stamped = shipped.stamped.map { s -> "${s.component} ${s.version}: " + if (s.stamped.isEmpty()) "nothing to stamp" else "stamped ${s.stamped.joinToString()}" },
+                    warnings = shipped.stamped.flatMap { it.warnings },
+                )
+            } catch (e: ShipException) {
+                ShipOutcome.NotShipped((listOf(e.message) + e.problems.map { "${it.code}: ${it.message}" }).joinToString("\n"))
+            } catch (e: Exception) {
+                ShipOutcome.NotShipped(e.message ?: e.toString())
+            }
+        }
+        if (outcome is ShipOutcome.Shipped) refresh()
         return outcome
     }
 

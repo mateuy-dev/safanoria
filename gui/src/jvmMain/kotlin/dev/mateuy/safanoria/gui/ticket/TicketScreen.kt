@@ -19,6 +19,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -50,6 +51,7 @@ import dev.mateuy.safanoria.gui.board.ChildrenBoard
 import dev.mateuy.safanoria.gui.theme.WarningColor
 import dev.mateuy.safanoria.gui.theme.color
 import dev.mateuy.safanoria.gui.theme.label
+import dev.mateuy.safanoria.views.ShipForm
 import dev.mateuy.safanoria.views.agentLabel
 import dev.mateuy.safanoria.views.TicketAction
 import dev.mateuy.safanoria.views.TicketLink
@@ -67,6 +69,7 @@ fun TicketScreen(viewModel: TicketViewModel, onOpenTicket: (String) -> Unit, onB
         onAction = viewModel::request,
         onConfirm = viewModel::confirm,
         onCancel = viewModel::cancel,
+        onShipChange = viewModel::editShip,
     )
 }
 
@@ -79,8 +82,13 @@ fun TicketContent(
     onAction: (TicketAction) -> Unit,
     onConfirm: (String) -> Unit,
     onCancel: () -> Unit,
+    onShipChange: ((ShipForm) -> ShipForm) -> Unit = {},
 ) {
-    state.confirming?.let { Confirmation(it, state.id, onConfirm, onCancel) }
+    state.confirming?.let { action ->
+        val form = state.shipForm
+        if (action == TicketAction.SHIP && form != null) ShipConfirmation(form, onShipChange, { onConfirm("") }, onCancel)
+        else Confirmation(action, state.id, onConfirm, onCancel)
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -213,7 +221,7 @@ private fun Confirmation(action: TicketAction, id: String, onConfirm: (String) -
             "Sets the ticket to in-progress again and logs the reason, committing only the ticket on its branch.",
             "Back to in progress",
         )
-        TicketAction.OPEN_TERMINAL, TicketAction.DIFF -> return
+        TicketAction.OPEN_TERMINAL, TicketAction.DIFF, TicketAction.SHIP -> return
     }
     val asksReason = action == TicketAction.REOPEN
     AlertDialog(
@@ -228,6 +236,44 @@ private fun Confirmation(action: TicketAction, id: String, onConfirm: (String) -
             }
         },
         confirmButton = { Button(onClick = { onConfirm(reason) }, enabled = !asksReason || reason.isNotBlank()) { Text(confirm) } },
+        dismissButton = { TextButton(onClick = onCancel) { Text("Cancel") } },
+    )
+}
+
+/**
+ * Asks before shipping a parent (SPEC §8.1): what ships, that it all does and nothing is pushed,
+ * and whether to stamp resolvedIn, in which components and versions.
+ */
+@Composable
+private fun ShipConfirmation(form: ShipForm, onChange: ((ShipForm) -> ShipForm) -> Unit, onConfirm: () -> Unit, onCancel: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text("Ship ${form.id} to ${form.mainBranch}?") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(form.text)
+                Row(Modifier.clickable { onChange { it.toggleStamp() } }, verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(form.stamp, { onChange { it.toggleStamp() } })
+                    Text("Stamp resolvedIn")
+                }
+                if (form.stamp) {
+                    if (form.components.isEmpty()) Text("The project has no components", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    form.components.forEach { c ->
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Checkbox(c.chosen, { onChange { it.toggle(c.name) } })
+                            Text(c.name, Modifier.width(120.dp))
+                            OutlinedTextField(
+                                c.version, { v -> onChange { it.version(c.name, v) } }, Modifier.width(160.dp),
+                                enabled = c.chosen, singleLine = true, label = { Text("Version") },
+                                supportingText = c.note?.let { { Text(it) } },
+                            )
+                        }
+                    }
+                }
+                form.problem?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+            }
+        },
+        confirmButton = { Button(onClick = onConfirm, enabled = form.problem == null) { Text("Ship") } },
         dismissButton = { TextButton(onClick = onCancel) { Text("Cancel") } },
     )
 }
@@ -254,6 +300,7 @@ private fun ActionBar(state: TicketViewState, onAction: (TicketAction) -> Unit) 
                     TicketAction.FINISH -> Button(onClick, enabled = !state.busy) { Text("Finish: set to review") }
                     TicketAction.MERGE -> Button(onClick, enabled = !state.busy) { Text("Merge and finish") }
                     TicketAction.REOPEN -> OutlinedButton(onClick, enabled = !state.busy) { Text("Back to in progress") }
+                    TicketAction.SHIP -> OutlinedButton(onClick, enabled = !state.busy) { Text("Ship to main branch") }
                 }
             }
             if (state.busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)

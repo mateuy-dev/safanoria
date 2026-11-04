@@ -6,6 +6,8 @@ import dev.mateuy.safanoria.gui.data.Terminal
 import dev.mateuy.safanoria.gui.data.launch
 import dev.mateuy.safanoria.views.DiffOutcome
 import dev.mateuy.safanoria.views.Notice
+import dev.mateuy.safanoria.views.ShipCheck
+import dev.mateuy.safanoria.views.ShipForm
 import dev.mateuy.safanoria.views.StartOutcome
 import dev.mateuy.safanoria.views.TicketAction
 import dev.mateuy.safanoria.views.TicketStore
@@ -27,12 +29,12 @@ import okio.Path
 
 class TicketViewModel(private val id: String, private val store: TicketStore, private val terminal: Terminal) : ViewModel() {
     /** The running action and the last one's result: what the tickets themselves don't say. */
-    private data class Activity(val busy: Boolean = false, val notice: Notice? = null, val confirming: TicketAction? = null)
+    private data class Activity(val busy: Boolean = false, val notice: Notice? = null, val confirming: TicketAction? = null, val shipForm: ShipForm? = null)
 
     private val activity = MutableStateFlow(Activity())
 
     val state: StateFlow<TicketViewState> = combine(store.snapshot, activity) { snapshot, activity ->
-        ticketViewState(id, snapshot).copy(busy = activity.busy, notice = activity.notice, confirming = activity.confirming)
+        ticketViewState(id, snapshot).copy(busy = activity.busy, notice = activity.notice, confirming = activity.confirming, shipForm = activity.shipForm)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ticketViewState(id, store.snapshot.value))
 
     /** The user asked for [action]: it runs now, or once confirmed ([confirm]) when it changes the repository. */
@@ -44,16 +46,27 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
             activity.value = Activity(notice = Notice("${agent.label} isn't installed: no `${agent.option}` command found. Start opens a plain terminal.", error = true))
             return
         }
-        if (action.confirmed) activity.update { it.copy(confirming = action) } else run(action)
+        when {
+            action == TicketAction.SHIP -> prepareShip()
+            action.confirmed -> activity.update { it.copy(confirming = action) }
+            else -> run(action)
+        }
+    }
+
+    /** Changes what the ship question has chosen: whether to stamp, the components, their versions. */
+    fun editShip(change: (ShipForm) -> ShipForm) {
+        activity.update { it.copy(shipForm = it.shipForm?.let(change)) }
     }
 
     /** Runs the action that was waiting to be confirmed. [input] is what its question asked for: the reason to reopen. */
     fun confirm(input: String = "") {
-        activity.value.confirming?.let { run(it, input) }
+        val action = activity.value.confirming ?: return
+        if (action == TicketAction.SHIP && activity.value.shipForm?.problem != null) return
+        run(action, input)
     }
 
     fun cancel() {
-        activity.update { it.copy(confirming = null) }
+        activity.update { it.copy(confirming = null, shipForm = null) }
     }
 
     private fun run(action: TicketAction, input: String = "") = when (action) {
@@ -67,6 +80,25 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
         TicketAction.FINISH -> finish()
         TicketAction.MERGE -> merge()
         TicketAction.REOPEN -> reopen(input)
+        TicketAction.SHIP -> activity.value.shipForm?.let { form -> act { store.ship(id, form.releases).notice } }
+    }
+
+    /** Whether the parent can ship needs git: checked now, then asked, or its reason told. */
+    private fun prepareShip() {
+        if (activity.value.busy) return
+        activity.value = Activity(busy = true)
+        viewModelScope.launch {
+            activity.value = try {
+                when (val check = store.prepareShip(id)) {
+                    is ShipCheck.Refused -> Activity(notice = Notice("Not shipped: ${check.reason}", error = true))
+                    is ShipCheck.Ready -> Activity(confirming = TicketAction.SHIP, shipForm = check.form)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Activity(notice = Notice(e.message ?: e.toString(), error = true))
+            }
+        }
     }
 
     /** Starts the ticket and opens a terminal where it is to be worked on, running [command] when given. */
