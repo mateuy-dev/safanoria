@@ -288,7 +288,11 @@ in the taskbar. Without it, or when the file can't be read, it has Safanoria's.
   ticket in progress sets it to `review`, as `safanoria-cli finish` does, and shows why it
   refused or what the ticket still has open. A ticket in review has **Merge and finish**, which
   does what `safanoria-cli merge` does, and **Back to in progress**, which asks for the reason
-  and does what `safanoria-cli reopen` does. A ticket started on another computer has only
+  and does what `safanoria-cli reopen` does. A parent in progress whose children merge into its
+  branch, with one done there, has **Ship to main branch** (`S` in the terminal app), which does
+  what `safanoria-cli ship` does: it asks whether to stamp `resolvedIn`, in which components (all,
+  to start with) and versions (as their sources read them), and says why when there is nothing to
+  ship. A ticket started on another computer has only
   **Create worktree**: its worktree here, on a local branch tracking `origin/<id>`, then a terminal there. On Linux the terminal is
   `$TERMINAL`, else the first usual one found on the `PATH`.
 

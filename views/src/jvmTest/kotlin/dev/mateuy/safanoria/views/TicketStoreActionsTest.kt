@@ -79,6 +79,73 @@ class TicketStoreActionsTest {
         assertIs<StartOutcome.NotStarted>(store.start("no-such-ticket"))
     }
 
+    /**
+     * Parent big in progress in its worktree, component app at 1.2.0; child one done and merged
+     * on big, child two not done. Returns big's worktree.
+     */
+    private fun parentWithAChildDone(): File {
+        File(project, "safanoria.yaml").writeText(
+            "safanoria: 1\ndir: tickets\nmainBranch: main\nworktree: ../project--{id}\n" +
+                "components:\n  app:\n    version: { file: gradle.properties, property: version }\n",
+        )
+        File(project, "gradle.properties").writeText("version=1.2.0\n")
+        File(project, "tickets").mkdirs()
+        fun child(id: String, status: String) = ticket(id, status = status, extra = "parent: big\narea: [app]").text + "- **2026-10-02** · status · $status\n"
+        File(project, "tickets/big.md").writeText(ticket("big", status = "in-progress", plan = "- [ ] `one`: One\n- [ ] `two`: Two").text)
+        File(project, "tickets/one.md").writeText(child("one", "backlog"))
+        File(project, "tickets/two.md").writeText(child("two", "backlog"))
+        git("init", "-q", "-b", "main")
+        git("config", "user.name", "Test")
+        git("config", "user.email", "test@example.com")
+        git("config", "core.autocrlf", "false")
+        git("add", ".")
+        git("commit", "-q", "-m", "tickets")
+        val workspace = File(base, "project--big")
+        git("worktree", "add", "-q", "-b", "big", workspace.path)
+        File(workspace, "tickets/one.md").writeText(child("one", "done"))
+        File(workspace, "tickets/big.md").writeText(File(workspace, "tickets/big.md").readText().replace("- [ ] `one`", "- [x] `one`"))
+        File(workspace, "one.txt").writeText("one\n")
+        git("add", ".", dir = workspace)
+        git("commit", "-q", "-m", "one: merge (done)", dir = workspace)
+        return workspace
+    }
+
+    @Test
+    fun shipAsksWhatShipsAndShipsItStampedAndMergedBack() = runBlocking<Unit> {
+        val workspace = parentWithAChildDone()
+        val store = TicketStore(root)
+        store.refresh()
+        assertTrue(TicketAction.SHIP in ticketViewState("big", store.snapshot.value).actions)
+
+        val form = assertIs<ShipCheck.Ready>(store.prepareShip("big")).form
+        assertEquals(listOf("one"), form.children)
+        assertEquals(listOf(ShipComponent("app", external = false, fromSource = "1.2.0")), form.components)
+
+        val outcome = store.ship("big", form.toggleStamp().releases, today = "2026-10-06").let { assertIs<ShipOutcome.Shipped>(it, it.toString()) }
+
+        assertEquals(listOf("app 1.2.0: stamped one"), outcome.stamped)
+        assertEquals("big: ship one (app 1.2.0)", git("log", "-1", "--format=%s", "main"))
+        assertEquals("one\n", File(project, "one.txt").readText())
+        assertTrue("app: 1.2.0" in File(project, "tickets/one.md").readText())
+        assertEquals("big: merge main back", git("log", "-1", "--format=%s", "big"))
+        assertTrue("· ship · shipped to main: `one`, released in app 1.2.0" in File(workspace, "tickets/big.md").readText())
+        assertEquals(Status.IN_PROGRESS, store.status("big"))
+        // Nothing new to ship: the reason is told.
+        assertTrue("nothing to ship" in assertIs<ShipCheck.Refused>(store.prepareShip("big")).reason)
+    }
+
+    @Test
+    fun shipWithoutStampingOnlyLogsAndANonParentIsRefused() = runBlocking<Unit> {
+        parentWithAChildDone()
+        val store = TicketStore(root)
+
+        assertTrue("not a parent" in assertIs<ShipCheck.Refused>(store.prepareShip("two")).reason)
+        store.ship("big", emptyList(), today = "2026-10-06").let { assertIs<ShipOutcome.Shipped>(it, it.toString()) }
+
+        assertTrue("resolvedIn" !in File(project, "tickets/one.md").readText())
+        assertEquals("big: ship one", git("log", "-1", "--format=%s", "main"))
+    }
+
     @Test
     fun finishSetsTheStartedTicketToReviewInItsWorktree() = runBlocking<Unit> {
         repository("first-one" to "backlog")

@@ -78,6 +78,17 @@ public object Ship {
     }
 
     /**
+     * Each component's version as its source reads it on the merged branches, which is what
+     * [plan] stamps when no version is given; null for a component without a source (external).
+     */
+    public fun versions(repository: Repository, ready: ShipResult.Ready): Map<String, VersionRead?> {
+        val git = repository.git
+        val layout = Branches.layout(repository, git.worktrees()) ?: throw ShipException("can't tell where this checkout is in git.")
+        val merged = Repository(repository.root, GitTreeFileSystem(git, ready.tree, layout.top))
+        return repository.config.components.mapValues { (_, c) -> c.version?.let { Versions.read(merged, it) } }
+    }
+
+    /**
      * The merged tree with the parent's Work Log entry and, for each of [releases], the stamps;
      * refused like [Release.prepare]. Writes only git objects, so a refusal changes nothing.
      */

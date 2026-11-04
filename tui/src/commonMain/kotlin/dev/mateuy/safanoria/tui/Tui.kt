@@ -211,6 +211,7 @@ internal class Tui(override val terminal: Terminal, override val store: TicketSt
               s c x             start a shell, start Claude Code, start Codex
               w o d f m i       create worktree, open a shell, diff, finish,
                                 merge, back to in progress
+              S                 ship a parent in progress to the main branch
               p                 the parent ticket
 
             Versions

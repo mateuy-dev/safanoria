@@ -98,6 +98,20 @@ class TicketViewStateTest {
     }
 
     @Test
+    fun aParentInProgressWithAChildDoneOnItsBranchOffersShip() {
+        val parent = ticket("big", status = "in-progress", branch = "big")
+        val done = ticket("one", status = "done", extra = "parent: big", branch = "big")
+        val open = ticket("two", status = "in-progress", extra = "parent: big", branch = "two")
+        assertEquals(TicketAction.SHIP, ticketViewState("big", snapshotOf(parent, done, open)).actions.last())
+        // No child done on its branch yet, or its children merge into main on their own: nothing to ship.
+        assertTrue(TicketAction.SHIP !in ticketViewState("big", snapshotOf(parent, open)).actions)
+        val own = ticket("big", status = "in-progress", branch = "big", extra = "childrenMergeInto: main")
+        assertTrue(TicketAction.SHIP !in ticketViewState("big", snapshotOf(own, done)).actions)
+        // Not a parent: no ship.
+        assertTrue(TicketAction.SHIP !in ticketViewState("one", snapshotOf(parent, done)).actions)
+    }
+
+    @Test
     fun theActionsDependOnTheStatus() {
         fun actions(status: String) = ticketViewState("the-one", snapshotOf(ticket("the-one", status = status))).actions
         assertEquals(listOf(TicketAction.START, TicketAction.START_IN_CLAUDE, TicketAction.START_IN_CODEX), actions("backlog"))

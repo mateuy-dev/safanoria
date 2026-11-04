@@ -4,6 +4,7 @@ import dev.mateuy.safanoria.core.SessionAgent
 import dev.mateuy.safanoria.core.Severity
 import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.core.Ticket
+import dev.mateuy.safanoria.core.TicketGraph
 import dev.mateuy.safanoria.core.text
 
 /** What the ticket screen shows. */
@@ -31,6 +32,8 @@ data class TicketViewState(
     val defaultAgent: SessionAgent = SessionAgent.CLAUDE,
     /** The action waiting for the user to confirm it, or null. */
     val confirming: TicketAction? = null,
+    /** While [confirming] is [TicketAction.SHIP]: what ships, and the stamps chosen so far. */
+    val shipForm: ShipForm? = null,
     /** True while one of the [actions] runs. */
     val busy: Boolean = false,
     /** How the last action went, when there is something to tell. */
@@ -57,6 +60,13 @@ enum class TicketAction(val confirmed: Boolean, val agent: SessionAgent? = null)
 
     /** In progress: the work is complete, set it to review. */
     FINISH(confirmed = true),
+
+    /**
+     * A parent in progress whose children merge into its branch, with one of them done there:
+     * ship its branch to the main branch without finishing it (SPEC §8.1). Whether it can is
+     * checked when asked, as it needs git; the confirmation asks whether to stamp.
+     */
+    SHIP(confirmed = true),
 
     /** In review: merge its branch into its target with the ticket done, and remove its worktree and branch. */
     MERGE(confirmed = true),
@@ -127,13 +137,23 @@ fun ticketViewState(id: String, snapshot: TicketsSnapshot): TicketViewState {
         actions = if (ticket.remote != null || (ticket.branch == id && id in snapshot.branchesWithoutWorktrees)) listOf(TicketAction.CHECK_OUT, TicketAction.DIFF) else when (f?.status) {
             Status.BACKLOG, Status.READY -> listOf(TicketAction.START) + listOf(TicketAction.START_IN_CLAUDE, TicketAction.START_IN_CODEX)
                 .sortedBy { it.agent != (snapshot.config?.defaultAgent ?: SessionAgent.CLAUDE) }
-            Status.IN_PROGRESS -> listOf(TicketAction.OPEN_TERMINAL, TicketAction.DIFF, TicketAction.FINISH)
+            Status.IN_PROGRESS -> listOf(TicketAction.OPEN_TERMINAL, TicketAction.DIFF, TicketAction.FINISH) +
+                listOfNotNull(TicketAction.SHIP.takeIf { shipsChildren(graph, ticket) })
             Status.REVIEW -> listOf(TicketAction.OPEN_TERMINAL, TicketAction.DIFF, TicketAction.MERGE, TicketAction.REOPEN)
             else -> emptyList()
         },
         problems = snapshot.diagnostics[id].orEmpty().map { TicketProblem(it.line, it.code, it.message, it.severity == Severity.ERROR) },
     )
 }
+
+/**
+ * Whether [ticket] may have something to ship: a parent on its own branch, its children merging
+ * there (not `childrenMergeInto: main`), one of them done on it. Whether that one is on the main
+ * branch already, and the rest `Ship.prepare` checks, needs git: it is checked when asked.
+ */
+private fun shipsChildren(graph: TicketGraph, ticket: Ticket): Boolean =
+    ticket.branch == ticket.fileId && ticket.frontmatter?.childrenMergeInto != "main" &&
+        graph.children(ticket).any { it.frontmatter?.status == Status.DONE && it.branch == ticket.fileId }
 
 /** The file's text after the frontmatter. */
 private fun body(ticket: Ticket): String {
