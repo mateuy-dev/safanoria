@@ -2,7 +2,7 @@
 id: parent-partial-release
 type: feature
 title: Partial release of a parent
-status: backlog
+status: done
 priority: medium
 size: M
 created: 2026-11-04
@@ -25,5 +25,16 @@ To do: describe this flow in the spec (§8.1 / §9 / §11 / §14.1), decide whet
 
 ## Acceptance Criteria
 
+- [x] SPEC describes the partial release of a parent (§8.1), and how it relates to stamping (§9), landing (§11.5) and the real copy (§14.1)
+- [x] `safanoria-cli ship <parent> [--release <component>[=<version>]]` merges the parent's branch into the main branch, logs it, optionally stamps, and merges back in one step
+- [x] It refuses, changing nothing, on uncommitted changes, conflicts or invalid tickets, and pushes nothing
+- [x] After it, the remaining children still target the parent's branch and the shipped children read their stamps there
+
 ## Work Log
 
+- **2026-11-04** · status · started
+- **2026-11-04** · decision · No §14.1 rule keeping an `in-progress` parent's branch as target while merged: which copy is real follows from git state, never from status. The merge back is part of the flow instead (and `ship` does it in the same step), so the window only exists between manual steps; the spec says so.
+- **2026-11-04** · decision · New command `ship` rather than `merge --partial`: `merge` means landing (sets `done`, removes the branch), which a partial release must not. Its Work Log entry and the stamps go in the merge commit on main (one commit, like a release commit), then main is merged back `--no-ff`; both commits are built with plumbing and the branches move only after both exist.
+- **2026-11-04** · decision · `ship` refuses when no child is done on the parent's branch and not yet done on main ("nothing to ship"), and only takes parents `in-progress` (one in review is landed with `merge`).
+- **2026-11-04** · status · review
+- **2026-11-04** · status · done

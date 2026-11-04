@@ -43,6 +43,7 @@ content. `safanoria-cli --help` lists its commands; each is described below. On 
 | `diff` | A quick look at a ticket's changes against its target: in the terminal, or `--tool` in git's diff tool |
 | `review` | Review mode: the ticket's whole diff as uncommitted changes in its worktree, for an IDE; `--end` goes back |
 | `merge`, `reopen` | Land a ticket in review (merged, `done`, worktree and branch removed); or send it back to `in-progress` |
+| `ship` | Ship a parent in progress without finishing it: its branch, with the children done there, into `main` (optionally stamped), then merged back |
 | `context` | The current branch's ticket, for the agent session (SessionStart hook) |
 | `validate`, `hook` | Check every SPEC rule; before each commit |
 | `release` | Stamp `resolvedIn` on the tickets a release ships |
@@ -467,6 +468,20 @@ and the SessionStart context tells the session the worktree is in review mode.
   branch and worktree. It is for a review that sends the ticket back to work. A small change
   you ask for is committed on the branch while the ticket stays in `review`; `merge` takes the
   branch as it is then.
+
+**Ship part of a parent.** A parent whose children merge into its branch ships them all together
+when it lands. To release the children done so far before that, `ship <parent>` merges the
+parent's branch into `main` with one commit, `<parent>: ship <children>`, that also logs it in
+the parent's Work Log and, with `--release <component>[=<version>]` (repeatable), stamps
+`resolvedIn` as `release` does. Then it merges `main` back into the parent's branch (moving its
+worktree too), so the stamps are where the children are read from, and the branch stays
+unmerged: the remaining children still start from and merge into it, and the parent lands as
+usual when it is done. Everything on the parent's branch ships, its own unfinished work too, so
+it must be releasable. It only takes a parent `in-progress` with a child done on its branch and
+not yet on `main`; it refuses, changing nothing, on uncommitted changes in the parent's
+worktree, a conflict, or tickets that wouldn't validate. It pushes nothing; `--dry-run` checks
+only. If you release with your own process instead (no `--release`), merge `main` into the
+parent's branch afterwards to bring the stamps there (SPEC §8.1).
 
 **Merges made elsewhere.** When the branch is merged by a pull request or by hand, the target
 has the ticket in `review`. `finish --done` without an id sets every such ticket `done` (one
