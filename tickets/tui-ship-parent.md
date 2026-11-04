@@ -2,7 +2,7 @@
 id: tui-ship-parent
 type: feature
 title: Ship a parent from the TUI and the desktop app
-status: backlog
+status: in-progress
 priority: medium
 size: M
 related: [parent-partial-release]
@@ -22,3 +22,4 @@ Stamping is optional: ask whether to stamp, which component(s) (default: all com
 
 ## Work Log
 
+- **2026-11-04** · status · started
