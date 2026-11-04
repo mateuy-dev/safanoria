@@ -2,7 +2,7 @@
 id: tui-ship-parent
 type: feature
 title: Ship a parent from the TUI and the desktop app
-status: in-progress
+status: review
 priority: medium
 size: M
 related: [parent-partial-release]
@@ -30,3 +30,4 @@ Stamping is optional: ask whether to stamp, which component(s) (default: all com
 - **2026-11-04** · status · started
 - **2026-11-04** · decision · The action shows from the snapshot alone (in-progress parent on its branch, children not `childrenMergeInto: main`, a child done there); `Ship.prepare` runs when it is asked, not on every refresh, since it needs git (merge-tree, worktree status). A refusal (e.g. already on main) is shown then.
 - **2026-11-04** · decision · Default versions come from the new core `Ship.versions`, read on the merged tree as `Ship.plan` would; a version left unchanged is sent as null so `Release` reads it from source itself. The TUI key is `S` (`s` is start).
+- **2026-11-04** · status · review
