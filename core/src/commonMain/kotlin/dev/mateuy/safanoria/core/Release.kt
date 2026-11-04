@@ -8,6 +8,12 @@ public data class ReleaseRequest(
     val only: List<String>? = null,
 )
 
+/**
+ * A shipped parent's branch after [Release.mergeBack]: merged in [commit] (null in a dry run), or,
+ * with [warning], left as it was.
+ */
+public data class MergedBack(val parent: String, val commit: String?, val warning: String?)
+
 public sealed interface ReleaseResult {
     public data class Ready(
         val component: String,
@@ -112,6 +118,64 @@ public object Release {
             PlannedFile(t.path, text, isNew = false)
         }
         return ReleaseResult.Ready(c, version, request.version == null, tickets.map { it.fileId }, files, warnings)
+    }
+
+    /**
+     * After stamping [ready] on `mainBranch`: merges `mainBranch`, with the stamps, back (`--no-ff`)
+     * into the local branch of every `in-progress` parent with `childrenMergeInto: parent` whose
+     * branch has a stamped ticket, its child (one shipped, §8.1). There the children are read from
+     * (§14.1), so without it they would show unreleased until the next merge of `mainBranch`.
+     *
+     * Stamping doesn't commit, so the merge takes the committed `mainBranch` with [ready]'s files on
+     * top: the stamps are in the merge's tree, and the release commit, making the same changes,
+     * merges cleanly into the branch later. Local branches only, pushes nothing; a branch with
+     * uncommitted changes in its worktree or a conflicting merge is skipped, untouched. With
+     * [dryRun], checks the same and moves nothing. Nothing when [branches] isn't on `mainBranch`.
+     */
+    public fun mergeBack(repository: Repository, branches: Branches, ready: ReleaseResult.Ready, dryRun: Boolean = false): List<MergedBack> {
+        val main = repository.config.mainBranch
+        if (ready.stamped.isEmpty() || branches.branches.first() != main) return emptyList()
+        val graph = branches.graph
+        // A child stamped here whose real copy is on its parent's branch: it shipped from there.
+        val parents = ready.stamped.mapNotNull { id ->
+            graph.ticket(id)?.let { c -> graph.parent(c)?.takeIf { it.fileId == c.branch } }
+        }.distinctBy { it.fileId }.filter { p ->
+            val f = p.frontmatter
+            f?.status == Status.IN_PROGRESS && f.childrenMergeInto != "main" && p.branch == p.fileId
+        }.sortedBy { it.fileId }
+        if (parents.isEmpty()) return emptyList()
+
+        val git = repository.git
+        val note = "released ${ready.component} ${ready.version}"
+        val stamped by lazy {
+            val layout = Branches.layout(repository, git.worktrees()) ?: throw GitException("can't tell where this checkout is in git")
+            val mainCommit = git.commitId("refs/heads/$main") ?: throw GitException("no local branch '$main'")
+            val relative = ready.files.map { it.path.relativeTo(repository.root).segments.joinToString("/") to it.text }
+            mainCommit to git.commitTree(treeWith(git, mainCommit, layout.sub, relative), listOf(mainCommit), "$main: $note")
+        }
+        return parents.map { p ->
+            val id = p.fileId
+            fun skipped(why: String) = MergedBack(id, null, "not merged back: $why; merge $main into it by hand once the release is committed")
+            try {
+                val branchCommit = git.commitId("refs/heads/$id") ?: return@map skipped("no local branch '$id'")
+                val worktree = git.worktrees().firstOrNull { it.branch == id }?.path?.takeIf { repository.fileSystem.exists(it) }
+                val changes = worktree?.let { Git(it).uncommitted() }.orEmpty()
+                if (changes.isNotEmpty()) return@map skipped("$worktree has uncommitted changes")
+                Review.blocking(git, id)?.let { return@map skipped(it) }
+                val (mainCommit, stampedCommit) = stamped
+                when (val merge = git.mergeTree(branchCommit, stampedCommit)) {
+                    is MergeTree.Conflict -> skipped("it conflicts in ${merge.paths.joinToString()}")
+                    is MergeTree.Clean -> {
+                        if (dryRun) return@map MergedBack(id, null, null)
+                        val commit = git.commitTree(merge.tree, listOf(branchCommit, mainCommit), "$id: merge $main back ($note)")
+                        Ship.move(repository, id, commit, branchCommit)
+                        MergedBack(id, commit, null)
+                    }
+                }
+            } catch (e: GitException) {
+                skipped(e.message ?: e.toString())
+            }
+        }
     }
 
     /**

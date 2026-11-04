@@ -53,15 +53,9 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
         }
     }
 
-    /** Changes what the ship question has chosen: whether to stamp, the components, their versions. */
-    fun editShip(change: (ShipForm) -> ShipForm) {
-        activity.update { it.copy(shipForm = it.shipForm?.let(change)) }
-    }
-
     /** Runs the action that was waiting to be confirmed. [input] is what its question asked for: the reason to reopen. */
     fun confirm(input: String = "") {
         val action = activity.value.confirming ?: return
-        if (action == TicketAction.SHIP && activity.value.shipForm?.problem != null) return
         run(action, input)
     }
 
@@ -80,7 +74,7 @@ class TicketViewModel(private val id: String, private val store: TicketStore, pr
         TicketAction.FINISH -> finish()
         TicketAction.MERGE -> merge()
         TicketAction.REOPEN -> reopen(input)
-        TicketAction.SHIP -> activity.value.shipForm?.let { form -> act { store.ship(id, form.releases).notice } }
+        TicketAction.SHIP -> activity.value.shipForm?.let { act { store.ship(id).notice } }
     }
 
     /** Whether the parent can ship needs git: checked now, then asked, or its reason told. */

@@ -6,10 +6,8 @@ import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.flag
-import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import dev.mateuy.safanoria.core.Branches
-import dev.mateuy.safanoria.core.ReleaseRequest
 import dev.mateuy.safanoria.core.Ship
 import dev.mateuy.safanoria.core.ShipException
 import dev.mateuy.safanoria.core.ShipResult
@@ -20,22 +18,19 @@ import okio.Path.Companion.toPath
 import kotlin.time.Clock
 
 /**
- * `safanoria-cli ship <parent> [--release <component>[=<version>]]…`: the partial release of a
- * parent (SPEC §8.1). Its branch merges into the main branch, optionally stamped, and back.
+ * `safanoria-cli ship <parent>`: the partial release of a parent (SPEC §8.1). Its branch merges
+ * into the main branch and back. It doesn't stamp: `release` does, as for any other ticket.
  */
 class ShipCommand : RepositoryCommand(name = "ship") {
     override fun help(context: Context) =
         "Ship a parent in progress without finishing it: merge its branch, with the children done there, into the main " +
-            "branch, logging it in the parent's Work Log and, with --release, stamping resolvedIn; then merge that back " +
+            "branch, logging it in the parent's Work Log; then merge that back " +
             "into the parent's branch, where the remaining children and the parent's own steps go on. Everything on the " +
             "parent's branch ships, its own partial work too. Pushes nothing. Refuses, changing nothing, on uncommitted " +
-            "changes in its worktree, a conflict, or tickets that wouldn't validate."
+            "changes in its worktree, a conflict, or tickets that wouldn't validate. It doesn't stamp resolvedIn: " +
+            "the next `release` stamps the shipped children with the rest and merges that back into the parent's branch."
 
     private val idArgument by argument(name = "id", help = "Parent ticket id (on a terminal: asks, starting on this branch's ticket)").optional()
-    private val releases by option(
-        "--release", metavar = "COMPONENT[=VERSION]",
-        help = "Also stamp this component (repeatable), as `release` does; the version is read from its source unless given",
-    ).multiple()
     private val dryRun by option("--dry-run", help = "Check that it can be shipped, change nothing").flag()
     private val date by option("--date", hidden = true, help = "Today's date (tests)")
 
@@ -53,21 +48,12 @@ class ShipCommand : RepositoryCommand(name = "ship") {
             is ShipResult.Refused -> throw PrintMessage("Not shipped: ${r.reason}", 1, true)
             is ShipResult.Ready -> r
         }
-        val requests = releases.map { r ->
-            val (component, version) = r.split('=', limit = 2).let { it[0] to it.getOrNull(1) }
-            ReleaseRequest(component, version)
-        }
         val plan = try {
-            Ship.plan(repo, ready, requests, today)
+            Ship.plan(repo, ready, today)
         } catch (e: ShipException) {
             fail(e)
         }
         val verb = if (dryRun) "would ship" else "shipped"
-        plan.stamped.forEach { s ->
-            s.warnings.forEach { echo("warning: $it", err = true) }
-            val what = if (s.stamped.isEmpty()) "nothing to stamp" else "${if (dryRun) "would stamp" else "stamped"} ${s.stamped.joinToString()}"
-            echo("${s.component} ${s.version}: $what")
-        }
         if (dryRun) {
             echo("$verb '$id' to ${ready.mainBranch} with ${ready.children.joinToString()}, then merge ${ready.mainBranch} back into '$id'")
             return
@@ -79,7 +65,7 @@ class ShipCommand : RepositoryCommand(name = "ship") {
         }
         echo("$verb '$id' to ${ready.mainBranch} with ${ready.children.joinToString()}: ${shipped.commit.take(7)} ${shipped.message}")
         echo("merged ${ready.mainBranch} back into '$id': ${shipped.back.take(7)}; its remaining children go on there")
-        echo("nothing was pushed")
+        echo("nothing was pushed; the next release stamps them")
     }
 
     private fun fail(e: ShipException): Nothing {

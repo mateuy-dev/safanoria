@@ -43,7 +43,7 @@ content. `safanoria-cli --help` lists its commands; each is described below. On 
 | `diff` | A quick look at a ticket's changes against its target: in the terminal, or `--tool` in git's diff tool |
 | `review` | Review mode: the ticket's whole diff as uncommitted changes in its worktree, for an IDE; `--end` goes back |
 | `merge`, `reopen` | Land a ticket in review (merged, `done`, worktree and branch removed); or send it back to `in-progress` |
-| `ship` | Ship a parent in progress without finishing it: its branch, with the children done there, into `main` (optionally stamped), then merged back |
+| `ship` | Ship a parent in progress without finishing it: its branch, with the children done there, into `main`, then merged back |
 | `context` | The current branch's ticket, for the agent session (SessionStart hook) |
 | `validate`, `hook` | Check every SPEC rule; before each commit |
 | `release` | Stamp `resolvedIn` on the tickets a release ships |
@@ -290,9 +290,7 @@ in the taskbar. Without it, or when the file can't be read, it has Safanoria's.
   does what `safanoria-cli merge` does, and **Back to in progress**, which asks for the reason
   and does what `safanoria-cli reopen` does. A parent in progress whose children merge into its
   branch, with one done there, has **Ship to main branch** (`S` in the terminal app), which does
-  what `safanoria-cli ship` does: it asks whether to stamp `resolvedIn`, in which components (all,
-  to start with) and versions (as their sources read them), and says why when there is nothing to
-  ship. A ticket started on another computer has only
+  what `safanoria-cli ship` does after asking, and says why when there is nothing to ship. A ticket started on another computer has only
   **Create worktree**: its worktree here, on a local branch tracking `origin/<id>`, then a terminal there. On Linux the terminal is
   `$TERMINAL`, else the first usual one found on the `PATH`.
 
@@ -476,16 +474,15 @@ and the SessionStart context tells the session the worktree is in review mode.
 **Ship part of a parent.** A parent whose children merge into its branch ships them all together
 when it lands. To release the children done so far before that, `ship <parent>` merges the
 parent's branch into `main` with one commit, `<parent>: ship <children>`, that also logs it in
-the parent's Work Log and, with `--release <component>[=<version>]` (repeatable), stamps
-`resolvedIn` as `release` does. Then it merges `main` back into the parent's branch (moving its
-worktree too), so the stamps are where the children are read from, and the branch stays
-unmerged: the remaining children still start from and merge into it, and the parent lands as
+the parent's Work Log. Then it merges `main` back into the parent's branch (moving its worktree
+too), so the branch stays unmerged: the remaining children still start from and merge into it, and the parent lands as
 usual when it is done. Everything on the parent's branch ships, its own unfinished work too, so
 it must be releasable. It only takes a parent `in-progress` with a child done on its branch and
 not yet on `main`; it refuses, changing nothing, on uncommitted changes in the parent's
 worktree, a conflict, or tickets that wouldn't validate. It pushes nothing; `--dry-run` checks
-only. If you release with your own process instead (no `--release`), merge `main` into the
-parent's branch afterwards to bring the stamps there (SPEC §8.1).
+only. It doesn't stamp: the shipped children reach `main` `done` without `resolvedIn`, and the
+next `release` stamps them with the rest of that release, then merges `main` back into the
+parent's branch, where the children are read from (see Releasing; SPEC §8.1).
 
 **Merges made elsewhere.** When the branch is merged by a pull request or by hand, the target
 has the ticket in `review`. `finish --done` without an id sets every such ticket `done` (one
@@ -531,6 +528,16 @@ repository release at their own pace; a ticket for both gets both versions. Run 
 refuses a version lower than one already stamped for the component. A ticket merged into
 `mainBranch` but still in `review` is set `done` first, in the same files, so it isn't left out
 of the version; its worktree and branch are removed as `finish --done` does.
+
+On `mainBranch`, `release` then brings the stamps to every parent that shipped children with
+`ship`: it merges `mainBranch`, with the stamps, back (`--no-ff`) into the local branch of each
+`in-progress` parent whose children merge into its branch and that has a stamped child, since the
+children are read from there (SPEC §14.1). As the stamps aren't committed yet, the merge takes the
+committed `mainBranch` with the stamped files on top; the release commit makes the same changes, so
+it merges into the branch cleanly later. A branch with uncommitted changes in its worktree, in
+review mode, or whose merge conflicts is skipped with a warning (merge `mainBranch` into it by hand
+after the release commit); the release itself goes on. It moves local branches only and pushes
+nothing; `--dry-run` says which branches it would merge into.
 
 External components (released from another repository) are stamped here with the version
 given, by hand or from that repository's release job. Use `--ticket` when `done` here doesn't

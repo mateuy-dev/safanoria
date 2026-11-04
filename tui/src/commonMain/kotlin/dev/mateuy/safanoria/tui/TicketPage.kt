@@ -30,9 +30,8 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
     private var confirming: TicketAction? = null
     private val reason = StringBuilder()
 
-    /** While shipping is being confirmed: what ships and the stamps chosen; [shipFocus] is the component row. */
+    /** While shipping is being confirmed: what ships. */
     private var shipForm: ShipForm? = null
-    private var shipFocus = 0
 
     private var scroll = 0
 
@@ -48,7 +47,7 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
 
     private var body: Pair<Pair<String, Int>, List<List<Cell>>>? = null
 
-    override val typing: Boolean get() = confirming == TicketAction.REOPEN || confirming == TicketAction.SHIP
+    override val typing: Boolean get() = confirming == TicketAction.REOPEN
 
     override fun draw(p: Painter) {
         state = ticketViewState(id, nav.store.snapshot.value)
@@ -213,12 +212,7 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
         val (title, text, confirm) = confirmation(action)
         val w = minOf(p.width - 4, 72)
         val textLines = wrap(text, w - 4)
-        val form = shipForm.takeIf { action == TicketAction.SHIP }
-        val h = textLines.size + when {
-            action == TicketAction.REOPEN -> 9
-            form != null -> 9 + (if (form.stamp) form.components.size else 0)
-            else -> 6
-        }
+        val h = textLines.size + if (action == TicketAction.REOPEN) 9 else 6
         val x = (p.width - w) / 2
         val y = ((p.height - h) / 2).coerceAtLeast(0)
         p.region(0, 0, p.width, p.height, click = {}, scroll = {})
@@ -234,40 +228,9 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
             p.text(end, by + 1, "▏", Theme.accent)
             by += 3
         }
-        if (form != null) by = drawShipForm(p, x + 2, by, w - 4, form)
-        val valid = if (form != null) form.problem == null else action != TicketAction.REOPEN || reason.isNotBlank()
+        val valid = action != TicketAction.REOPEN || reason.isNotBlank()
         val bx = p.button(x + 2, by, "$confirm (⏎)", enabled = valid) { confirm() } + 2
         p.button(bx, by, "Cancel (esc)") { confirming = null }
-    }
-
-    /**
-     * Whether to stamp, and with [ShipForm.stamp] the components: `[x] name version`, the focused
-     * one's version being typed. Then why it can't ship as it is, if so. Returns the row for the buttons.
-     */
-    private fun drawShipForm(p: Painter, x: Int, top: Int, width: Int, form: ShipForm): Int {
-        var y = top
-        val toggle = { shipForm = form.toggleStamp() }
-        val end = p.text(x, y, (if (form.stamp) "[x]" else "[ ]") + " Stamp resolvedIn (t)", Theme.accent)
-        p.region(x, y, end - x, 1, click = toggle)
-        y++
-        if (form.stamp) {
-            if (form.components.isEmpty()) p.text(x + 4, y++, "The project has no components", Theme.dim)
-            form.components.forEachIndexed { i, c ->
-                val focused = i == shipFocus
-                val box = (if (c.chosen) "[x] " else "[ ] ")
-                var cx = p.text(x + 2, y, box + c.name + " ", if (focused) Theme.accent + Theme.selected else Plain)
-                p.region(x + 2, y, cx - x - 2, 1, click = { shipFocus = i; shipForm = form.toggle(c.name) })
-                cx = p.text(cx, y, c.version.ifEmpty { if (focused) "" else "version?" }, if (c.version.isEmpty()) Theme.dim else Plain)
-                if (focused) cx = p.text(cx, y, "▏", Theme.accent)
-                c.note?.let { p.text(cx + 1, y, it, Theme.dim, max = x + width - cx - 1) }
-                y++
-            }
-            p.text(x, y++, "↑↓ component · space choose · type the version", Theme.dim, max = width)
-        } else {
-            y++
-        }
-        form.problem?.let { p.text(x, y, it, Theme.error, max = width) }
-        return y + 2
     }
 
     /** The question for [action]: title, what it does, and its button. */
@@ -329,7 +292,6 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
                     is ShipCheck.Refused -> Notice("Not shipped: ${check.reason}", error = true)
                     is ShipCheck.Ready -> {
                         shipForm = check.form
-                        shipFocus = 0
                         confirming = TicketAction.SHIP
                         null
                     }
@@ -346,7 +308,6 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
     private fun confirm() {
         val action = confirming ?: return
         if (action == TicketAction.REOPEN && reason.isBlank()) return
-        if (action == TicketAction.SHIP && shipForm?.problem != null) return
         confirming = null
         run(action)
     }
@@ -373,7 +334,7 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
             TicketAction.FINISH -> act { store.finish(id).notice }
             TicketAction.MERGE -> act { store.merge(id).notice }
             TicketAction.REOPEN -> reason.toString().trim().let { r -> act { store.reopen(id, r).notice } }
-            TicketAction.SHIP -> shipForm?.let { form -> shipForm = null; act { store.ship(id, form.releases).notice } }
+            TicketAction.SHIP -> shipForm?.let { shipForm = null; act { store.ship(id).notice } }
         }
     }
 
@@ -462,7 +423,6 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
         when {
             e.key == "Enter" -> confirm()
             e.key == "Escape" -> confirming = null
-            action == TicketAction.SHIP -> shipKey(e)
             action == TicketAction.REOPEN -> when {
                 e.key == "Backspace" -> if (reason.isNotEmpty()) reason.setLength(reason.length - 1)
                 e.key.length == 1 || e.key.length == 2 && e.key[0].isHighSurrogate() -> if (!e.ctrl && !e.alt) reason.append(e.key)
@@ -472,27 +432,7 @@ internal class TicketPage(private val nav: Navigator, private val id: String) : 
         }
         return true
     }
-
-    /** In the ship question: `t` toggles stamping; with it, arrows pick a component, space chooses it, digits and dots type its version. */
-    private fun shipKey(e: KeyboardEvent) {
-        val form = shipForm ?: return
-        val focused = form.components.getOrNull(shipFocus)
-        when {
-            e.key == "t" -> shipForm = form.toggleStamp()
-            e.key == "n" || e.key == "q" -> confirming = null
-            !form.stamp -> if (e.key == "y") confirm()
-            focused == null -> {}
-            e.key == "ArrowUp" -> shipFocus = (shipFocus - 1).coerceAtLeast(0)
-            e.key == "ArrowDown" || e.key == "Tab" -> shipFocus = (shipFocus + 1).coerceAtMost(form.components.size - 1)
-            e.key == " " -> shipForm = form.toggle(focused.name)
-            e.key == "Backspace" -> shipForm = form.version(focused.name, focused.version.dropLast(1))
-            VERSION_CHAR.matches(e.key) && !e.ctrl && !e.alt -> shipForm = form.version(focused.name, focused.version + e.key)
-        }
-    }
 }
-
-/** What can be typed into a version: `MAJOR.MINOR.PATCH`. */
-private val VERSION_CHAR = Regex("[0-9.]")
 
 /** The key that runs the action on the ticket screen. */
 internal val TicketAction.key: String

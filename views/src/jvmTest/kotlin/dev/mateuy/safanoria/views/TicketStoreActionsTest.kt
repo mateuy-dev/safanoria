@@ -111,39 +111,27 @@ class TicketStoreActionsTest {
     }
 
     @Test
-    fun shipAsksWhatShipsAndShipsItStampedAndMergedBack() = runBlocking<Unit> {
+    fun shipAsksWhatShipsAndShipsItUnstampedAndMergedBack() = runBlocking<Unit> {
         val workspace = parentWithAChildDone()
         val store = TicketStore(root)
         store.refresh()
         assertTrue(TicketAction.SHIP in ticketViewState("big", store.snapshot.value).actions)
+        assertTrue("not a parent" in assertIs<ShipCheck.Refused>(store.prepareShip("two")).reason)
 
         val form = assertIs<ShipCheck.Ready>(store.prepareShip("big")).form
         assertEquals(listOf("one"), form.children)
-        assertEquals(listOf(ShipComponent("app", external = false, fromSource = "1.2.0")), form.components)
 
-        val outcome = store.ship("big", form.toggleStamp().releases, today = "2026-10-06").let { assertIs<ShipOutcome.Shipped>(it, it.toString()) }
+        store.ship("big", today = "2026-10-06").let { assertIs<ShipOutcome.Shipped>(it, it.toString()) }
 
-        assertEquals(listOf("app 1.2.0: stamped one"), outcome.stamped)
-        assertEquals("big: ship one (app 1.2.0)", git("log", "-1", "--format=%s", "main"))
+        assertEquals("big: ship one", git("log", "-1", "--format=%s", "main"))
         assertEquals("one\n", File(project, "one.txt").readText())
-        assertTrue("app: 1.2.0" in File(project, "tickets/one.md").readText())
+        assertTrue("status: done" in File(project, "tickets/one.md").readText())
+        assertTrue("resolvedIn" !in File(project, "tickets/one.md").readText(), "the release stamps it")
         assertEquals("big: merge main back", git("log", "-1", "--format=%s", "big"))
-        assertTrue("· ship · shipped to main: `one`, released in app 1.2.0" in File(workspace, "tickets/big.md").readText())
+        assertTrue("· ship · shipped to main: `one`" in File(workspace, "tickets/big.md").readText())
         assertEquals(Status.IN_PROGRESS, store.status("big"))
         // Nothing new to ship: the reason is told.
         assertTrue("nothing to ship" in assertIs<ShipCheck.Refused>(store.prepareShip("big")).reason)
-    }
-
-    @Test
-    fun shipWithoutStampingOnlyLogsAndANonParentIsRefused() = runBlocking<Unit> {
-        parentWithAChildDone()
-        val store = TicketStore(root)
-
-        assertTrue("not a parent" in assertIs<ShipCheck.Refused>(store.prepareShip("two")).reason)
-        store.ship("big", emptyList(), today = "2026-10-06").let { assertIs<ShipOutcome.Shipped>(it, it.toString()) }
-
-        assertTrue("resolvedIn" !in File(project, "tickets/one.md").readText())
-        assertEquals("big: ship one", git("log", "-1", "--format=%s", "main"))
     }
 
     @Test
