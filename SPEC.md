@@ -318,6 +318,26 @@ it in `parent`; there is no parent type.
   `childrenMergeInto: main`: children merge into `mainBranch` independently.
 - A parent is `done` when all its Plan items, children and own steps, are checked.
 
+**Partial release.** A parent with `childrenMergeInto: parent` MAY ship the children already
+merged into its branch before it is `done`, without changing how the rest proceeds:
+
+1. With nothing uncommitted on branch `<parent>`, merge it into `mainBranch` with a plain merge
+   commit, not a landing (§11.5): the parent stays `in-progress`. Its Work Log gets an entry
+   (`ship · shipped to <mainBranch>: <children>`), committed on branch `<parent>` before the
+   merge or in the merge commit.
+2. Release and stamp on `mainBranch` as usual (§9).
+3. Merge `mainBranch` back into branch `<parent>` with a merge commit (`--no-ff`) after the
+   stamping. It brings the stamps to the children's copies there, which are their real copies
+   (§14.1), and gives the branch a commit `mainBranch` lacks, so it is not merged again: until
+   then branch `<parent>` counts as merged and the parent's children target `mainBranch`.
+
+Remaining children then branch from and merge into branch `<parent>`, its own steps continue
+there, and it merges into `mainBranch` when `done`. Everything on branch `<parent>` ships, the
+parent's own partial work included, so it MUST be releasable at that point. A tool MAY do these
+steps in one go (merge, stamping, merge back), with the same rules as landing: it MUST change
+nothing when a branch has uncommitted work or a merge conflicts, and MUST NOT push. Stamping done
+later than the merge back reaches branch `<parent>` at its next merge of `mainBranch`.
+
 ### 8.2 `blockedBy`
 
 A real dependency: this ticket cannot be built or merged until those are `done`. MUST NOT form
@@ -345,7 +365,8 @@ resolvedIn:
   set `resolvedIn.<c>: <v>` and add a Work Log entry `release · <c> <v>`. Stamping SHOULD be part
   of the release commit.
 - Because stamping reads `mainBranch`, children merged into a parent's branch are stamped together
-  with the parent. A child's version MUST NOT be later than its parent's.
+  with the parent, or earlier in a partial release of the parent (§8.1), which brings their
+  stamps back to the parent's branch. A child's version MUST NOT be later than its parent's.
 - A parent's own `resolvedIn` is stamped normally; the feature as a whole shipped at the highest
   version among the parent and its children.
 - Versions only go up: stamping `<c>` at a version lower than one already in a ticket's
@@ -400,6 +421,9 @@ what was decided; they do not script the work. Working on a ticket is an ordinar
    branch has uncommitted work, the merge conflicts or the tickets wouldn't validate, and MUST
    NOT push. It MAY then remove the worktree and delete the branch. When the merge is made
    elsewhere (a pull request), `done` is set on the target afterwards.
+
+   A parent `in-progress` MAY instead ship part of its work without landing (§8.1): it stays
+   `in-progress` and keeps its branch and worktree. Only when the human says so, like landing.
 
 ## 12. Validation
 
@@ -461,6 +485,9 @@ not merged, else the parent's target.
 2. Otherwise it is the target's copy. A child merged into an unmerged parent branch is
    therefore read from the parent's branch. Once a branch is merged, the target wins even if the
    branch is kept, so stamping on `mainBranch` is never hidden by an old branch copy.
+   A parent's branch merged into `mainBranch` in a partial release (§8.1) counts as merged
+   too, whatever its status, until `mainBranch` is merged back into it; that merge back is part
+   of the partial release, so the window is only between its steps.
 3. A ticket on neither is real wherever it is found (for example, a ticket created on a feature
    branch, §14.2). Tools SHOULD mark it with that branch's name.
 

@@ -144,6 +144,13 @@ The user reviews. What comes next is theirs to say, never yours to start:
 Without the CLI: merge with `git merge --no-ff --no-commit <id>` on the target, set `status: done`
 and log `status · done` (and check the item in the parent's Plan) before committing the merge.
 
+**"Ship what's done" of a parent in progress** (children merging into its branch; only when the
+user asks, like merging): `safanoria-cli ship <parent> [--release <component>[=<version>]]`. It
+merges the parent's branch into the main branch (the parent stays `in-progress`), logs it, stamps
+with `--release`, and merges the main branch back into the parent's branch; the remaining
+children carry on there. Everything on that branch ships, the parent's own unfinished work too:
+say so if that work isn't releasable. It pushes nothing. Without the CLI: SPEC §8.1.
+
 ## Release notes
 
 When the user asks what a version brings, or what changed between two versions:
