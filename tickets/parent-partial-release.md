@@ -2,7 +2,7 @@
 id: parent-partial-release
 type: feature
 title: Partial release of a parent
-status: backlog
+status: in-progress
 priority: medium
 size: M
 created: 2026-11-04
@@ -27,3 +27,4 @@ To do: describe this flow in the spec (§8.1 / §9 / §11 / §14.1), decide whet
 
 ## Work Log
 
+- **2026-11-04** · status · started
