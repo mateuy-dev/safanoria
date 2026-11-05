@@ -2,7 +2,7 @@
 id: release-sentry-fixes
 type: feature
 title: Print Sentry Fixes trailers for stamped tickets on release
-status: backlog
+status: in-progress
 priority: medium
 size: M
 created: 2026-11-05
@@ -43,3 +43,4 @@ To settle in the spec:
 
 ## Work Log
 
+- **2026-11-05** · status · started
