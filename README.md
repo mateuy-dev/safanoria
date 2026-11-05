@@ -539,6 +539,26 @@ review mode, or whose merge conflicts is skipped with a warning (merge `mainBran
 after the release commit); the release itself goes on. It moves local branches only and pushes
 nothing; `--dry-run` says which branches it would merge into.
 
+Tickets can reference issues in other systems (`refs: { sentry: [7Y] }`, declared under
+`refs` in `safanoria.yaml`). When the system resolves issues from commit messages, give it a
+`fixes` template, and `release` (also with `--dry-run`) prints a line for each ref of the tickets it
+stamps, to put in the release commit message:
+
+```yaml
+refs:
+  sentry: { url: "https://example.sentry.io/issues/?query={id}", fixes: "Fixes APP-{id}" }
+```
+
+```
+for the release commit message (refs with fixes in safanoria.yaml):
+Fixes APP-7Y
+```
+
+Sentry then marks those issues resolved in the release it creates with `sentry-cli releases
+set-commits` (its commit integration), and reports a regression if one happens again later. The
+release job creates that release, with the name Sentry knows it by (often `app@4.3.0`).
+`release` calls no external system and needs no token.
+
 External components (released from another repository) are stamped here with the version
 given, by hand or from that repository's release job. Use `--ticket` when `done` here doesn't
 guarantee the ticket was in that release.

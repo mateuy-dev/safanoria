@@ -24,7 +24,12 @@ public data class Component(
     val line: Int,
 )
 
-public data class RefSystem(val name: String, val url: String)
+/**
+ * An external system tickets reference (SPEC §2 `refs`). [fixes], when set, is how a commit message
+ * says one of its ids is fixed (`{id}` replaced), e.g. `Fixes APP-{id}`; `release` prints it for
+ * every id on a stamped ticket (§9).
+ */
+public data class RefSystem(val name: String, val url: String, val fixes: String? = null)
 
 /**
  * `safanoria.yaml` with SPEC §2 defaults applied. Values of the wrong type fall back to their
@@ -98,7 +103,7 @@ public object ConfigLoader {
             key.content to Component(key.content, source, value.get("external").text() == "true", block.lineOf(key))
         }
         val refs = root.get("refs").mapEntries().mapNotNull { (key, value) ->
-            value.get("url").text()?.let { key.content to RefSystem(key.content, it) }
+            value.get("url").text()?.let { key.content to RefSystem(key.content, it, value.get("fixes").text()) }
         }.toMap()
         val tags = root.get("tags").mapEntries().associate { (key, value) -> key.content to value.text().orEmpty() }
         val schemaDiagnostics = SchemaValidator.configErrors(block).map { SchemaValidator.toDiagnostic(block, it) }

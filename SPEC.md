@@ -44,7 +44,7 @@ tags:                                 # optional; themes tickets can be grouped 
   registry: Official registry integration
 userRef: VacApp user id               # what requests[].user refers to (documentation)
 refs:                                 # external systems tickets may reference (§5, refs)
-  sentry: { url: "https://example.sentry.io/issues/?query={id}" }
+  sentry: { url: "https://example.sentry.io/issues/?query={id}", fixes: "Fixes APP-{id}" }
 learningTargets: [CLAUDE.md, docs/, .claude/skills/, code comment]   # optional hint (§7.6)
 icon: composeApp/icons/app.svg        # optional; the project's icon, for tools that show one
 ```
@@ -62,6 +62,11 @@ icon: composeApp/icons/app.svg        # optional; the project's icon, for tools 
   `external: true` means the component is released from another repository, and the version is
   supplied when stamping (§9).
 - `channels` defaults to `[email, phone, in-person, other]`.
+- `refs` maps each external system's name (a slug) to `url`, where `{id}` is replaced by a
+  ticket's reference to link it, and optionally `fixes`: how a commit message says one of its ids
+  is fixed (`{id}` replaced), e.g. `Fixes APP-{id}` for Sentry, `Fixes #{id}` for GitHub. Write in
+  it whatever the ids in tickets leave out (a Sentry project prefix, when tickets have `7Y`), so
+  the result is the id the system expects. Stamping prints it (§9).
 - `tags` maps each theme's name (a slug) to a one-line description of what it covers. They are
   the allowed values of a ticket's `tags`; without it, no ticket can have tags. The description
   is what whoever creates a ticket decides from. Keep the list short: a theme groups tickets
@@ -379,6 +384,12 @@ resolvedIn:
   whose merge conflicts.
 - A parent's own `resolvedIn` is stamped normally; the feature as a whole shipped at the highest
   version among the parent and its children.
+- A tool that stamps SHOULD print, for the release commit message, the `fixes` line (§2 `refs`)
+  of every ref of a stamped ticket whose system declares one, so that system resolves it in that
+  release (Sentry: from the release's commits, `sentry-cli releases set-commits`; if the same
+  issue happens in a later release, it is a regression). The tool calls no external system. The
+  release job is the one that creates the system's release with the right name (often
+  `app@4.3.0`, not `4.3.0`) and gives it the commit.
 - Versions only go up: stamping `<c>` at a version lower than one already in a ticket's
   `resolvedIn.<c>` MUST be refused.
 

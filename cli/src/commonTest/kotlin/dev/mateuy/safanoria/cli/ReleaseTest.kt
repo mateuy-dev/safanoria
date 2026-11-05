@@ -93,4 +93,30 @@ class ReleaseTest {
         assertTrue(lower.stderr.contains("lower than 1.2.0"), lower.stderr)
         assertEquals(1, run("app", "--any-branch", "--ticket", "herd-locations-map").statusCode, "not done")
     }
+
+    @Test
+    fun printsFixesForTheRefsOfStampedTickets() {
+        SystemFileSystem.write(work / "safanoria.yaml") {
+            writeUtf8(
+                read(fixture / "safanoria.yaml") + "refs:\n" +
+                    "  sentry: { url: \"https://example.sentry.io/issues/?query={id}\", fixes: \"Fixes APP-{id}\" }\n" +
+                    "  docs: { url: \"https://docs.example.com/{id}\" }\n",
+            )
+        }
+        val ticket = read(photo)
+        SystemFileSystem.write(photo) { writeUtf8(ticket.replace("updated: 2026-10-01\n", "updated: 2026-10-01\nrefs:\n  sentry: [7Y, 7T]\n  docs: [intro]\n")) }
+        assertEquals(emptyList(), Validator(Repository(work)).validate(listOf(photo)).map { it.toString() })
+
+        val fixes = "\nfor the release commit message (refs with fixes in safanoria.yaml):\nFixes APP-7Y\nFixes APP-7T\n"
+        val dry = run("app", "--any-branch", "--dry-run")
+        assertEquals(0, dry.statusCode, dry.output)
+        assertTrue(dry.stdout.contains(fixes) && !dry.stdout.contains("intro"), dry.stdout)
+
+        val r = run("app", "--any-branch")
+        assertEquals(0, r.statusCode, r.output)
+        assertTrue(r.stdout.contains(fixes), r.stdout)
+
+        val again = run("app", "--any-branch")
+        assertTrue(!again.stdout.contains("Fixes"), "only the tickets stamped now: ${again.stdout}")
+    }
 }

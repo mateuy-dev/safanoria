@@ -2,7 +2,7 @@
 id: release-sentry-fixes
 type: feature
 title: Print Sentry Fixes trailers for stamped tickets on release
-status: backlog
+status: done
 priority: medium
 size: M
 created: 2026-11-05
@@ -41,5 +41,15 @@ To settle in the spec:
 
 ## Acceptance Criteria
 
+- [x] A ref system in `safanoria.yaml` can declare `fixes` (a template with `{id}`); schema and SPEC §2 describe it.
+- [x] `release` (and `--dry-run`) prints the `fixes` line of every ref of each ticket it stamps, for the release commit message; refs of systems without `fixes` print nothing.
+- [x] No network calls and no Sentry-specific code; SPEC §9 and README say the release job creates the Sentry release (name like `app@1.2.3`) and runs `set-commits`.
+- [x] Tests cover config parsing and the CLI output.
+
 ## Work Log
 
+- **2026-11-05** · status · started
+- **2026-11-05** · decision · Generic `refs.<name>.fixes: "Fixes {id}"` template instead of a Sentry-specific `prefix`: the template also carries the prefix (`Fixes APP-{id}` for tickets with `7Y`, `Fixes {id}` for full ids), so the spec needn't require one id format, and GitHub/Jira/Linear work the same way.
+- **2026-11-05** · decision · Lines are printed after the stamped list under a header, unindented, deduplicated, in stamped-ticket order, so a release job can grep `^Fixes `. No separate machine-readable flag yet.
+- **2026-11-05** · status · review
+- **2026-11-05** · status · done
