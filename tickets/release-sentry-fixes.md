@@ -2,7 +2,7 @@
 id: release-sentry-fixes
 type: feature
 title: Print Sentry Fixes trailers for stamped tickets on release
-status: in-progress
+status: review
 priority: medium
 size: M
 created: 2026-11-05
@@ -51,3 +51,4 @@ To settle in the spec:
 - **2026-11-05** · status · started
 - **2026-11-05** · decision · Generic `refs.<name>.fixes: "Fixes {id}"` template instead of a Sentry-specific `prefix`: the template also carries the prefix (`Fixes APP-{id}` for tickets with `7Y`, `Fixes {id}` for full ids), so the spec needn't require one id format, and GitHub/Jira/Linear work the same way.
 - **2026-11-05** · decision · Lines are printed after the stamped list under a header, unindented, deduplicated, in stamped-ticket order, so a release job can grep `^Fixes `. No separate machine-readable flag yet.
+- **2026-11-05** · status · review
