@@ -16,6 +16,8 @@ requests:
     who: Project maintainer
     channel: other
     date: 2026-11-05
+resolvedIn:
+  safanoria: 0.10.0
 ---
 
 ## Objective
@@ -53,3 +55,4 @@ To settle in the spec:
 - **2026-11-05** · decision · Lines are printed after the stamped list under a header, unindented, deduplicated, in stamped-ticket order, so a release job can grep `^Fixes `. No separate machine-readable flag yet.
 - **2026-11-05** · status · review
 - **2026-11-05** · status · done
+- **2026-11-05** · release · safanoria 0.10.0

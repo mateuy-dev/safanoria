@@ -6,7 +6,9 @@ status: done
 priority: medium
 size: M
 created: 2026-11-04
-updated: 2026-11-04
+updated: 2026-11-05
+resolvedIn:
+  safanoria: 0.10.0
 ---
 
 ## Objective
@@ -38,3 +40,4 @@ To do: describe this flow in the spec (§8.1 / §9 / §11 / §14.1), decide whet
 - **2026-11-04** · decision · `ship` refuses when no child is done on the parent's branch and not yet done on main ("nothing to ship"), and only takes parents `in-progress` (one in review is landed with `merge`).
 - **2026-11-04** · status · review
 - **2026-11-04** · status · done
+- **2026-11-05** · release · safanoria 0.10.0

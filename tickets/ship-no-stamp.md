@@ -6,7 +6,9 @@ status: done
 priority: medium
 size: S
 created: 2026-11-04
-updated: 2026-11-04
+updated: 2026-11-05
+resolvedIn:
+  safanoria: 0.10.0
 ---
 
 ## Objective
@@ -32,3 +34,4 @@ Update SPEC (§8.1 partial release, §9 stamping), the skill and README where th
 - **2026-11-04** · decision · `release` doesn't commit, so the merge back can't take a committed stamp: it merges the committed `mainBranch` with the stamped files on top (merge parents: the branch and `mainBranch`; the stamps live in the merge tree). The release commit makes the same changes, so merging it into the parent's branch later is clean. Done only when `release` runs on `mainBranch`; `--dry-run` lists the branches.
 - **2026-11-04** · status · review
 - **2026-11-04** · status · done
+- **2026-11-05** · release · safanoria 0.10.0
