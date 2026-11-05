@@ -31,7 +31,8 @@ class ConfigTest {
               offline: Working without a connection
             userRef: VacApp user id
             refs:
-              sentry: { url: "https://example.sentry.io/issues/?query={id}" }
+              sentry: { url: "https://example.sentry.io/issues/?query={id}", fixes: "Fixes APP-{id}" }
+              docs: { url: "https://docs.example.com/{id}" }
             learningTargets: [CLAUDE.md, docs/]
             icon: design/app.svg
             unknownKey: kept
@@ -51,9 +52,11 @@ class ConfigTest {
         assertEquals(10, config.components["rails"]?.line)
         assertEquals(listOf("whatsapp", "email"), config.channels)
         assertEquals("https://example.sentry.io/issues/?query={id}", config.refs["sentry"]?.url)
+        assertEquals("Fixes APP-{id}", config.refs["sentry"]?.fixes)
+        assertNull(config.refs["docs"]?.fixes)
         assertEquals(listOf("CLAUDE.md", "docs/"), config.learningTargets)
         assertEquals("design/app.svg", config.icon)
-        assertEquals(21, config.keyLines["unknownKey"])
+        assertEquals(22, config.keyLines["unknownKey"])
     }
 
     @Test

@@ -42,9 +42,12 @@
       "additionalProperties": {
         "type": "object",
         "required": ["url"],
-        "properties": { "url": { "type": "string", "pattern": "\\{id\\}" } }
+        "properties": {
+          "url": { "type": "string", "pattern": "\\{id\\}" },
+          "fixes": { "type": "string", "pattern": "\\{id\\}", "description": "How a commit message says an id is fixed, e.g. \"Fixes APP-{id}\"; release prints it for the refs of the tickets it stamps." }
+        }
       },
-      "description": "External systems tickets may reference in refs; {id} in url is replaced by the reference."
+      "description": "External systems tickets may reference in refs; {id} in url and fixes is replaced by the reference."
     },
     "learningTargets": {
       "type": "array",

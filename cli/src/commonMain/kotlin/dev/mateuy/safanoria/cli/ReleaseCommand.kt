@@ -10,6 +10,7 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import dev.mateuy.safanoria.core.Branches
+import dev.mateuy.safanoria.core.CONFIG_FILE
 import dev.mateuy.safanoria.core.GitException
 import dev.mateuy.safanoria.core.Land
 import dev.mateuy.safanoria.core.Release
@@ -32,7 +33,9 @@ class ReleaseCommand : RepositoryCommand(name = "release") {
             "version for it yet, and log it. Tickets merged but still in review are set done first. " +
             "Run on the main branch, as part of the release commit. Then merges the main branch, with the stamps, " +
             "back into the local branch of every parent in progress that shipped children with ship, so they show " +
-            "released there too; skips, with a warning, a branch with uncommitted changes or a conflict. Pushes nothing."
+            "released there too; skips, with a warning, a branch with uncommitted changes or a conflict. Pushes nothing. " +
+            "Prints, for the release commit message, a line for each ref of a stamped ticket whose system has fixes " +
+            "in safanoria.yaml (e.g. Fixes APP-7Y), so the tracker resolves it in this release."
 
     private val componentArgument by argument(name = "component", help = "Component from safanoria.yaml (on a terminal: asks)").optional()
     private val version by argument(help = "MAJOR.MINOR.PATCH (default: read from the component's version source; required for external ones)").optional()
@@ -63,6 +66,12 @@ class ReleaseCommand : RepositoryCommand(name = "release") {
         } else {
             echo("${if (dryRun) "would stamp" else "stamped"} $what on ${ready.stamped.size} ticket${if (ready.stamped.size == 1) "" else "s"}:")
             ready.stamped.forEach { id -> echo("  ${displayPath(repo.ticketDir / "$id.md")}") }
+        }
+        // Not run here: the release commit is the user's or CI's, and the tracker resolves them from it.
+        if (ready.fixes.isNotEmpty()) {
+            echo("\nfor the release commit message (refs with fixes in $CONFIG_FILE):")
+            ready.fixes.forEach { echo(it) }
+            echo()
         }
         if (dryRun) {
             if (branches != null) mergeBack(repo, branches, ready, dryRun = true)

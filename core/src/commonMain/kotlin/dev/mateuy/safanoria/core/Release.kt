@@ -26,6 +26,12 @@ public sealed interface ReleaseResult {
         val warnings: List<String>,
         /** Ids of the tickets set `done` first: merged, but still in `review` ([Finish.merged]). */
         val promoted: List<String> = emptyList(),
+        /**
+         * For the release commit message: each ref of a stamped ticket whose system declares `fixes`
+         * in `safanoria.yaml`, written with it (`Fixes APP-7Y`), so the tracker resolves it in this
+         * release. In stamped-ticket order, without repeats.
+         */
+        val fixes: List<String> = emptyList(),
     ) : ReleaseResult
 
     public data class Refused(val reason: String) : ReleaseResult
@@ -117,7 +123,7 @@ public object Release {
             }
             PlannedFile(t.path, text, isNew = false)
         }
-        return ReleaseResult.Ready(c, version, request.version == null, tickets.map { it.fileId }, files, warnings)
+        return ReleaseResult.Ready(c, version, request.version == null, tickets.map { it.fileId }, files, warnings, fixes = fixes(tickets, config))
     }
 
     /**
@@ -177,6 +183,14 @@ public object Release {
             }
         }
     }
+
+    /** [ReleaseResult.Ready.fixes] of [tickets]: refs of systems without `fixes` aren't resolved by commit. */
+    private fun fixes(tickets: List<Ticket>, config: Config): List<String> = tickets.flatMap { t ->
+        t.frontmatter?.refs.orEmpty().flatMap { (name, ids) ->
+            val template = config.refs[name]?.fixes ?: return@flatMap emptyList()
+            ids.map { template.replace("{id}", it) }
+        }
+    }.distinct()
 
     /**
      * The components a `done` [ticket] is still to be released in: those stamping would give it a
