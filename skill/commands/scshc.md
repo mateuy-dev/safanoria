@@ -1,6 +1,6 @@
 ---
 name: scshc
-description: Create a Safanoria ticket from the text (or this conversation), commit it on the main branch, and start it in Herdr, in a session that discusses it first.
+description: Create a Safanoria ticket from the text (or this conversation), commit it on the session branch by default (top-level on main only when requested or outside a ticket session), and start it in Herdr, in a session that discusses it first.
 argument-hint: '[--agent claude|codex] <what the ticket is about>'
 disable-model-invocation: true
 ---

@@ -10,6 +10,7 @@ import kotlin.test.assertTrue
 class ScriptedPrompts(vararg answers: Any) : Prompts {
     private val answers = answers.toMutableList()
     val asked = mutableListOf<Pair<String, List<String>>>()
+    val defaults = mutableMapOf<String, String?>()
 
     private fun next(question: String, offered: List<String> = emptyList()): Any {
         asked += question to offered
@@ -18,7 +19,8 @@ class ScriptedPrompts(vararg answers: Any) : Prompts {
     }
 
     override fun choose(title: String, choices: List<Choice>, default: String?): String {
-        val answer = next(title, choices.map { it.value }) as String
+        defaults[title] = default
+        val answer = (next(title, choices.map { it.value }) as String).let { if (it == "<default>") default.orEmpty() else it }
         check(choices.any { it.value == answer }) { "'$answer' isn't offered for $title: ${choices.map { it.value }}" }
         return answer
     }
@@ -140,6 +142,83 @@ class PromptsTest {
         assertEquals(0, r.statusCode, r.output)
         assertTrue("herd-photos" in repo.git("show", "--name-only", "main"), "committed on main")
         assertEquals("feature", repo.git("branch", "--show-current").trim())
+    }
+
+    @Test
+    fun newOnATicketBranchDefaultsToAChildEvenWithoutOptionalAnswers() {
+        val repo = GitRepo.scenario("prompts-new-child")
+        repo.checkout("beta")
+        val prompts = ScriptedPrompts("Photos", "feature", false, "")
+        val r = run(repo, prompts, "new", "--date", "2026-10-03")
+        assertEquals(0, r.statusCode, r.output)
+        assertTrue("parent: beta\n" in repo.read("tickets/beta-photos.md"))
+        assertTrue("- [ ] `beta-photos`: Photos" in repo.read("tickets/beta.md"))
+        assertFalse(prompts.questions().any { it.contains("Where does") })
+        assertEquals("beta", repo.git("branch", "--show-current").trim())
+        assertTrue("?? tickets/beta-photos.md" in repo.git("status", "--porcelain"))
+    }
+
+    @Test
+    fun newOnAChildBranchDefaultsToASiblingAndOffersOnlyEligibleParents() {
+        val repo = GitRepo.scenario("prompts-new-sibling")
+        repo.checkout("beta")
+        repo.write("tickets/part.md", GitRepo.ticket("part", "in-progress").replace("updated: 2026-10-02\n", "updated: 2026-10-02\nparent: beta\n"))
+        repo.write("tickets/beta.md", repo.read("tickets/beta.md").replace("- [ ] Step", "- [ ] `part`: Part"))
+        repo.write("tickets/research.md", GitRepo.ticket("research").replace("type: feature", "type: research"))
+        repo.commit("child and research")
+        repo.checkout("part", create = true)
+        val prompts = ScriptedPrompts("Photos", "feature", true, "medium", "S", "<default>", "", "")
+        val r = run(repo, prompts, "new", "--date", "2026-10-03")
+        assertEquals(0, r.statusCode, r.output)
+        assertEquals("beta", prompts.defaults["Parent"])
+        val offered = prompts.asked.first { it.first == "Parent" }.second
+        assertFalse("part" in offered || "research" in offered, offered.toString())
+        assertTrue("parent: beta\n" in repo.read("tickets/beta-photos.md"))
+        assertTrue("- [ ] `beta-photos`: Photos" in repo.read("tickets/beta.md"))
+    }
+
+    @Test
+    fun explicitOnMainSuppressesTheInteractiveSessionParent() {
+        val repo = GitRepo.scenario("prompts-new-explicit-main")
+        repo.checkout("beta")
+        val prompts = ScriptedPrompts("Photos", "feature", false, "")
+        val r = run(repo, prompts, "new", "--on", "main", "--date", "2026-10-03")
+        assertEquals(0, r.statusCode, r.output)
+        assertFalse("parent:" in repo.git("show", "main:tickets/photos.md"))
+        assertFalse("photos" in repo.read("tickets/beta.md"))
+    }
+
+    @Test
+    fun choosingNoParentCreatesATopLevelTicketOnMain() {
+        val repo = GitRepo.scenario("prompts-new-no-parent")
+        repo.checkout("beta")
+        val prompts = ScriptedPrompts("Photos", "feature", true, "medium", "S", "", "", "main", "")
+        val r = run(repo, prompts, "new", "--date", "2026-10-03")
+        assertEquals(0, r.statusCode, r.output)
+        assertEquals("beta", prompts.defaults["Parent"])
+        assertFalse("parent:" in repo.git("show", "main:tickets/photos.md"))
+    }
+
+    @Test
+    fun explicitParentOverridesTheInteractiveSessionParent() {
+        val repo = GitRepo.scenario("prompts-new-explicit-parent")
+        repo.checkout("beta")
+        val prompts = ScriptedPrompts("Photos", "feature", false, "")
+        val r = run(repo, prompts, "new", "--parent", "alpha", "--date", "2026-10-03")
+        assertEquals(0, r.statusCode, r.output)
+        assertTrue("parent: alpha\n" in repo.read("tickets/alpha-photos.md"))
+    }
+
+    @Test
+    fun researchSessionDoesNotInferAParent() {
+        val repo = GitRepo.scenario("prompts-new-research")
+        repo.write("tickets/research.md", GitRepo.ticket("research", "in-progress").replace("type: feature", "type: research"))
+        repo.commit("research")
+        repo.checkout("research", create = true)
+        val prompts = ScriptedPrompts("Photos", "feature", false, "main", "")
+        val r = run(repo, prompts, "new", "--date", "2026-10-03")
+        assertEquals(0, r.statusCode, r.output)
+        assertFalse("parent:" in repo.git("show", "main:tickets/photos.md"))
     }
 
     @Test

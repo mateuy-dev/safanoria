@@ -57,7 +57,7 @@ class New : RepositoryCommand(name = "new") {
         // Asking happens when the title is missing: with a title, flags and defaults decide, as in a script.
         val asking = titleArgument == null
         if (asking && prompts == null) throw UsageError("missing argument <title>").apply { context = currentContext }
-        if (asking && prompts != null) ask(prompts, repo, branches)
+        if (asking && prompts != null) ask(prompts, repo)
         val components = repo.config.components.keys.toList()
         if (area == null && components.size > 1 && prompts != null) area = askArea(prompts, components)
 
@@ -144,17 +144,21 @@ class New : RepositoryCommand(name = "new") {
     )
 
     /** Title, type, then the rest only if wanted, then the branch; values given as flags aren't asked. */
-    private fun ask(prompts: Prompts, repo: Repository, branches: Branches?) {
+    private fun ask(prompts: Prompts, repo: Repository) {
         while (title.isBlank()) title = prompts.text("Title").trim()
         if (typeOption == null) type = prompts.choose("Type", TicketType.entries.map { Choice(it.text) }, type)
-        val open = branches?.tickets.orEmpty().filter { it.frontmatter?.status !in setOf(Status.DONE, Status.WONTFIX) }
+        val open = repo.tickets.filter {
+            val fm = it.frontmatter
+            fm != null && fm.parent == null && fm.type != TicketType.RESEARCH && fm.status !in setOf(Status.DONE, Status.WONTFIX)
+        }
+        if (parentOption == null && onOption == null) parent = defaultParent(repo)
         val declaredTags = repo.config.tags
         if (prompts.confirm("Set priority, size${if (open.isNotEmpty()) ", parent" else ""}${if (declaredTags.isNotEmpty()) ", tags" else ""} or objective?", default = false)) {
             if (priorityOption == null) priority = prompts.choose("Priority", Priority.entries.map { Choice(it.text) }, priority)
             if (sizeOption == null) size = prompts.choose("Size", Size.entries.map { Choice(it.text) }, size)
             if (parentOption == null && open.isNotEmpty()) {
                 val none = Choice("", "(none)", "a top-level ticket")
-                parent = prompts.choose("Parent", listOf(none) + open.map(::ticketChoice), "").ifEmpty { null }
+                parent = prompts.choose("Parent", listOf(none) + open.map(::ticketChoice), parent.orEmpty()).ifEmpty { null }
             }
             if (tagOption == null && declaredTags.isNotEmpty()) {
                 tags = prompts.chooseMany("Tags: themes it belongs to, if any", declaredTags.map { (name, description) -> Choice(name, description = description) })
@@ -191,11 +195,28 @@ class New : RepositoryCommand(name = "new") {
         throw ProgramResult(1)
     }
 
-    /** SPEC §14.2: a top-level ticket belongs on mainBranch; say how when the user is elsewhere. */
+    /** Keep the one-level hierarchy (§8.1): a child's session creates siblings. */
+    private fun defaultParent(repo: Repository): String? {
+        val current = try { repo.git.currentBranch() } catch (e: GitException) { return null }
+        if (current == repo.config.mainBranch || current == "HEAD") return null
+        val ticket = repo.ticket(current)?.frontmatter ?: return null
+        val id = ticket.parent?.value ?: current
+        val parent = repo.ticket(id)?.frontmatter ?: return null
+        return id.takeIf {
+            parent.parent == null && parent.type != TicketType.RESEARCH && parent.status !in setOf(Status.DONE, Status.WONTFIX)
+        }
+    }
+
+    /** SPEC §14.2: tell script callers which explicit flag matches the session default. */
     private fun mainBranchHint(repo: Repository) {
         val current = try { repo.git.currentBranch() } catch (e: GitException) { return }
         val main = repo.config.mainBranch
         if (current != main && current != "HEAD") {
+            val parent = defaultParent(repo)
+            if (parent != null) {
+                echo("note: this is ticket branch '$current'; default to --parent $parent here; use --on $main only for an explicitly separate top-level ticket (SPEC §14.2)", err = true)
+                return
+            }
             echo("note: this is branch '$current'; a top-level ticket belongs on $main (SPEC §14.2): use --on $main unless it's part of this branch's work", err = true)
         }
     }
