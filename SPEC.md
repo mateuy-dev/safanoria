@@ -416,18 +416,20 @@ what was decided; they do not script the work. Working on a ticket is an ordinar
 
 1. **Create.** Pick an id that is unused (a ticket file on any branch, and a branch name), copy
    the template for its type (§6.2), set `status: backlog`, fill Objective. Add requests and
-   quotes if it comes from users. Create it on the branch §14.2 says, which is often not the
-   current one. The id need not be confirmed first: it can be renamed while the ticket is
-   only on one branch.
+   quotes if it comes from users. Create it on the branch §14.2 says, defaulting to a child in
+   a ticket session. The id need not be confirmed first: it can be renamed while the ticket
+   is only on one branch.
 2. **Start** — only when the human says so. Create the branch `<id>` (from the parent's branch if
    `childrenMergeInto: parent`, else from `mainBranch`) and its worktree (§2). Set
    `status: in-progress` and log it.
 3. **Work** happens on branch `<id>`, in its worktree, in a session opened there.
    The session knows its ticket from the branch name. It works as the human directs and keeps
    the ticket current: decisions go into the Work Log (§7.7), committed with the code they
-   explain; Objective and Acceptance Criteria are updated when the goal changes. Out-of-scope
-   work becomes a new `backlog` ticket in `related`, created on `mainBranch` (§14.2). A child of
-   this ticket is created on this branch and started like any ticket, in its own session.
+   explain; Objective and Acceptance Criteria are updated when the goal changes. New work defaults
+   to a child on this branch (or a sibling when this ticket is a child, §8.1). Only an explicit
+   request for separate or out-of-scope work makes it a top-level `backlog` ticket in `related`
+   on `mainBranch` (§14.2). Research follow-up work is top-level and related (§6.2). New tickets
+   are started like any ticket, in their own sessions.
 4. **Finish.** Set `status: review` when the work is complete: committed on branch `<id>`, which
    has what its target has. Tools SHOULD refuse otherwise, and list pending Learnings and
    unchecked Acceptance Criteria without blocking on them (§7.6). Until here tools commit only
@@ -519,11 +521,18 @@ wins over a remote one with the same name.
 
 ### 14.2 Where a ticket is created
 
-- Top-level tickets, including out-of-scope ones found while working on another ticket (§11.3),
+- In a session on a ticket's branch, new tickets SHOULD default to children of that ticket,
+  created on the current branch. From a child's session, the default parent is its `parent`
+  (a sibling), preserving the one-level hierarchy (§8.1). Research cannot have children:
+  its follow-up work is top-level and linked with `related` (§6.2).
+- Only an explicit request for a top-level, separate or out-of-scope ticket changes that
+  session default. On `mainBranch`, or outside a ticket session, tickets default to top-level.
+- Top-level tickets, including explicitly separate work found during another ticket (§11.3),
   are created on `mainBranch`, without checking it out. That reserves the id at once, the ticket
   survives if the branch that found it is abandoned, and it can be prioritized on its own.
-- Children of a parent with `childrenMergeInto: parent` are created on the parent's branch,
-  where their own branches start.
+- Outside a ticket session, children of a parent with `childrenMergeInto: parent` are
+  created on the parent's branch, where their own branches start. Children recorded in a
+  child session reach the parent's branch when that session's ticket is merged.
 - If `mainBranch` can't be written to (protected, pull requests only), a ticket MAY be created
   on the current branch. Tools reading every branch still find it (§14.1, rule 3).
 

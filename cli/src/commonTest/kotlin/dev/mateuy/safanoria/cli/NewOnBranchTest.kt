@@ -67,6 +67,17 @@ class NewOnBranchTest {
     }
 
     @Test
+    fun ticketBranchHintRecommendsParentWithoutChangingScriptDefaults() {
+        val repo = GitRepo.scenario("new-ticket-hint")
+        repo.checkout("beta")
+        val r = run(repo.root, "Photos")
+        assertEquals(0, r.statusCode, r.output)
+        assertTrue("default to --parent beta here" in r.stderr, r.stderr)
+        assertFalse("parent:" in repo.read("tickets/photos.md"))
+        assertFalse("note:" in run(repo.root, "Other photos", "--parent", "beta", "--dry-run").stderr)
+    }
+
+    @Test
     fun aProjectInASubdirectory() {
         val repo = GitRepo("new-on-subdir")
         repo.write("app/safanoria.yaml", GitRepo.config("app"))

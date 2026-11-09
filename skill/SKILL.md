@@ -44,13 +44,20 @@ planning or approval step, and a session works as the user directs it.
    ticket; most tickets have none. Never a tag that isn't declared there: a new theme is the
    user's call, so suggest it instead.
 3. **Which branch** (SPEC §14.2):
-   - A top-level ticket goes on `mainBranch`. In a session on another branch, use `--on <mainBranch>`:
-     it commits the ticket there without touching this checkout. If that fails (e.g. `main` is
-     protected), create it on the current branch and tell the user it needs moving.
-     The commit is on the local `mainBranch` only. If this branch references the ticket
-     (`related`), tell the user to push `mainBranch` with it: until then `validate` warns
-     `ref-unpushed`, and CI on this branch fails with `ref-unknown`.
-   - A child of the current ticket goes on this branch, without `--on`.
+   - On a ticket's branch, default to a child of that ticket: use `--parent <current id>`,
+     on this branch, without `--on`. When the current ticket is itself a child, use its
+     `parent` instead (a sibling), because Safanoria allows only one level (§8.1). The CLI
+     adds the new child to the parent's Plan. Do not infer top-level work just because it
+     will be implemented separately.
+   - Only an explicit request ("in main", "top-level", "separate ticket", or "out of this
+     ticket's scope") makes it top-level on `mainBranch`: use `--on <mainBranch>`. On
+     `mainBranch`, tickets are top-level by default. Outside a ticket branch, use the same
+     top-level rule. A research ticket cannot have children: create related top-level work
+     on `mainBranch` (§6.2).
+   - If `--on <mainBranch>` fails (e.g. the branch is protected), create it on the current
+     branch and tell the user it needs moving. The commit is on the local `mainBranch` only.
+     If this branch references it (`related`), tell the user to push `mainBranch` with it:
+     until then `validate` warns `ref-unpushed`, and CI on this branch fails with `ref-unknown`.
    - Don't edit, from another branch, a ticket you created on `mainBranch`: the file isn't there.
 4. From a user: add the `requests` entry and the verbatim quote in User Requests (SPEC §7.3).
    With `--on`, edit and commit that where `mainBranch` is checked out (`git worktree list`;
@@ -67,8 +74,9 @@ planning or approval step, and a session works as the user directs it.
 in one step, so ask nothing. Write it from the command's text and, when the text points to it
 ("what we discussed"), from this conversation. The session that works the ticket sees only the
 ticket, so its Objective stands on its own: what was decided, the options rejected and why, the
-constraints found; conclusions already reached go into Acceptance Criteria. It is a top-level
-ticket on `mainBranch` (`--on <mainBranch>` from another branch). Only if the text and the
+constraints found; conclusions already reached go into Acceptance Criteria. Apply Create step 3:
+on a ticket branch it defaults to a child (or a sibling from a child branch), on this branch without `--on`; use top-level on `mainBranch` only when
+explicitly requested or when there is no eligible session parent. Only if the text and the
 conversation together are too thin for an Objective: ask, and create nothing until answered.
 
 Without the CLI: pick an id (SPEC §3) that no branch has used (`git rev-list --all -1 --
@@ -88,8 +96,10 @@ If the CLI is unavailable, read the branch ticket directly. Along the way:
   deviation from the Objective, a constraint found. Not progress, not a summary of the diff.
   Commit the entry together with the code it explains.
 - **The goal changed?** Update Objective or Acceptance Criteria and log why.
-- **Out-of-scope work**: a new `backlog` ticket on `mainBranch` (Create, `--on`), added to this
-  ticket's `related`.
+- **New work** defaults to a child (or a sibling from a child branch), created here (Create
+  step 3). Only work the user explicitly identifies as separate or out of scope becomes a
+  top-level `backlog` ticket on `mainBranch` (`--on`), added to this ticket's `related`.
+  Research follow-up work is also top-level and related, since research cannot have children.
 - **Something true beyond this ticket** (about the code, a library, an external system): add it
   to Learnings (SPEC §7.6), and promote it to the project's `learningTargets` when it is clear.
 - A Plan is optional. Write one only if the user asks or it helps; a parent's Plan lists its children.

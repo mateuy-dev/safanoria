@@ -29,6 +29,13 @@ Update everywhere the default is stated, so Claude and Codex behave the same: `s
 
 ## Acceptance Criteria
 
+- [x] Skills, creation commands, README and spec consistently default ticket sessions to children, with explicit top-level requests honored.
+- [x] Interactive creation defaults to the session parent and updates its Plan; flags retain their explicit behavior.
+- [x] Child sessions create siblings within the existing one-level hierarchy; research follow-up stays top-level and related.
+
 ## Work Log
 
 - **2026-11-09** · status · started
+
+- **2026-11-09** · decision · A child's session defaults to its existing parent (a sibling), preserving §8.1's one-level hierarchy rather than expanding nesting and lifecycle semantics. Research follow-up remains top-level and related because research cannot have children.
+- **2026-11-09** · decision · Infer the parent only in interactive creation; scripts and agents keep explicit flags, with the CLI hint recommending the session parent and the skill supplying it.

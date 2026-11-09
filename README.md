@@ -159,26 +159,35 @@ most four words); it's the branch name.
 
 **On a terminal, the CLI asks** for what you leave out. `safanoria-cli` alone opens the terminal
 app, or outside a project offers to set one up. `new` without a title asks for the title, the type and the id (enter keeps the suggestion),
-optionally priority, size, parent, tags (when the project declares some) and objective, and, on a branch other than `mainBranch`,
-whether the ticket goes on `mainBranch`; with a title it asks only for a missing `area`.
+optionally priority, size, parent, tags (when the project declares some) and objective.
+The parent defaults to the session ticket (or its parent from a child session). Choosing no
+parent offers `mainBranch`; outside a ticket session it also asks where a top-level ticket
+goes. With a title it asks only for a missing `area`.
 `start`, `finish`, `merge`, `reopen` and `release` without an id or component offer a list (backlog and ready
 tickets to start; in-progress ones to finish; those in review to merge or reopen, and `reopen` asks for the reason). `init` asks for the
 components and where each one's version is, and `init` and `update` ask before changing a file
 of yours. Ctrl-C cancels without changing anything. When stdin or stdout isn't a terminal (scripts, agents, CI), nothing is asked:
 a missing value is an error, as before.
 
-**Which branch** (SPEC §14.2): a new top-level ticket belongs on `mainBranch`, even when you
-find the work while on another ticket's branch. On `main` the id is taken at once, the ticket
+**Which branch** (SPEC §14.2): in a ticket session, default to a child on the current branch:
+use `--parent <current id>`, without `--on`. From a child's session, use its parent (creating a
+sibling), since only one level is allowed. The parent's Plan is updated automatically.
+Only an explicit request ("in main", "top-level", "separate ticket", or "out of this ticket's
+scope") makes it top-level. On `mainBranch`, or outside a ticket session, tickets default to
+top-level. Research follow-up tickets are top-level and related, since research cannot have
+children. Top-level tickets belong on `mainBranch`. On `main` the id is taken at once, the ticket
 survives if that branch is abandoned, and it can be prioritized on its own. `--on main` does
 that from anywhere:
 - If `main` is checked out in another worktree, it writes the file there and commits only that
   file; whatever else is staged there stays staged.
 - Otherwise it commits straight to the branch, without checking it out.
 
-It validates the ticket first, and the commit is `<id>: create`. Children are created on their
-parent's branch, which is where you are while planning the parent. Without `--on`, `new` writes
+It validates the ticket first, and the commit is `<id>: create`. Children are recorded on the
+session branch; from a child session the parent's Plan update reaches its branch when the
+current ticket merges. Outside ticket sessions, create children on their parent's branch. Without `--on`, `new` writes
 into this checkout and doesn't commit; on a branch other than `mainBranch` it reminds you about
-`--on`.
+`--on` for top-level work, or `--parent` for the session default. With a title, flags remain
+explicit: `new` does not infer a parent or commit unless asked.
 
 **From a phone**, without building anything: with Claude Code's
 [Remote Control](https://code.claude.com/docs/en/remote-control), the Claude app drives a
@@ -400,7 +409,8 @@ installs runs `safanoria-cli context`: on a ticket's branch it gives the session
 what to do with it; elsewhere it prints nothing. From there it's an ordinary session: you
 direct the work. The session keeps the ticket current. Each decision, with its reason, gets a
 short Work Log entry, committed with the code it explains. It updates Objective or Acceptance
-Criteria when the goal changes, and creates tickets for out-of-scope work on `main`. A child
+Criteria when the goal changes, and defaults new tickets to children (siblings from child
+sessions). Explicitly separate work goes on `main`. A child
 ticket is started the same way, with `start`, in its own worktree and session.
 
 Hook in `.claude/settings.json`, if you set it up by hand:
