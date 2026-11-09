@@ -2,7 +2,7 @@
 id: child-ticket-default
 type: feature
 title: "Tickets created in a ticket's session default to children"
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-11-09
@@ -31,3 +31,4 @@ Update everywhere the default is stated, so Claude and Codex behave the same: `s
 
 ## Work Log
 
+- **2026-11-09** · status · started
