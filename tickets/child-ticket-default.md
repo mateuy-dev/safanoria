@@ -2,7 +2,7 @@
 id: child-ticket-default
 type: feature
 title: "Tickets created in a ticket's session default to children"
-status: in-progress
+status: review
 priority: medium
 size: S
 created: 2026-11-09
@@ -39,3 +39,4 @@ Update everywhere the default is stated, so Claude and Codex behave the same: `s
 
 - **2026-11-09** · decision · A child's session defaults to its existing parent (a sibling), preserving §8.1's one-level hierarchy rather than expanding nesting and lifecycle semantics. Research follow-up remains top-level and related because research cannot have children.
 - **2026-11-09** · decision · Infer the parent only in interactive creation; scripts and agents keep explicit flags, with the CLI hint recommending the session parent and the skill supplying it.
+- **2026-11-09** · status · review
