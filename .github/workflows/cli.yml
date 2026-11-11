@@ -20,7 +20,7 @@ jobs:
             target: MingwX64
             binary: safanoria-cli.exe
             dir: mingwX64
-          - os: macos-14
+          - os: macos-15
             target: MacosArm64
             binary: safanoria-cli.kexe
             dir: macosArm64

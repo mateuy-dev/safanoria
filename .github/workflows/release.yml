@@ -32,7 +32,7 @@ jobs:
             binary: safanoria-cli.exe
             asset: safanoria-windows-x64.exe
             app: safanoria-app-windows-x64.zip
-          - os: macos-14
+          - os: macos-15
             target: MacosArm64
             dir: macosArm64
             binary: safanoria-cli.kexe
@@ -102,7 +102,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, windows-2022, macos-14]
+        os: [ubuntu-24.04, windows-2022, macos-15]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -152,6 +152,7 @@ jobs:
     needs: build
     if: github.ref_type == 'tag'
     runs-on: ubuntu-24.04
+    concurrency: release-${{ github.ref }}
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -164,5 +165,28 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" dist/* --repo "${GITHUB_REPOSITORY}" \
-            --title "Safanoria ${GITHUB_REF_NAME#v}" --generate-notes
+          publish() {
+            # Resume a draft left by a failed upload or publish. A completed release is
+            # already done: don't replace its assets when the job is rerun.
+            if draft=$(gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft); then
+              if [ "$draft" = false ]; then
+                echo "Release $GITHUB_REF_NAME is already published"
+                return 0
+              fi
+            else
+              gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
+                --title "Safanoria ${GITHUB_REF_NAME#v}" --generate-notes --draft --verify-tag || return 1
+            fi
+            # Keep the release in draft until every asset, including SHA256SUMS, is uploaded.
+            gh release upload "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --clobber || return 1
+            gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false
+          }
+
+          # Recheck the release each time: a server error can follow a successful request.
+          for attempt in 1 2 3; do
+            if [ "$attempt" -gt 1 ]; then sleep "$((10 * (attempt - 1)))"; fi
+            if publish; then exit 0; fi
+            echo "::warning::Release publishing attempt $attempt failed"
+          done
+          echo "::error::Could not publish $GITHUB_REF_NAME after 3 attempts"
+          exit 1
