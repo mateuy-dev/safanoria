@@ -6,12 +6,14 @@ status: done
 priority: medium
 size: S
 created: 2026-11-09
-updated: 2026-11-09
+updated: 2026-11-11
 requests:
   - user: null
     who: Project maintainer
     channel: other
     date: 2026-11-09
+resolvedIn:
+  safanoria: 0.11.0
 ---
 
 ## Objective
@@ -41,3 +43,4 @@ Update everywhere the default is stated, so Claude and Codex behave the same: `s
 - **2026-11-09** · decision · Infer the parent only in interactive creation; scripts and agents keep explicit flags, with the CLI hint recommending the session parent and the skill supplying it.
 - **2026-11-09** · status · review
 - **2026-11-09** · status · done
+- **2026-11-11** · release · safanoria 0.11.0
