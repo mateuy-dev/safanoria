@@ -2,7 +2,7 @@
 id: after-release-tasks
 type: feature
 title: After Release section for post-release tasks
-status: in-progress
+status: review
 priority: medium
 size: M
 created: 2026-11-25
@@ -44,3 +44,4 @@ Spec changes: new §7.x section and a row in the §7 section table; a note in §
 - **2026-11-25** · status · started
 
 - **2026-11-25** · decision · Unprefixed tasks are due from the first stamp and appear again if still unchecked at a later stamp. A prefix naming a component in the ticket’s area waits for that component, so a partial release can surface its own tasks.
+- **2026-11-25** · status · review
