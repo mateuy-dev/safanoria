@@ -2,7 +2,7 @@
 id: after-release-tasks
 type: feature
 title: After Release section for post-release tasks
-status: backlog
+status: in-progress
 priority: medium
 size: M
 created: 2026-11-25
@@ -36,3 +36,4 @@ Spec changes: new §7.x section and a row in the §7 section table; a note in §
 
 ## Work Log
 
+- **2026-11-25** · status · started
