@@ -4,7 +4,7 @@ import okio.Path
 
 /** The sections SPEC §7 defines, in their required order. */
 public val STANDARD_SECTIONS: List<String> =
-    listOf("Objective", "User Requests", "Acceptance Criteria", "Plan", "Design", "Learnings", "Work Log")
+    listOf("Objective", "User Requests", "Acceptance Criteria", "Plan", "Design", "Learnings", "After Release", "Work Log")
 
 /**
  * A `## ` section. Lines are 1-based file lines: [headingLine] is the heading, the content is
@@ -87,6 +87,10 @@ public class Body internal constructor(
 
     /** Checklist items of a section, in order. */
     public fun checklist(name: String): List<CheckItem> = checklists[name] ?: emptyList()
+
+    /** The task text, including any indented continuation lines. */
+    internal fun itemText(item: CheckItem): String =
+        (listOf(item.text) + (item.line + 1..item.lastLine).map(::text)).joinToString("\n")
 
     private val checklists: Map<String, List<CheckItem>> by lazy {
         sections.associate { section ->

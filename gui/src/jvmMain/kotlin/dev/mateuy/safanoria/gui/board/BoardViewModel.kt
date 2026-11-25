@@ -58,6 +58,10 @@ class BoardViewModel(private val store: TicketStore) : ViewModel() {
         showChildren.update { !it }
     }
 
+    fun toggleAfterRelease() {
+        filter.update { it.copy(afterRelease = !it.afterRelease) }
+    }
+
     fun clearFilter() {
         filter.value = TicketFilter()
     }

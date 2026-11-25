@@ -95,6 +95,11 @@ If the CLI is unavailable, read the branch ticket directly. Along the way:
   lines, for choices a later reader would wonder about: an approach taken or rejected, a
   deviation from the Objective, a constraint found. Not progress, not a summary of the diff.
   Commit the entry together with the code it explains.
+- **After Release** (§7.9): add checklist items between Learnings and Work Log as soon as a
+  post-release task is known. For tickets with requests, consider “reply to the requesters”.
+  Prefix an item with its component (e.g. `app: check crash rate`) when it must wait for that
+  component’s release. On `mainBranch`, check each completed item and log what was done with
+  a dated `release` entry. The ticket stays `done`.
 - **The goal changed?** Update Objective or Acceptance Criteria and log why.
 - **New work** defaults to a child (or a sibling from a child branch), created here (Create
   step 3). Only work the user explicitly identifies as separate or out of scope becomes a

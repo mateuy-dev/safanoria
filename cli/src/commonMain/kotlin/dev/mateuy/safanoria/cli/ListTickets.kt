@@ -34,6 +34,7 @@ class ListTickets : AcrossBranchesCommand(name = "list") {
     private val tag by option("--tag", help = "Tags (themes declared in safanoria.yaml)").split(",")
     private val parent by option("--parent", help = "Only children of this ticket")
     private val blocked by option("--blocked", help = "Only tickets blocked by a ticket that is not done").flag()
+    private val afterRelease by option("--after-release", help = "Only tickets with unchecked tasks due after release").flag()
     private val format by option("--format", help = "Output format").choice("text", "json").default("text")
 
     override fun run() {
@@ -44,6 +45,7 @@ class ListTickets : AcrossBranchesCommand(name = "list") {
             tags = tag.orEmpty().toSet(),
             parent = parent,
             blocked = blocked,
+            afterRelease = afterRelease,
         )
         val shown = graph.tickets.filter { filter.matches(graph, it) }
         if (format == "json") echo(json(graph, shown).toString()) else text(graph, shown).forEach { echo(it) }

@@ -34,6 +34,13 @@ Spec changes: new §7.x section and a row in the §7 section table; a note in §
 
 ## Acceptance Criteria
 
+- [x] Release and dry-run output list unchecked tasks on the tickets being stamped, respecting component prefixes.
+- [x] The CLI, TUI and GUI can filter tickets with tasks due after a release.
+- [x] Validation warns about checklist items on research and wontfix tickets.
+- [x] The spec, templates, skill and README describe how to record and complete follow-up work.
+
 ## Work Log
 
 - **2026-11-25** · status · started
+
+- **2026-11-25** · decision · Unprefixed tasks are due from the first stamp and appear again if still unchecked at a later stamp. A prefix naming a component in the ticket’s area waits for that component, so a partial release can surface its own tasks.
