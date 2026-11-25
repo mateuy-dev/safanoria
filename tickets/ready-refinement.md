@@ -2,7 +2,7 @@
 id: ready-refinement
 type: feature
 title: "Ready status: refine tickets before starting"
-status: in-progress
+status: review
 priority: medium
 size: M
 created: 2026-11-25
@@ -40,3 +40,4 @@ Decisions from the discussion:
 
 - **2026-11-25** · status · started
 - **2026-11-25** · decision · Refine records a full Git commit ID. Older ready tickets may lack it, so their starting session checks the current code directly.
+- **2026-11-25** · status · review
