@@ -27,10 +27,10 @@ Decisions from the discussion:
 
 ## Acceptance Criteria
 
-- [ ] SPEC defines the Refine step in §11 (on `mainBranch`, ticket files only, no code changes, only when the human asks) and updates §6.1/§7.1: `ready` requires Acceptance Criteria; §7.1's "no planning or approval step" wording is adjusted so refinement is optional, not a gate.
-- [ ] SPEC defines the `refinedAt` frontmatter field (a `mainBranch` commit) and Start's check of changes since it, with deviations logged.
-- [ ] JSON schema and `safanoria-cli validate` accept `refinedAt` and enforce Acceptance Criteria for `ready`.
-- [ ] The skill has a Refine flow and the Start-from-`ready` staleness check; README documents the backlog → ready → in-progress use.
+- [x] SPEC defines the Refine step in §11 (on `mainBranch`, ticket files only, no code changes, only when the human asks) and updates §6.1/§7.1: `ready` requires Acceptance Criteria; §7.1's "no planning or approval step" wording is adjusted so refinement is optional, not a gate.
+- [x] SPEC defines the `refinedAt` frontmatter field (a `mainBranch` commit) and Start's check of changes since it, with deviations logged.
+- [x] JSON schema and `safanoria-cli validate` accept `refinedAt` and enforce Acceptance Criteria for `ready`.
+- [x] The skill has a Refine flow and the Start-from-`ready` staleness check; README documents the backlog → ready → in-progress use.
 
 ## After Release
 
@@ -39,3 +39,4 @@ Decisions from the discussion:
 ## Work Log
 
 - **2026-11-25** · status · started
+- **2026-11-25** · decision · Refine records a full Git commit ID. Older ready tickets may lack it, so their starting session checks the current code directly.

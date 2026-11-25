@@ -6,7 +6,7 @@ every feature, tracked in git next to the code.
 The way of working is deliberately plain. You ask an agent session to create tickets. To work
 on one, you start it with the CLI (a branch and a worktree) and open an ordinary Claude Code
 session in that worktree. The session knows its ticket from the branch, works as you direct it,
-and records its decisions in the ticket as it commits. No planning or approval steps.
+and records its decisions in the ticket as it commits.
 
 - [`SPEC.md`](SPEC.md): the format, version 1. The contract for every tool.
 - [`skill/`](skill/): agent workflow (Claude Code skill). The install scripts, `safanoria-cli init`
@@ -345,6 +345,13 @@ safanoria-cli review herd-photos                # see its changes in your IDE; r
 safanoria-cli merge herd-photos                 # reviewed: merged, status: done, worktree and branch gone
 safanoria-cli reopen herd-photos --reason "…"   # or: the review found something, back to in-progress
 ```
+
+**Refine (optional).** A backlog ticket can begin with a one-line idea. When you want it on the
+short list of upcoming work, ask the agent to refine it on the configured main branch. The agent
+can investigate the code, write observable Acceptance Criteria and mark the ticket `ready`.
+It commits only ticket files and records the commit it examined in `refinedAt`. Starting a ready
+ticket moves it to `in-progress`. The session first checks changes since `refinedAt`, updates
+stale assumptions and logs deviations. You can also start directly from `backlog`.
 
 **Start.** `start` creates the branch `<id>` from the parent's branch (when the parent has
 `childrenMergeInto: parent`, the default) or from `mainBranch`, sets `status: in-progress`, logs

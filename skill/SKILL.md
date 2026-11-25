@@ -3,7 +3,7 @@ name: safanoria
 description: >
   Create and keep Safanoria tickets: markdown files in the project's ticket directory (see
   safanoria.yaml) that track the backlog and the progress of each feature. Use when the user asks
-  to create a ticket or log a user request, to finish a ticket, or what a version brings (release
+  to create, refine or finish a ticket, to log a user request, or what a version brings (release
   notes, what changed between two versions); and in any session on a branch whose name is a
   ticket id, to keep that ticket current.
 ---
@@ -14,8 +14,7 @@ own `.agents/skills/safanoria/SPEC.md` (Codex) or `.claude/skills/safanoria/SPEC
 settings (ticket directory, components, channels, worktree path, main branch) are in
 `safanoria.yaml` at the repository root.
 
-Tickets record what is wanted and what was decided. They don't script the work: there is no
-planning or approval step, and a session works as the user directs it.
+Tickets record what is wanted and what was decided. Refinement is optional. A session works as the user directs it.
 
 ## Rules
 
@@ -33,7 +32,7 @@ planning or approval step, and a session works as the user directs it.
 ## Create
 
 1. Write the ticket from the conversation. The Objective is the most valuable part: what is
-   wanted and why, with the context a later session will need. For a bug, also Steps to
+   wanted and why, with the context a later session will need. A one-line idea is enough for the backlog. For a bug, also Steps to
    reproduce, Expected and Actual. Acceptance Criteria only if they are clear already.
 2. With the CLI, `safanoria-cli` (`safanoria-cli version` works): `safanoria-cli new "<title>" --objective "…"
    [--type …] [--area …] [--tag …] [--size …] [--parent <id>] [--on <branch>]`. It picks the id, fills the
@@ -83,13 +82,34 @@ Without the CLI: pick an id (SPEC §3) that no branch has used (`git rev-list --
 '<dir>/<id>.md'` and `git branch -a --list '*<id>'` print nothing), copy the template (SPEC §6.2),
 set `status: backlog`, today's dates, and for a child `parent` plus its item in the parent's Plan.
 
+## Refine
+
+Only when the human asks, refine a backlog ticket or revisit a ready ticket in the existing
+`mainBranch` checkout. Record its `git rev-parse HEAD` before investigating. Read the code as
+needed, then clarify the Objective and write checklist items for observable Acceptance Criteria.
+Update Design or Plan where helpful, favouring lasting decisions over detailed steps. You may
+split work into children, add Learnings, close a ticket as wontfix or consolidate duplicates.
+
+For work that is ready to start, set `status: ready`. Set `refinedAt` to the recorded commit,
+overwriting the previous value on re-refinement. Append a Work Log entry with the refinement
+decision and why. Validate and commit only the affected ticket files on `mainBranch`.
+Refinement involves no code edits, branch creation or worktree creation.
+
 ## Working on a ticket's branch
 
 When the current branch is a ticket id (a SessionStart hook usually gives you the ticket; else
 read `<dir>/<id>.md`), the session belongs to that ticket. Work normally, as the user directs.
 For Codex, read `CLAUDE.md` if present for shared project instructions and run
 `safanoria-cli context --agent codex` before working to discover ticket context and review mode.
-If the CLI is unavailable, read the branch ticket directly. Along the way:
+If the CLI is unavailable, read the branch ticket directly.
+
+When starting a refined ticket, first run `git log <refinedAt>..<mainBranch>`, substituting the
+ticket's commit and configured main branch. Inspect relevant diffs, update Plan and Design
+assumptions that have changed and log deviations. For older ready tickets without `refinedAt`,
+review the assumptions against the current code. A direct start from backlog can define the work
+in this session.
+
+Along the way:
 
 - **Decisions** go into the Work Log: `- **<date>** · decision · <what and why>`. One or two
   lines, for choices a later reader would wonder about: an approach taken or rejected, a
