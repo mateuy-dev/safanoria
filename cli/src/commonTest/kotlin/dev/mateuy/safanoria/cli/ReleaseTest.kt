@@ -128,6 +128,48 @@ class ReleaseTest {
     }
 
     @Test
+    fun afterReleaseListsEveryUncheckedTaskAsDueOrWaiting() {
+        fun tasks(vararg args: String) = cli().test(listOf("--root", work.toString(), "after-release", "--checkout") + args.toList())
+        assertEquals("No unchecked After Release tasks.\n", tasks().stdout)
+        assertEquals("No After Release tasks are due.\n", tasks("--due").stdout)
+        val config = work / "safanoria.yaml"
+        val multiComponent = read(config).replace("  app:", "  web: { external: true }\n  app:")
+        SystemFileSystem.write(config) { writeUtf8(multiComponent) }
+        val ticket = read(photo).replace("size: S", "size: S\narea: [app, web]").replace(
+            "## Work Log",
+            "## After Release\n\n- [ ] Reply to requesters\n- [ ] app: Check crashes\n  after 24 hours\n" +
+                "- [ ] web: Update listing\n- [x] Done earlier\n\n## Work Log",
+        )
+        SystemFileSystem.write(photo) { writeUtf8(ticket) }
+        val before = tasks()
+        assertEquals(0, before.statusCode, before.output)
+        assertEquals(
+            listOf(
+                "waiting  photo-upload  Reply to requesters",
+                "waiting  photo-upload  app: Check crashes",
+                "                       after 24 hours",
+                "waiting  photo-upload  web: Update listing",
+            ),
+            before.stdout.lines().filter { it.isNotEmpty() },
+        )
+        assertEquals("No After Release tasks are due.\n", tasks("--due").stdout)
+        val stamp = run("app", "--ticket", "photo-upload", "--any-branch")
+        assertEquals(0, stamp.statusCode, stamp.output)
+        assertEquals(
+            listOf("due      photo-upload  Reply to requesters", "due      photo-upload  app: Check crashes"),
+            tasks("--due").stdout.lines().filter { it.startsWith("due") },
+        )
+        val after = tasks().stdout
+        assertTrue(after.lines().last { it.isNotEmpty() } == "waiting  photo-upload  web: Update listing", after)
+        assertTrue(!after.contains("Done earlier"), after)
+        val json = tasks("--format", "json").stdout
+        assertTrue(json.contains("{\"ticket\":\"photo-upload\",\"text\":\"web: Update listing\",\"due\":false}"), json)
+        val wontfix = read(photo).replace("status: done", "status: wontfix")
+        SystemFileSystem.write(photo) { writeUtf8(wontfix) }
+        assertEquals("No unchecked After Release tasks.\n", tasks().stdout, "a wontfix ticket never ships")
+    }
+
+    @Test
     fun afterReleaseOnUnreleasableTicketsIsOnlyAWarning() {
         val ticket = read(photo).replace("## Work Log", "## After Release\n\n- [x] Check listing\n\n## Work Log")
         for (text in listOf(ticket.replace("feature", "research"), ticket.replace("status: done", "status: wontfix"))) {

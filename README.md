@@ -209,6 +209,7 @@ safanoria-cli board                                 # markdown board on stdout
 safanoria-cli board -o docs/BOARD.md                # links relative to the file
 safanoria-cli list --local                          # local branches only, not origin/*
 safanoria-cli list --checkout                       # only this checkout's files
+safanoria-cli after-release                         # every unchecked After Release task: due or waiting
 ```
 
 **Every branch.** A ticket you start moves to its own branch: there it becomes `in-progress`
@@ -586,7 +587,9 @@ Record follow-up work in the ticket as soon as you know about it.
 
 Stamping prints unchecked tasks for the tickets in that release. Unprefixed tasks are due from
 the first stamp. Prefix a task with a component in the ticket’s area to wait for its release.
-Find tickets with tasks due using `safanoria-cli list --after-release` or the **after release**
+`safanoria-cli after-release` lists the text of every unchecked task with its ticket, `due` once
+its release is stamped and `waiting` before (`--due` for only those due, `--format json` for
+agents). Find tickets with tasks due using `safanoria-cli list --after-release` or the **after release**
 filter on the terminal or desktop board. On `mainBranch`, check each completed task and add a
 Work Log entry such as `- **2026-11-25** · release · Replied to the requesters.`
 

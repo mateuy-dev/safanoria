@@ -99,7 +99,8 @@ If the CLI is unavailable, read the branch ticket directly. Along the way:
   post-release task is known. For tickets with requests, consider “reply to the requesters”.
   Prefix an item with its component (e.g. `app: check crash rate`) when it must wait for that
   component’s release. On `mainBranch`, check each completed item and log what was done with
-  a dated `release` entry. The ticket stays `done`.
+  a dated `release` entry. The ticket stays `done`. `safanoria-cli after-release` lists every
+  unchecked task across tickets, due or still waiting for its release.
 - **The goal changed?** Update Objective or Acceptance Criteria and log why.
 - **New work** defaults to a child (or a sibling from a child branch), created here (Create
   step 3). Only work the user explicitly identifies as separate or out of scope becomes a
