@@ -2,7 +2,7 @@
 id: list-unchecked-after-release
 type: feature
 title: List unchecked After Release tasks across tickets
-status: backlog
+status: in-progress
 priority: medium
 size: S
 created: 2026-11-25
@@ -21,3 +21,4 @@ Provide one CLI command that lists the text of every unchecked After Release ite
 
 ## Work Log
 
+- **2026-11-25** · status · started
