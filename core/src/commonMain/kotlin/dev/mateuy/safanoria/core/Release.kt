@@ -211,14 +211,25 @@ public object Release {
     internal fun afterRelease(
         ticket: Ticket,
         stamps: Set<String> = ticket.frontmatter?.resolvedIn.orEmpty().filterValues { it.value != null }.keys,
-    ): List<String> {
+    ): List<String> = afterReleaseTasks(ticket, stamps).filter { it.due }.map { it.text }
+
+    /**
+     * Every unchecked After Release item of [ticket] (§7.9), each [AfterReleaseTask.due] when the
+     * stamps it waits for exist (for the given [stamps], or the ticket's own). Empty for tickets
+     * that never ship: `wontfix` and `research`.
+     */
+    public fun afterReleaseTasks(
+        ticket: Ticket,
+        stamps: Set<String> = ticket.frontmatter?.resolvedIn.orEmpty().filterValues { it.value != null }.keys,
+    ): List<AfterReleaseTask> {
         val f = ticket.frontmatter ?: return emptyList()
-        if (stamps.isEmpty() || f.status != Status.DONE || f.type == TicketType.RESEARCH) return emptyList()
+        if (f.status == Status.WONTFIX || f.type == TicketType.RESEARCH) return emptyList()
+        val shipped = f.status == Status.DONE && stamps.isNotEmpty()
         val components = f.area.map { it.value }.ifEmpty { stamps.toList() }
-        return ticket.body.checklist("After Release").filter { item ->
+        return ticket.body.checklist("After Release").filter { !it.checked }.map { item ->
             val prefix = item.text.substringBefore(':', "")
-            !item.checked && (prefix !in components || prefix in stamps)
-        }.map { ticket.body.itemText(it) }
+            AfterReleaseTask(ticket.body.itemText(item), shipped && (prefix !in components || prefix in stamps))
+        }
     }
 
     /** The `area`, or the project's component when it has only one and the ticket names none. */
@@ -238,3 +249,6 @@ public object Release {
 
     private fun refused(reason: String) = ReleaseResult.Refused(reason)
 }
+
+/** An unchecked After Release item (§7.9): [due] once the release it waits for is stamped. */
+public data class AfterReleaseTask(val text: String, val due: Boolean)

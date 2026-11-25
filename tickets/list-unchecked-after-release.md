@@ -2,7 +2,7 @@
 id: list-unchecked-after-release
 type: feature
 title: List unchecked After Release tasks across tickets
-status: backlog
+status: done
 priority: medium
 size: S
 created: 2026-11-25
@@ -15,9 +15,18 @@ Provide one CLI command that lists the text of every unchecked After Release ite
 
 ## Acceptance Criteria
 
+- [x] `safanoria-cli after-release` prints each unchecked After Release item's text with its ticket id
+- [x] Items are `due` or `waiting`, by the same component stamp rules as `list --after-release`; due first
+- [x] Checked items, and those of `wontfix` and `research` tickets, are left out
+- [x] An empty result prints a clear message; `--due` and `--format json` are available
+
 ## After Release
 
 <!-- Add tasks as they become known. For tickets with requests, consider “reply to the requesters”. -->
 
 ## Work Log
 
+- **2026-11-25** · status · started
+- **2026-11-25** · decision · A new `after-release` command rather than a `list` flag: `list` prints one line per ticket, this one line per task. `waiting` covers every non-`wontfix`, non-`research` ticket not yet stamped for the item, whatever its status, since those tasks are already known.
+- **2026-11-25** · status · review
+- **2026-11-25** · status · done
