@@ -2,7 +2,7 @@
 id: ready-refinement
 type: feature
 title: "Ready status: refine tickets before starting"
-status: backlog
+status: in-progress
 priority: medium
 size: M
 created: 2026-11-25
@@ -38,3 +38,4 @@ Decisions from the discussion:
 
 ## Work Log
 
+- **2026-11-25** · status · started
