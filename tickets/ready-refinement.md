@@ -31,6 +31,7 @@ Decisions from the discussion:
 - [x] SPEC defines the `refinedAt` frontmatter field (a `mainBranch` commit) and Start's check of changes since it, with deviations logged.
 - [x] JSON schema and `safanoria-cli validate` accept `refinedAt` and enforce Acceptance Criteria for `ready`.
 - [x] The skill has a Refine flow and the Start-from-`ready` staleness check; README documents the backlog → ready → in-progress use.
+- [x] `/scrh` creates and refines a ticket in Herdr and `/srh` refines an existing ticket. Both accept the usual optional `--agent`.
 
 ## After Release
 
@@ -41,3 +42,4 @@ Decisions from the discussion:
 - **2026-11-25** · status · started
 - **2026-11-25** · decision · Refine records a full Git commit ID. Older ready tickets may lack it, so their starting session checks the current code directly.
 - **2026-11-25** · status · review
+- **2026-11-25** · review · Both Herdr shortcuts launch in the existing main checkout. Create-and-refine makes a top-level ticket there so the refinement session can commit to the same branch.

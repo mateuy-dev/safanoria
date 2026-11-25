@@ -84,6 +84,9 @@ set `status: backlog`, today's dates, and for a child `parent` plus its item in 
 
 ## Refine
 
+`/scrh` creates a top-level ticket on the main branch and opens a refinement session in Herdr.
+`/srh` opens one for an existing ticket. Both accept `--agent claude|codex`.
+
 Only when the human asks, refine a backlog ticket or revisit a ready ticket in the existing
 `mainBranch` checkout. Record its `git rev-parse HEAD` before investigating. Read the code as
 needed, then clarify the Objective and write checklist items for observable Acceptance Criteria.

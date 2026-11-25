@@ -403,7 +403,7 @@ safanoria-cli start herd-photos --herdr --agent codex
 safanoria-cli start herd-photos --prompt implement --agent claude
 ```
 
-All six launch skills (`ssh`, `sshc`, `sshi`, `scsh`, `scshc`, `scshi`) accept the same optional
+The launch skills (`scrh`, `srh`, `ssh`, `sshc`, `sshi`, `scsh`, `scshc`, `scshi`) accept the same optional
 `--agent claude|codex`. For create skills, the option is removed before writing the ticket;
 put `--` before literal ticket text containing `--agent`. Omit the option to use the project default.
 Codex is started through Herdr's `--kind codex`, without Claude's `--name` flag. The initial
@@ -524,6 +524,8 @@ works it sees only the ticket.
 | `/scshc <text>` | … and the session discusses it first (`--prompt chat`) |
 | `/scshi <text>` | … and the session implements and finishes it (`--prompt implement`) |
 | `/ssh <id>`, `/sshc <id>`, `/sshi <id>` | The same three starts, for an existing ticket |
+| `/scrh [--agent claude\|codex] <text>` | Create a top-level backlog ticket on the main branch and open a Herdr refinement session |
+| `/srh [--agent claude\|codex] <id>` | Open a Herdr refinement session for an existing backlog or ready ticket (`safanoria-cli refine <id>`) |
 | `/sr [--since <commit>]` | `review`: review this worktree's ticket in your IDE |
 | `/sre` | `review --end`, then act on your edits and `// REVIEW:` comments |
 | `/sm` | End the review if in it, then `merge` this worktree's ticket |
