@@ -55,8 +55,7 @@ class ContextCommand : RepositoryCommand(name = "context") {
             }
             append("This session works on the Safanoria ticket `$branch`: this checkout is its branch, and the ticket is $file ")
             append("(format: ${skillDir?.let { displayPath(it / "SPEC.md") } ?: "the safanoria skill's SPEC.md"}, settings: $CONFIG_FILE). ")
-            append("Work as the user directs; there is no planning ")
-            append("or approval step. Keep the ticket current with the `safanoria` skill: a short Work Log entry for each decision ")
+            append("Work as the user directs. Keep the ticket current with the `safanoria` skill: a short Work Log entry for each decision ")
             append("(what and why, not progress), committed together with the code it explains.")
             if (ticket.frontmatter?.status == Status.IN_PROGRESS) {
                 append(" When you consider the implementation complete, run `safanoria-cli finish $branch` without being asked, ")

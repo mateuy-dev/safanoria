@@ -186,6 +186,7 @@ public class Validator(
         val required = buildList {
             add("Objective")
             if (f.requests.isNotEmpty()) add("User Requests")
+            if (f.status == Status.READY) add("Acceptance Criteria")
             add("Work Log")
         }
         for (name in required) if (body.section(name) == null) {
@@ -195,6 +196,13 @@ public class Validator(
         }
 
         val status = f.status ?: return out
+        if (status == Status.READY) {
+            val criteria = body.section("Acceptance Criteria")
+            if (criteria != null && body.checklist(criteria.name).none { body.itemText(it).isNotBlank() }) {
+                out += Diagnostic(ticket.path, criteria.headingLine, null, "section-empty",
+                    "'## Acceptance Criteria' needs at least one checklist item at ready (§7.1)")
+            }
+        }
         val nonEmpty = buildList {
             add("Objective")
             if (status.ordinal >= Status.IN_PROGRESS.ordinal) add("Work Log") // wontfix: the Work Log says why (§6.1)
