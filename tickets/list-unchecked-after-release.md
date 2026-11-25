@@ -7,6 +7,8 @@ priority: medium
 size: S
 created: 2026-11-25
 updated: 2026-11-25
+resolvedIn:
+  safanoria: 0.13.0
 ---
 
 ## Objective
@@ -30,3 +32,4 @@ Provide one CLI command that lists the text of every unchecked After Release ite
 - **2026-11-25** · decision · A new `after-release` command rather than a `list` flag: `list` prints one line per ticket, this one line per task. `waiting` covers every non-`wontfix`, non-`research` ticket not yet stamped for the item, whatever its status, since those tasks are already known.
 - **2026-11-25** · status · review
 - **2026-11-25** · status · done
+- **2026-11-25** · release · safanoria 0.13.0

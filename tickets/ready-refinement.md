@@ -7,6 +7,8 @@ priority: medium
 size: M
 created: 2026-11-25
 updated: 2026-11-25
+resolvedIn:
+  safanoria: 0.13.0
 ---
 
 ## Objective
@@ -44,3 +46,4 @@ Decisions from the discussion:
 - **2026-11-25** · status · review
 - **2026-11-25** · review · Both Herdr shortcuts launch in the existing main checkout. Create-and-refine makes a top-level ticket there so the refinement session can commit to the same branch.
 - **2026-11-25** · status · done
+- **2026-11-25** · release · safanoria 0.13.0
