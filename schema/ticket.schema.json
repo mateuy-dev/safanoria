@@ -28,6 +28,7 @@
     "assignee": { "type": ["string", "null"] },
     "created": { "$ref": "#/$defs/date" },
     "updated": { "$ref": "#/$defs/date" },
+    "refinedAt": { "type": "string", "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$", "description": "Full Git commit ID of mainBranch HEAD examined during refinement (§11)." },
     "parent": { "$ref": "#/$defs/idFormat", "type": ["string", "null"] },
     "childrenMergeInto": { "enum": ["parent", "main"] },
     "blockedBy": { "$ref": "#/$defs/idList" },

@@ -129,6 +129,7 @@ and `safanoria.yaml`.
 | `assignee` | no | string | null | Who works on it, when it is not the usual person. |
 | `created` | yes | date | | `YYYY-MM-DD` |
 | `updated` | yes | date | | `YYYY-MM-DD`. Set on every change. |
+| `refinedAt` | no | string | | Full Git commit ID of the `mainBranch` HEAD examined during the latest Refine (§11). |
 | `parent` | no | id | null | §8.1 |
 | `childrenMergeInto` | no | `parent` \| `main` | `parent` | Only on parents. §8.1 |
 | `blockedBy` | no | list of id | `[]` | §8.2 |
@@ -153,7 +154,7 @@ A request is:
 | Status | Meaning |
 |---|---|
 | `backlog` | Recorded, not prepared. |
-| `ready` | Prepared: clear enough to start. |
+| `ready` | Refined for upcoming work, with an Objective and Acceptance Criteria. |
 | `in-progress` | Being worked on in its branch. |
 | `review` | Work complete in its branch, waiting for review or merge. |
 | `done` | Merged into its target (`mainBranch`, or the parent's branch). |
@@ -200,7 +201,7 @@ Sections are level-2 headings with these exact names, in this order:
 |---|---|
 | `## Objective` | no |
 | `## User Requests` | yes; present when `requests` is not empty |
-| `## Acceptance Criteria` | yes |
+| `## Acceptance Criteria` | required in `ready`, otherwise optional |
 | `## Plan` | yes; present in a parent (§8.1) |
 | `## Design` | yes |
 | `## Learnings` | yes |
@@ -215,11 +216,11 @@ Level-3 and deeper headings inside a section are free.
 | Status | MUST be non-empty |
 |---|---|
 | `backlog` | Objective |
-| `ready` | Objective |
-| `in-progress`, `review`, `done`, `wontfix` | plus Work Log |
+| `ready` | Objective and at least one Acceptance Criteria checklist item (§7.4) |
+| `in-progress`, `review`, `done`, `wontfix` | Objective and Work Log |
 
-Acceptance Criteria, Plan and Design are written when they help, never required. Work is not
-gated on them: there is no planning or approval step (§11).
+Refinement is optional. A human MAY start a backlog ticket directly and define the work in
+the ticket session (§11). A one-line Objective is enough to record a backlog idea.
 
 ### 7.2 Objective
 
@@ -243,7 +244,7 @@ request's `who`. Personal data MUST NOT appear (§10).
 
 ### 7.4 Acceptance Criteria
 
-Optional. A checklist (`- [ ]` / `- [x]`) of observable outcomes, optionally followed by a line
+A checklist (`- [ ]` / `- [x]`) of observable outcomes, optionally followed by a line
 `Out of scope:` and a plain list. For `research`, the items are questions to answer.
 
 ### 7.5 Plan
@@ -431,9 +432,23 @@ what was decided; they do not script the work. Working on a ticket is an ordinar
    quotes if it comes from users. Create it on the branch §14.2 says, defaulting to a child in
    a ticket session. The id need not be confirmed first: it can be renamed while the ticket
    is only on one branch.
+
+**Refine** (optional, only when the human asks). Work on `mainBranch`, without creating a
+branch or worktree. Read the code as needed and commit only ticket files. Clarify the
+Objective and observable Acceptance Criteria. The agent MAY revise Design or Plan, split
+work into children (§8.1), record Learnings or triage duplicates and wontfix tickets.
+Prefer outcomes and lasting design decisions over detailed implementation steps.
+The agent MAY set the ticket to `ready`. Record the examined `mainBranch` HEAD in
+`refinedAt` before committing and log refinement decisions in the Work Log. Re-refining
+replaces the commit ID and appends a Work Log entry. This assumes stable `mainBranch`
+history. Tools MAY display the number of commits since `refinedAt`.
+
 2. **Start** — only when the human says so. Create the branch `<id>` (from the parent's branch if
    `childrenMergeInto: parent`, else from `mainBranch`) and its worktree (§2). Set
-   `status: in-progress` and log it.
+   `status: in-progress` and log it. When starting from `ready`, the session first reviews
+   `git log <refinedAt>..<mainBranch>` and the relevant diffs, checks Plan and Design
+   assumptions against the current code, updates them and logs deviations. For an older
+   ticket without a recorded commit, check the assumptions against the current tree.
 3. **Work** happens on branch `<id>`, in its worktree, in a session opened there.
    The session knows its ticket from the branch name. It works as the human directs and keeps
    the ticket current: decisions go into the Work Log (§7.7), committed with the code they
