@@ -43,6 +43,7 @@ internal class BoardPage(private val nav: Navigator) : Page {
         state.areas.forEachIndexed { i, area -> add(Chip(area, area in filter.areas, { filter = filter.copy(areas = filter.areas.toggled(area)) }, gapBefore = i == 0)) }
         state.tags.forEachIndexed { i, tag -> add(Chip("#$tag", tag in filter.tags, { filter = filter.copy(tags = filter.tags.toggled(tag)) }, gapBefore = i == 0)) }
         add(Chip("blocked", filter.blocked, { filter = filter.copy(blocked = !filter.blocked) }, gapBefore = true))
+        add(Chip("after release", filter.afterRelease, { filter = filter.copy(afterRelease = !filter.afterRelease) }))
         if (filter != TicketFilter()) add(Chip("clear", false, { filter = TicketFilter() }))
         // Not a filter: clearing leaves it.
         add(Chip("children", showChildren, { showChildren = !showChildren }, gapBefore = true))

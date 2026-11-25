@@ -573,6 +573,23 @@ External components (released from another repository) are stamped here with the
 given, by hand or from that repository's release job. Use `--ticket` when `done` here doesn't
 guarantee the ticket was in that release.
 
+### After Release
+
+Record follow-up work in the ticket as soon as you know about it.
+
+```markdown
+## After Release
+
+- [ ] Reply to the requesters.
+- [ ] app: Check the crash rate after 24 hours.
+```
+
+Stamping prints unchecked tasks for the tickets in that release. Unprefixed tasks are due from
+the first stamp. Prefix a task with a component in the ticket’s area to wait for its release.
+Find tickets with tasks due using `safanoria-cli list --after-release` or the **after release**
+filter on the terminal or desktop board. On `mainBranch`, check each completed task and add a
+Work Log entry such as `- **2026-11-25** · release · Replied to the requesters.`
+
 ### Release notes
 
 ```sh

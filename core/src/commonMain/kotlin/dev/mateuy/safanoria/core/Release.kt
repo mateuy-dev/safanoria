@@ -32,6 +32,8 @@ public sealed interface ReleaseResult {
          * release. In stamped-ticket order, without repeats.
          */
         val fixes: List<String> = emptyList(),
+        /** Unchecked tasks for this component stamp, by ticket id and in checklist order. */
+        val afterRelease: Map<String, List<String>> = emptyMap(),
     ) : ReleaseResult
 
     public data class Refused(val reason: String) : ReleaseResult
@@ -123,7 +125,9 @@ public object Release {
             }
             PlannedFile(t.path, text, isNew = false)
         }
-        return ReleaseResult.Ready(c, version, request.version == null, tickets.map { it.fileId }, files, warnings, fixes = fixes(tickets, config))
+        val afterRelease = tickets.associate { it.fileId to afterRelease(it, setOf(c)) }.filterValues { it.isNotEmpty() }
+        return ReleaseResult.Ready(c, version, request.version == null, tickets.map { it.fileId }, files, warnings,
+            fixes = fixes(tickets, config), afterRelease = afterRelease)
     }
 
     /**
@@ -201,6 +205,20 @@ public object Release {
         val f = ticket.frontmatter ?: return emptyList()
         if (f.status != Status.DONE || f.type == TicketType.RESEARCH) return emptyList()
         return area(f, config).filter { it in config.components && f.resolvedIn?.get(it)?.value == null }
+    }
+
+    /** Unchecked tasks due for the given stamps, or for any existing stamp when browsing. */
+    internal fun afterRelease(
+        ticket: Ticket,
+        stamps: Set<String> = ticket.frontmatter?.resolvedIn.orEmpty().filterValues { it.value != null }.keys,
+    ): List<String> {
+        val f = ticket.frontmatter ?: return emptyList()
+        if (stamps.isEmpty() || f.status != Status.DONE || f.type == TicketType.RESEARCH) return emptyList()
+        val components = f.area.map { it.value }.ifEmpty { stamps.toList() }
+        return ticket.body.checklist("After Release").filter { item ->
+            val prefix = item.text.substringBefore(':', "")
+            !item.checked && (prefix !in components || prefix in stamps)
+        }.map { ticket.body.itemText(it) }
     }
 
     /** The `area`, or the project's component when it has only one and the ticket names none. */

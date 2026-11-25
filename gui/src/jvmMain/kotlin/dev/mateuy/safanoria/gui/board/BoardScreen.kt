@@ -78,6 +78,7 @@ fun BoardScreen(viewModel: BoardViewModel, onOpenTicket: (String) -> Unit, onOpe
             toggleArea = viewModel::toggleArea,
             toggleTag = viewModel::toggleTag,
             toggleBlocked = viewModel::toggleBlocked,
+            toggleAfterRelease = viewModel::toggleAfterRelease,
             toggleChildren = viewModel::toggleChildren,
             clearFilter = viewModel::clearFilter,
             openTicket = onOpenTicket,
@@ -95,6 +96,7 @@ class BoardActions(
     val toggleArea: (String) -> Unit,
     val toggleTag: (String) -> Unit,
     val toggleBlocked: () -> Unit,
+    val toggleAfterRelease: () -> Unit,
     val toggleChildren: () -> Unit,
     val clearFilter: () -> Unit,
     val openTicket: (String) -> Unit,
@@ -166,6 +168,7 @@ private fun FilterBar(state: BoardViewState, filtered: Boolean, actions: BoardAc
         }
         FilterGap()
         FilterChip(selected = state.filter.blocked, onClick = actions.toggleBlocked, label = { Text("blocked") })
+        FilterChip(selected = state.filter.afterRelease, onClick = actions.toggleAfterRelease, label = { Text("after release") })
         if (filtered) TextButton(onClick = actions.clearFilter) { Text("Clear") }
         FilterGap()
         FilterChip(selected = state.showChildren, onClick = actions.toggleChildren, label = { Text("children") })

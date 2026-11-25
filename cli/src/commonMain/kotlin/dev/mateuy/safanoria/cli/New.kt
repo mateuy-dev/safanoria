@@ -19,6 +19,7 @@ import dev.mateuy.safanoria.core.NewTicketRequest
 import dev.mateuy.safanoria.core.NewTicketResult
 import dev.mateuy.safanoria.core.Priority
 import dev.mateuy.safanoria.core.Repository
+import dev.mateuy.safanoria.core.Severity
 import dev.mateuy.safanoria.core.Size
 import dev.mateuy.safanoria.core.Status
 import dev.mateuy.safanoria.core.TicketType
@@ -192,7 +193,7 @@ class New : RepositoryCommand(name = "new") {
     private fun report(problems: List<Diagnostic>) {
         if (problems.isEmpty()) return
         problems.forEach { echo(it.copy(file = it.file?.let { p -> displayPath(p).toPath() }).toString(), err = true) }
-        throw ProgramResult(1)
+        if (problems.any { it.severity == Severity.ERROR }) throw ProgramResult(1)
     }
 
     /** Keep the one-level hierarchy (§8.1): a child's session creates siblings. */

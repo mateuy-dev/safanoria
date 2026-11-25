@@ -149,6 +149,13 @@ public class Validator(
             report(line, "requests-quotes-mismatch", "${requests.size} requests in the frontmatter but ${quotes.size} quotes in User Requests (§7.3)")
         }
 
+        if (status == Status.WONTFIX || f.type == TicketType.RESEARCH) {
+            body.checklist("After Release").firstOrNull()?.let { item ->
+                out += Diagnostic(ticket.path, item.line, null, "after-release-unreleasable",
+                    "research and wontfix tickets never receive a release stamp (§9)", Severity.WARNING)
+            }
+        }
+
         // Sections (§7, §7.1)
         out += sectionDiagnostics(ticket, f, body)
 

@@ -204,6 +204,7 @@ Sections are level-2 headings with these exact names, in this order:
 | `## Plan` | yes; present in a parent (§8.1) |
 | `## Design` | yes |
 | `## Learnings` | yes |
+| `## After Release` | yes |
 | `## Work Log` | no (may be empty in `backlog` and `ready`) |
 
 Other `##` sections MAY be added. Tools MUST preserve them and their position.
@@ -305,6 +306,15 @@ render on GitHub and in apps:
 - §10 applies: crop or redact personal data from screenshots and logs.
 - A ticket SHOULD link only to its own attachments.
 
+### 7.9 After Release
+
+An optional checklist (`- [ ]` / `- [x]`) of tasks to perform once a change ships. Add an item as
+soon as the task is known. An unprefixed item is due from the first component stamp. An item
+starting with a component from the ticket’s area followed by a colon (e.g. `app: check crash rate`)
+is due from that component’s stamp. Check each completed item on `mainBranch` and append a dated
+Work Log entry with the ref `release` describing what was done. A ticket is settled once it is
+`done`, stamped for its area, and every After Release item is checked. Its status stays `done`.
+
 ## 8. Relations
 
 Every relation is written on one side only. Tools derive the reverse direction.
@@ -390,6 +400,8 @@ resolvedIn:
   issue happens in a later release, it is a regression). The tool calls no external system. The
   release job is the one that creates the system's release with the right name (often
   `app@4.3.0`, not `4.3.0`) and gives it the commit.
+- Stamping SHOULD print the unchecked After Release items (§7.9) on the tickets just stamped,
+  including unprefixed items and those prefixed with the component being released.
 - Versions only go up: stamping `<c>` at a version lower than one already in a ticket's
   `resolvedIn.<c>` MUST be refused.
 
@@ -465,7 +477,8 @@ A validator MUST report:
 - A child's `resolvedIn` later than its parent's.
 - A link to a file under `attachments/` that does not exist.
 
-A validator SHOULD warn about attachment files over 1 MB.
+A validator SHOULD warn about attachment files over 1 MB and After Release checklist items on
+`wontfix` or `research` tickets.
 
 A validator checks the files of one checkout (what is about to be committed or merged). An id is
 unknown only if no branch the validator can see has a ticket file with it (§14), so a reference

@@ -95,6 +95,50 @@ class ReleaseTest {
     }
 
     @Test
+    fun tasksFollowComponentStampsAndDisappearWhenChecked() {
+        val config = work / "safanoria.yaml"
+        val multiComponent = read(config).replace("  app:", "  web: { external: true }\n  app:")
+        SystemFileSystem.write(config) { writeUtf8(multiComponent) }
+        val ticket = read(photo).replace("size: S", "size: S\narea: [app, web]").replace(
+            "## Work Log",
+            "## After Release\n\n- [ ] Reply to requesters\n- [ ] app: Check crashes\n  after 24 hours\n" +
+                "- [ ] web: Update listing\n- [x] Done earlier\n\n## Work Log",
+        )
+        SystemFileSystem.write(photo) { writeUtf8(ticket) }
+        fun listed() = cli().test(listOf("--root", work.toString(), "list", "--checkout", "--after-release")).stdout.contains("photo-upload")
+        assertTrue(!listed())
+        for (args in listOf(listOf("--dry-run"), emptyList())) {
+            val r = run("app", "--ticket", "photo-upload", "--any-branch", *args.toTypedArray())
+            assertEquals(0, r.statusCode, r.output)
+            assertTrue(r.stdout.contains("photo-upload: Reply to requesters"), r.stdout)
+            assertTrue(r.stdout.contains("photo-upload: app: Check crashes\n  after 24 hours"), r.stdout)
+            assertTrue(!r.stdout.contains("Update listing") && !r.stdout.contains("Done earlier"), r.stdout)
+        }
+        assertTrue(listed())
+        val checked = read(photo).replace("[ ] Reply", "[x] Reply").replace("[ ] app:", "[x] app:")
+        SystemFileSystem.write(photo) { writeUtf8(checked) }
+        assertTrue(!listed())
+        val web = run("web", "2.0.0", "--ticket", "photo-upload", "--any-branch")
+        assertEquals(0, web.statusCode, web.output)
+        assertTrue(web.stdout.contains("photo-upload: web: Update listing"), web.stdout)
+        assertTrue(listed())
+        val settled = read(photo).replace("[ ] web:", "[x] web:")
+        SystemFileSystem.write(photo) { writeUtf8(settled) }
+        assertTrue(!listed())
+    }
+
+    @Test
+    fun afterReleaseOnUnreleasableTicketsIsOnlyAWarning() {
+        val ticket = read(photo).replace("## Work Log", "## After Release\n\n- [x] Check listing\n\n## Work Log")
+        for (text in listOf(ticket.replace("feature", "research"), ticket.replace("status: done", "status: wontfix"))) {
+            SystemFileSystem.write(photo) { writeUtf8(text) }
+            val result = cli().test(listOf("--root", work.toString(), "validate", photo.toString()))
+            assertEquals(0, result.statusCode, result.output)
+            assertTrue(result.output.contains("warning[after-release-unreleasable]"), result.output)
+        }
+    }
+
+    @Test
     fun printsFixesForTheRefsOfStampedTickets() {
         SystemFileSystem.write(work / "safanoria.yaml") {
             writeUtf8(

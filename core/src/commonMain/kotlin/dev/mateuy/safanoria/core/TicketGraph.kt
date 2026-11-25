@@ -72,6 +72,7 @@ public data class TicketFilter(
     val parent: String? = null,
     /** Only tickets with a `blockedBy` that is not `done`. */
     val blocked: Boolean = false,
+    val afterRelease: Boolean = false,
 ) {
     public fun matches(graph: TicketGraph, ticket: Ticket): Boolean {
         val f = ticket.frontmatter
@@ -80,6 +81,7 @@ public data class TicketFilter(
             (areas.isEmpty() || f?.area.orEmpty().any { it.value in areas }) &&
             (tags.isEmpty() || f?.tags.orEmpty().any { it.value in tags }) &&
             (parent == null || f?.parent?.value == parent) &&
-            (!blocked || graph.openBlockers(ticket).isNotEmpty())
+            (!blocked || graph.openBlockers(ticket).isNotEmpty()) &&
+            (!afterRelease || Release.afterRelease(ticket).isNotEmpty())
     }
 }

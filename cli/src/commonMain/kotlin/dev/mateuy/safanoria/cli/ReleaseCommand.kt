@@ -17,6 +17,7 @@ import dev.mateuy.safanoria.core.Release
 import dev.mateuy.safanoria.core.ReleaseRequest
 import dev.mateuy.safanoria.core.ReleaseResult
 import dev.mateuy.safanoria.core.Repository
+import dev.mateuy.safanoria.core.Severity
 import dev.mateuy.safanoria.core.Validator
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
@@ -34,6 +35,7 @@ class ReleaseCommand : RepositoryCommand(name = "release") {
             "Run on the main branch, as part of the release commit. Then merges the main branch, with the stamps, " +
             "back into the local branch of every parent in progress that shipped children with ship, so they show " +
             "released there too; skips, with a warning, a branch with uncommitted changes or a conflict. Pushes nothing. " +
+            "Lists the After Release tasks due for the stamped tickets. " +
             "Prints, for the release commit message, a line for each ref of a stamped ticket whose system has fixes " +
             "in safanoria.yaml (e.g. Fixes APP-7Y), so the tracker resolves it in this release."
 
@@ -67,6 +69,10 @@ class ReleaseCommand : RepositoryCommand(name = "release") {
             echo("${if (dryRun) "would stamp" else "stamped"} $what on ${ready.stamped.size} ticket${if (ready.stamped.size == 1) "" else "s"}:")
             ready.stamped.forEach { id -> echo("  ${displayPath(repo.ticketDir / "$id.md")}") }
         }
+        if (ready.afterRelease.isNotEmpty()) {
+            echo("\nAfter Release:")
+            ready.afterRelease.forEach { (id, tasks) -> tasks.forEach { echo("  $id: $it") } }
+        }
         // Not run here: the release commit is the user's or CI's, and the tracker resolves them from it.
         if (ready.fixes.isNotEmpty()) {
             echo("\nfor the release commit message (refs with fixes in $CONFIG_FILE):")
@@ -83,7 +89,7 @@ class ReleaseCommand : RepositoryCommand(name = "release") {
         val problems = Validator(Repository(repo.root, repo.fileSystem)).validate(ready.files.map { it.path })
         if (problems.isNotEmpty()) {
             problems.forEach { echo(it.copy(file = it.file?.let { p -> displayPath(p).toPath() }).toString(), err = true) }
-            throw ProgramResult(1)
+            if (problems.any { it.severity == Severity.ERROR }) throw ProgramResult(1)
         }
         ready.promoted.forEach { id -> Land.cleanUp(repo, id, repo.config.mainBranch).forEach { echo(it) } }
         if (branches != null) mergeBack(repo, branches, ready, dryRun = false)

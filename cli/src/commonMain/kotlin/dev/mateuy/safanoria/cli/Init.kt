@@ -17,6 +17,7 @@ import dev.mateuy.safanoria.core.FileAction
 import dev.mateuy.safanoria.core.FileChange
 import dev.mateuy.safanoria.core.Install
 import dev.mateuy.safanoria.core.Repository
+import dev.mateuy.safanoria.core.Severity
 import dev.mateuy.safanoria.core.SystemFileSystem
 import dev.mateuy.safanoria.core.Validator
 import dev.mateuy.safanoria.core.VersionSource
@@ -73,7 +74,7 @@ class Init : CliktCommand(name = "init") {
         val problems = Validator(Repository(root)).validate()
         if (problems.isNotEmpty()) {
             problems.forEach { echo(it.toString(), err = true) }
-            throw ProgramResult(1)
+            if (problems.any { it.severity == Severity.ERROR }) throw ProgramResult(1)
         }
         echo(
             "Safanoria is set up. Next: `safanoria-cli new \"<title>\"`; `safanoria-cli hook install` to validate tickets before " +
